@@ -1,22 +1,16 @@
 from django.db import models
 
 
-class Company(models.Model):
-    company_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=255)
-
-    class Meta:
-        db_table = "company"
-
-    def __str__(self):
-        return self.name
-
-
 class Teams(models.Model):
-    team_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
     description = models.TextField()
-    company = models.ForeignKey("companies.Company", on_delete=models.CASCADE)
+    manager = models.ForeignKey(
+        "users.Users",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="managed_teams",
+    )
     members = models.ManyToManyField("users.Users", through="TeamMembers")
 
     class Meta:

@@ -1,15 +1,10 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
-class Users(models.Model):
-    user_id = models.AutoField(primary_key=True)
-    user_name = models.CharField(max_length=150, unique=True)
-    password = models.CharField(max_length=128)
-    role = models.CharField(
-        max_length=10, choices=[("admin", "Admin"), ("employee", "Employee")]
-    )
-    email = models.EmailField(unique=True)
-    company = models.ForeignKey("companies.Company", on_delete=models.CASCADE)
+class Users(AbstractUser):
+    avatar = models.ImageField(upload_to="avatars/", null=True, blank=True)
+    phone = models.CharField(max_length=20, null=True, blank=True)
 
     class Meta:
         db_table = "users"
@@ -19,7 +14,6 @@ class Users(models.Model):
 
 
 class EmployeeKPIs(models.Model):
-    employee_kpi_id = models.AutoField(primary_key=True)
     user = models.ForeignKey("users.Users", on_delete=models.CASCADE)
     kpi = models.ForeignKey("kpis.KPIs", on_delete=models.CASCADE)
     target_value = models.CharField(max_length=50)
@@ -34,7 +28,6 @@ class EmployeeKPIs(models.Model):
 
 
 class PersonalGoals(models.Model):
-    goal_id = models.AutoField(primary_key=True)
     user = models.ForeignKey("users.Users", on_delete=models.CASCADE)
     goal_description = models.TextField()
     target_date = models.DateField()

@@ -2,10 +2,10 @@ from pathlib import Path
 import environ
 
 
-env = environ.Env(DEBUG=(bool, False))
-environ.Env.read_env()
-
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+env = environ.Env(DEBUG=(bool, False))
+environ.Env.read_env(BASE_DIR / ".env")
 
 SECRET_KEY = "django-insecure-2ze2*^o@b9u&(_=$@-(5(*pmdjcw4y*nfk(8k_mka$@01_wuxj"
 
@@ -108,7 +108,21 @@ LOGIN_EXEMPT_URLS = [
     r"^$",
     r"^users/login/$",
     r"^users/register/$",
+    r"^users/forgot-password/$",
+    r"^users/change-password/$",
 ]
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 # STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+EMAIL_BACKEND = env("EMAIL_BACKEND")
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_PORT = env("EMAIL_PORT")
+EMAIL_USE_TLS = env("EMAIL_USE_TLS")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+
+AUTH_USER_MODEL = "users.Users"

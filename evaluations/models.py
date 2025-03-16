@@ -2,10 +2,11 @@ from django.db import models
 
 
 class Forms(models.Model):
-    form_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
-    type = models.CharField(max_length=10, choices=[("self", "Self"), ("peer", "Peer")])
-    period = models.CharField(max_length=20)
+    type = models.CharField(
+        max_length=10, choices=[("self", "Self"), ("peer", "Peer")], default="self"
+    )
+    period = models.CharField(max_length=20, default="monthly")
 
     class Meta:
         db_table = "forms"
@@ -15,7 +16,6 @@ class Forms(models.Model):
 
 
 class FormQuestions(models.Model):
-    question_id = models.AutoField(primary_key=True)
     form = models.ForeignKey("evaluations.Forms", on_delete=models.CASCADE)
     question_text = models.TextField()
 
@@ -27,7 +27,6 @@ class FormQuestions(models.Model):
 
 
 class FormResponses(models.Model):
-    response_id = models.AutoField(primary_key=True)
     form = models.ForeignKey("evaluations.Forms", on_delete=models.CASCADE)
     user = models.ForeignKey(
         "users.Users", on_delete=models.CASCADE, related_name="responses_given"

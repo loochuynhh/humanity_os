@@ -2,12 +2,17 @@ from django.db import models
 
 
 class Projects(models.Model):
-    project_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
     description = models.TextField()
     start_date = models.DateField()
     end_date = models.DateField()
-    company = models.ForeignKey("companies.Company", on_delete=models.CASCADE)
+    manager = models.ForeignKey(
+        "users.Users",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="managed_projects",
+    )
 
     class Meta:
         db_table = "projects"
@@ -17,7 +22,6 @@ class Projects(models.Model):
 
 
 class Tasks(models.Model):
-    task_id = models.AutoField(primary_key=True)
     project = models.ForeignKey("projects.Projects", on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     description = models.TextField()
@@ -44,7 +48,6 @@ class Tasks(models.Model):
 
 
 class TaskAssignments(models.Model):
-    assignment_id = models.AutoField(primary_key=True)
     task = models.ForeignKey("projects.Tasks", on_delete=models.CASCADE)
     user = models.ForeignKey("users.Users", on_delete=models.CASCADE)
 
@@ -56,7 +59,6 @@ class TaskAssignments(models.Model):
 
 
 class TimeEntries(models.Model):
-    entry_id = models.AutoField(primary_key=True)
     user = models.ForeignKey("users.Users", on_delete=models.CASCADE)
     task = models.ForeignKey("projects.Tasks", on_delete=models.CASCADE)
     start_time = models.DateTimeField()
