@@ -2,5 +2,5 @@ from django.apps import AppConfig
 
 
 class KpisConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'kpis'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "kpis"
