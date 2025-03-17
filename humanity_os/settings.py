@@ -110,6 +110,7 @@ LOGIN_EXEMPT_URLS = [
     r"^users/register/$",
     r"^users/forgot-password/$",
     r"^users/change-password/$",
+    r"^users/reset-password/.*$",
 ]
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -126,3 +127,4 @@ EMAIL_HOST_USER = env("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 
 AUTH_USER_MODEL = "users.Users"
+DEBUG = True
