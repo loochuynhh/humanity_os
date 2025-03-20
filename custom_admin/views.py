@@ -13,35 +13,35 @@ from custom_admin.forms import (
     UserPasswordChangeForm,
 )
 from django.contrib.auth import logout
-from django.contrib.auth.decorators import login_required
+from custom_admin.utils import superuser_required
 
 
-@login_required(login_url="custom_admin:login")
+@superuser_required
 def index(request):
     return render(request, "pages/index.html", {"segment": "dashboard"})
 
 
-@login_required(login_url="/admin/accounts/login/")
+@superuser_required
 def billing(request):
     return render(request, "pages/billing.html", {"segment": "billing"})
 
 
-@login_required(login_url="/admin/accounts/login/")
+@superuser_required
 def tables(request):
     return render(request, "pages/tables.html", {"segment": "tables"})
 
 
-@login_required(login_url="/admin/accounts/login/")
+@superuser_required
 def vr(request):
     return render(request, "pages/virtual-reality.html", {"segment": "virtual_reality"})
 
 
-@login_required(login_url="/admin/accounts/login/")
+@superuser_required
 def rtl(request):
     return render(request, "pages/rtl.html", {"segment": "rtl"})
 
 
-@login_required(login_url="/admin/accounts/login/")
+@superuser_required
 def profile(request):
     return render(request, "pages/profile.html", {"segment": "profile"})
 

@@ -29,6 +29,11 @@ def user_list(request):
     return render(request, "users/user_list.html", {"users": users})
 
 
+@login_required(login_url="login")
+def index(request):
+    return render(request, "users/index.html")
+
+
 def login_view(request):
     if request.method == "POST":
         username = request.POST.get("username")
@@ -37,7 +42,7 @@ def login_view(request):
         if user is not None:
             login(request, user)
             messages.success(request, "Đăng nhập thành công!")
-            return redirect(request.GET.get("next", "home"))
+            return redirect("users:index")
         else:
             messages.error(request, "Tên đăng nhập hoặc mật khẩu không đúng!")
     return render(request, "users/login.html")

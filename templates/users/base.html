@@ -13,17 +13,17 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'home' %}">User Management</a>
+            <a class="navbar-brand" href="{% url 'users:index' %}">User Management</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     {% if request.user.is_authenticated %}
-                        <li class="nav-item"><a class="nav-link" href="{% url 'change_password' %}">Đổi mật khẩu</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Đăng xuất</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'users:change_password' %}">Đổi mật khẩu</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'users:logout' %}">Đăng xuất</a></li>
                     {% else %}
-                        <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Đăng nhập</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'users:login' %}">Đăng nhập</a></li>
                     {% endif %}
                 </ul>
             </div>

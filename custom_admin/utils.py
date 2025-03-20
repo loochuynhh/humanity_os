@@ -1,4 +1,3 @@
-import datetime
 import json
 from django.template import Context
 from django.utils import translation
@@ -24,6 +23,7 @@ from django.contrib import messages
 from django.contrib.admin.options import IncorrectLookupParameters
 from django.contrib import admin
 from django.utils.text import slugify
+from django.shortcuts import render
 
 try:
     from django.utils.translation import ugettext_lazy as _
@@ -37,6 +37,15 @@ except ImportError:
 
 
 default_apps_icon = {"auth": "fa fa-users"}
+
+
+def superuser_required(view_func):
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated or not request.user.is_superuser:
+            return render(request, "pages/404.html", status=404)
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
 
 
 class JsonResponse(HttpResponse):
