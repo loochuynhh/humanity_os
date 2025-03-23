@@ -85,7 +85,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a href="/login/" class="btn btn-primary px-4 py-2 mt-2 mt-lg-0 slide-in">Đăng Nhập</a>
+                        <a href="{% url 'users:login' %}"class="btn btn-primary px-4 py-2 mt-2 mt-lg-0 slide-in">Đăng Nhập</a>
                     </li>
                 </ul>
             </div>
@@ -160,7 +160,7 @@
         <div class="container">
             <h3 class="fw-bold mb-3 fade-in-up">Sẵn sàng trải nghiệm?</h3>
             <p class="text-muted mb-4 fade-in-up" style="animation-delay: 0.2s;">Tham gia ngay để nâng cao hiệu suất làm việc của bạn!</p>
-            <a href="/login/" class="btn btn-primary btn-lg px-5 fade-in-up" style="animation-delay: 0.4s;">Đăng Nhập Ngay</a>
+            <a href="{% url 'users:login' %}" class="btn btn-primary btn-lg px-5 fade-in-up" style="animation-delay: 0.4s;">Đăng Nhập Ngay</a>
         </div>
     </section>
 

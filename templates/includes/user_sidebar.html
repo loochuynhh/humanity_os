@@ -1,0 +1,276 @@
+{% load static %}
+<nav
+  id="sidebarMenu"
+  class="col-md-3 col-lg-2 sidebar d-md-block collapse"
+  style="background: var(--sidebar-bg)"
+>
+  <div class="position-sticky pt-3">
+    <!-- Toggle Button for Mobile -->
+    <div
+      class="d-flex justify-content-between align-items-center px-3 mb-3 d-md-none"
+    >
+      <button
+        class="btn btn-light"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#sidebarMenu"
+        aria-expanded="false"
+        aria-label="Toggle sidebar"
+      >
+        <i class="bi bi-list"></i>
+      </button>
+    </div>
+
+    <!-- Logo and Branding -->
+    <div class="text-center mb-4 fade-in-down">
+      <h6 class="fw-bold text-white">Humanity OS</h6>
+      <small class="text-white-50">Employee Dashboard</small>
+    </div>
+
+    <!-- User Info -->
+    <div
+      class="d-flex align-items-center px-3 mb-4 fade-in-down"
+      style="animation-delay: 0.2s"
+    >
+      <img
+        src="{% static 'assets/img/profile.jpg' %}"
+        alt="Avatar"
+        class="rounded-circle me-2"
+        width="40"
+        height="40"
+      />
+      <div class="text-white">
+        <span class="fw-semibold"
+          >{{ request.user.first_name }} {{ request.user.last_name }}</span
+        >
+        <small class="d-block text-white-50">Nhân viên</small>
+      </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <ul class="nav flex-column">
+      <li class="nav-item">
+        <a
+          class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}"
+          href="{% url 'users:index' %}"
+        >
+          <i class="bi bi-house-door me-2"></i>Dashboard
+        </a>
+      </li>
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          href="#"
+          data-bs-toggle="collapse"
+          data-bs-target="#tasksSubmenu"
+          aria-expanded="false"
+        >
+          <i class="bi bi-kanban me-2"></i>Tasks
+          <span class="badge bg-danger ms-2">3</span>
+          <i class="bi bi-chevron-down float-end mt-1 toggle-icon"></i>
+        </a>
+        <div class="collapse" id="tasksSubmenu">
+          <ul class="nav flex-column ms-3">
+            <li class="nav-item">
+              <a class="nav-link sub-link" href="#">Tất cả Tasks</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link sub-link" href="#">Task của tôi</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link sub-link" href="#">Task quá hạn</a>
+            </li>
+          </ul>
+        </div>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">
+          <i class="bi bi-clock me-2"></i>Time Tracking
+          <span class="badge bg-success ms-2">4h 30m</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          href="#"
+          data-bs-toggle="collapse"
+          data-bs-target="#performanceSubmenu"
+          aria-expanded="false"
+        >
+          <i class="bi bi-graph-up me-2"></i>Performance
+          <i class="bi bi-chevron-down float-end mt-1 toggle-icon"></i>
+        </a>
+        <div class="collapse" id="performanceSubmenu">
+          <ul class="nav flex-column ms-3">
+            <li class="nav-item">
+              <a class="nav-link sub-link" href="#">KPI cá nhân</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link sub-link" href="#">Báo cáo tuần</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link sub-link" href="#">Đánh giá từ quản lý</a>
+            </li>
+          </ul>
+        </div>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">
+          <i class="bi bi-star me-2"></i>Goals
+          <span class="badge bg-warning ms-2">2/5</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          href="#"
+          data-bs-toggle="collapse"
+          data-bs-target="#projectsSubmenu"
+          aria-expanded="false"
+        >
+          <i class="bi bi-folder me-2"></i>Dự án
+          <i class="bi bi-chevron-down float-end mt-1 toggle-icon"></i>
+        </a>
+        <div class="collapse" id="projectsSubmenu">
+          <ul class="nav flex-column ms-3">
+            <li class="nav-item">
+              <a class="nav-link sub-link" href="#">Dự án A</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link sub-link" href="#">Dự án B</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link sub-link" href="#">Tất cả dự án</a>
+            </li>
+          </ul>
+        </div>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">
+          <i class="bi bi-robot me-2"></i>Công cụ AI
+        </a>
+      </li>
+      <!-- Dark Mode Toggle -->
+      <li class="nav-item">
+        <a class="nav-link" href="#" id="darkModeToggle">
+          <i class="bi bi-moon-stars me-2"></i>Chế độ tối
+        </a>
+      </li>
+      <li class="nav-item mt-5">
+        <a class="nav-link text-danger" href="{% url 'home' %}">
+          <i class="bi bi-box-arrow-right me-2"></i>Đăng xuất
+        </a>
+      </li>
+    </ul>
+
+    <!-- Sidebar Footer -->
+    <div class="text-center mt-4 text-white-50">
+      <small>© 2025 Humanity OS</small>
+    </div>
+  </div>
+</nav>
+
+<!-- Custom Styles -->
+<style>
+  :root {
+    --sidebar-bg: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+    --sidebar-text: #ffffff;
+    --sidebar-active-bg: #ffffff;
+    --sidebar-active-text: #1e3c72;
+  }
+  [data-theme="dark"] {
+    --sidebar-bg: linear-gradient(180deg, #343a40 0%, #212529 100%);
+    --sidebar-text: #f8f9fa;
+    --sidebar-active-bg: #495057;
+    --sidebar-active-text: #ffffff;
+  }
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    padding: 20px 0;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    background: var(--sidebar-bg);
+    transition: transform 0.3s ease;
+    width: 250px;
+  }
+  .sidebar .nav-link {
+    color: var(--sidebar-text);
+    padding: 12px 20px;
+    transition: all 0.3s ease;
+    border-radius: 0 20px 20px 0;
+    position: relative;
+  }
+  .sidebar .nav-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--sidebar-text);
+  }
+  .sidebar .nav-link.active {
+    background: var(--sidebar-active-bg);
+    color: var(--sidebar-active-text);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  }
+  .sidebar .sub-link {
+    color: #d1e7ff;
+    padding: 8px 30px;
+    font-size: 0.9rem;
+  }
+  [data-theme="dark"] .sidebar .sub-link {
+    color: #adb5bd;
+  }
+  .sidebar .sub-link:hover {
+    color: var(--sidebar-text);
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .toggle-icon {
+    transition: transform 0.3s ease;
+  }
+  .nav-link[aria-expanded="true"] .toggle-icon {
+    transform: rotate(180deg);
+  }
+  /* Responsive */
+  @media (max-width: 767.98px) {
+    .sidebar {
+      transform: translateX(-100%);
+    }
+    .sidebar.show {
+      transform: translateX(0);
+    }
+  }
+  @media (min-width: 768px) {
+    .sidebar {
+      transform: translateX(0);
+    }
+  }
+</style>
+
+<!-- Scripts (Sử dụng file có sẵn) -->
+<script src="{% static 'assets/js/core/jquery-3.7.1.min.js' %}"></script>
+<script src="{% static 'assets/js/core/bootstrap.bundle.min.js' %}"></script>
+<script>
+  // Dark Mode Toggle
+  document
+    .getElementById("darkModeToggle")
+    .addEventListener("click", function (e) {
+      e.preventDefault();
+      const body = document.body;
+      if (body.getAttribute("data-theme") === "dark") {
+        body.removeAttribute("data-theme");
+        localStorage.setItem("theme", "light");
+        this.innerHTML = '<i class="bi bi-moon-stars me-2"></i>Chế độ tối';
+      } else {
+        body.setAttribute("data-theme", "dark");
+        localStorage.setItem("theme", "dark");
+        this.innerHTML = '<i class="bi bi-sun me-2"></i>Chế độ sáng';
+      }
+    });
+
+  // Load theme from localStorage
+  if (localStorage.getItem("theme") === "dark") {
+    document.body.setAttribute("data-theme", "dark");
+    document.getElementById("darkModeToggle").innerHTML =
+      '<i class="bi bi-sun me-2"></i>Chế độ sáng';
+  }
+</script>
