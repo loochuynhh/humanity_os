@@ -63,7 +63,7 @@ def forgot_password(request):
             token = PasswordResetTokenGenerator().make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             reset_url = request.build_absolute_uri(
-                reverse("reset_password", kwargs={"uidb64": uid, "token": token})
+                reverse("users:reset_password", kwargs={"uidb64": uid, "token": token})
             )
             send_mail(
                 subject="Đặt lại mật khẩu của bạn",
@@ -78,7 +78,8 @@ def forgot_password(request):
         except Users.DoesNotExist:
             messages.error(request, "Email không tồn tại!")
         except Exception as e:
-            messages.error(request, "Có lỗi xảy ra! Vui lòng thử lại sau.")
+            messages.error(request, "Có lỗi xảy ra! Vui lòng thử lại sau")
+
     return render(request, "users/forgot_password.html")
 
 

@@ -2,40 +2,81 @@
 {% block title %}Đăng Nhập - Humanity OS{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-5 col-lg-4">
-        <div class="card shadow-lg border-0 fade-in-up">
-            <div class="card-body p-4">
-                <h3 class="text-center fw-bold mb-4"><i class="bi bi-box-arrow-in-right me-2"></i>Đăng Nhập</h3>
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-sm border-0 fade-in">
+            <div class="card-body p-5">
+                <h2 class="text-center fw-bold mb-2 text-dark">Đăng Nhập</h2>
+                <p class="text-center text-muted mb-4">Chào mừng đến với Humanity OS</p>
                 <form method="POST">
                     {% csrf_token %}
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Tên đăng nhập</label>
-                        <input type="text" name="username" class="form-control" required placeholder="Nhập tên đăng nhập">
+                    <div class="mb-4">
+                        <label class="form-label fw-medium text-dark">Tên đăng nhập</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
+                            <input type="text" name="username" class="form-control border-start-0" required placeholder="Nhập tên đăng nhập">
+                        </div>
                     </div>
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">Mật khẩu</label>
-                        <input type="password" name="password" class="form-control" required placeholder="Nhập mật khẩu">
+                        <label class="form-label fw-medium text-dark">Mật khẩu</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+                            <input type="password" name="password" class="form-control border-start-0" required placeholder="Nhập mật khẩu">
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100 py-2" style="transition: all 0.3s ease;">
-                        <i class="bi bi-person-check-fill me-2"></i>Đăng nhập
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-medium">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Đăng Nhập
                     </button>
                 </form>
-                <div class="text-center mt-3">
-                    <a href="{% url 'users:forgot_password' %}" class="text-muted text-decoration-none">Quên mật khẩu?</a>
+                <div class="text-center mt-4">
+                    <a href="{% url 'users:forgot_password' %}" class="text-muted text-decoration-none hover-link">Quên mật khẩu?</a>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 <style>
+    .card {
+        border-radius: 15px;
+        background: #ffffff;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
     .card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15) !important;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+    .form-control {
+        padding: 12px;
+        border-radius: 8px;
+        background: #f8f9fa;
         transition: all 0.3s ease;
     }
-    .btn:hover {
-        transform: scale(1.05);
+    .form-control:focus {
+        background: #fff;
+        box-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
+        border-color: #4a90e2;
+    }
+    .btn-primary {
+        background: #4a90e2;
+        border: none;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+        background: #357abd;
+        transform: scale(1.02);
+    }
+    .hover-link:hover {
+        color: #4a90e2;
+        text-decoration: underline;
+    }
+    .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 </style>
 {% endblock %}
