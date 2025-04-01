@@ -1,0 +1,118 @@
+/* static/assets/css/dashboard.css */
+:root {
+    --primary-bg: #ffffff;
+    --text-color: #212529;
+    --card-bg: #ffffff;
+    --hover-shadow: rgba(0, 0, 0, 0.2);
+    --gradient-primary: linear-gradient(135deg, #0d6efd 0%, #1e3c72 100%);
+    --table-bg: #ffffff;
+    --table-hover-bg: #f8f9fa;
+    --list-group-bg: #ffffff;
+    --table-border-color: rgba(0, 0, 0, 0.125);
+    --muted-color: #6c757d;
+}
+[data-theme="dark"] {
+    --primary-bg: #212529;
+    --text-color: #f8f9fa;
+    --card-bg: #343a40;
+    --hover-shadow: rgba(255, 255, 255, 0.1);
+    --gradient-primary: linear-gradient(135deg, #1e3c72 0%, #0d6efd 100%);
+    --table-bg: #343a40;
+    --table-hover-bg: #495057;
+    --list-group-bg: #343a40;
+    --table-border-color: rgba(255, 255, 255, 0.125);
+    --muted-color: #adb5bd;
+}
+body {
+    background: var(--primary-bg);
+    color: var(--text-color);
+    transition: all 0.3s ease;
+}
+.card {
+    background: var(--card-bg);
+    color: var(--text-color);
+}
+.bg-gradient-primary {
+    background: var(--gradient-primary);
+}
+.hover-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.hover-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 25px var(--hover-shadow) !important;
+}
+.btn-outline-primary {
+    color: #0d6efd;
+    border-color: #0d6efd;
+}
+[data-theme="dark"] .btn-outline-primary {
+    color: #66b0ff;
+    border-color: #66b0ff;
+}
+.btn-outline-primary:hover {
+    transform: scale(1.05);
+    transition: transform 0.3s ease;
+    color: #fff;
+    background-color: #0d6efd;
+}
+[data-theme="dark"] .btn-outline-primary:hover {
+    background-color: #66b0ff;
+}
+/* List Group */
+.list-group-item {
+    background: var(--list-group-bg);
+    color: var(--text-color);
+    border-color: var(--table-border-color);
+}
+/* Table */
+.table {
+    background: var(--table-bg) !important; /* Đảm bảo ghi đè Bootstrap */
+    color: var(--text-color);
+    border-color: var(--table-border-color);
+}
+.table th,
+.table td {
+    background: var(--table-bg); /* Áp dụng cho từng ô */
+    color: var(--text-color);
+    border-color: var(--table-border-color);
+}
+.table-hover tbody tr:hover {
+    background: var(--table-hover-bg) !important; /* Đảm bảo hover đúng */
+    color: var(--text-color);
+}
+.table thead th {
+    background: var(--table-bg); /* Đảm bảo thead không trắng */
+    color: var(--text-color);
+}
+/* Badges */
+[data-theme="dark"] .badge.bg-info {
+    background-color: #17a2b8;
+}
+[data-theme="dark"] .badge.bg-warning {
+    background-color: #ffc107;
+}
+[data-theme="dark"] .badge.bg-success {
+    background-color: #28a745;
+}
+/* Progress Bar */
+[data-theme="dark"] .progress {
+    background-color: #495057;
+}
+/* Text Muted */
+.text-muted {
+    color: var(--muted-color) !important;
+}
+/* Responsive Adjustments */
+@media (max-width: 767.98px) {
+    .content-wrapper {
+        margin-left: 0 !important;
+        padding: 15px;
+    }
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+    .card-body {
+        padding: 1rem;
+    }
+}

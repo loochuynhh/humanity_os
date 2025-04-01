@@ -11,7 +11,10 @@ from django.utils.encoding import force_bytes, force_str
 from django.urls import reverse
 from django.conf import settings
 from .models import Users
-
+from .utils import (
+    get_task_counts, get_time_tracking, get_kpi_snapshot, 
+    get_project_progress, get_ai_suggestions, get_recent_tasks, get_personal_goals
+)
 
 def admin_required(view_func):
     @login_required(login_url="login")
@@ -31,7 +34,24 @@ def user_list(request):
 
 @login_required(login_url="login")
 def index(request):
-    return render(request, "users/index.html")
+    user = request.user
+    
+    context = {
+        'user': user,
+        'task_counts': get_task_counts(user.id),
+        'task_chart_data': get_task_counts(user.id, as_json=True),
+        'today_time': get_time_tracking(user.id, period='today'),
+        'week_time': get_time_tracking(user.id, period='week'),
+        'week_chart_data': get_time_tracking(user.id, period='week', as_json=True),
+        'kpi_completion': get_kpi_snapshot(user.id, 'completion'),
+        'kpi_percentage': get_kpi_snapshot(user.id, 'percentage'),
+        'project_progress': get_project_progress(user.id),
+        'suggestions': get_ai_suggestions(user.id),
+        'recent_tasks': get_recent_tasks(user.id),
+        'personal_goals': get_personal_goals(user.id),
+    }
+    
+    return render(request, 'users/index.html', context)
 
 
 def login_view(request):
@@ -144,3 +164,18 @@ def create_user(request):
             messages.success(request, "Tài khoản đã được tạo!")
             return redirect("user_list")
     return render(request, "users/create_user.html")
+
+def check_in(request):
+    if request.method == "POST":
+        return render(request, 'users/action_success.html', {'message': 'Check-in thành công!'})
+    return redirect('users:index')
+
+def check_out(request):
+    if request.method == "POST":
+        return render(request, 'users/action_success.html', {'message': 'Check-out thành công!'})
+    return redirect('users:index')
+
+def set_goal(request):
+    if request.method == "POST":
+        return render(request, 'users/action_success.html', {'message': 'Đặt mục tiêu thành công!'})
+    return redirect('users:index')

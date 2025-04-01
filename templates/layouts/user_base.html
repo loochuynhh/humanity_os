@@ -12,48 +12,10 @@
     <link rel="stylesheet" href="{% static 'assets/fonts/fontawesome/fa-solid-900.css' %}">
     <link rel="stylesheet" href="{% static 'assets/fonts/fontawesome/fa-regular-400.css' %}">
     <link rel="stylesheet" href="{% static 'assets/fonts/fontawesome/fa-brands-400.css' %}">
-    <!-- Custom CSS -->
-    <style>
-        /* Navbar */
-        .navbar {
-            transition: background-color 0.3s ease, box-shadow 0.3s ease;
-        }
-        .navbar.scrolled {
-            background-color: rgba(33, 37, 41, 0.95) !important;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
-        /* Animation */
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .fade-in-down {
-            animation: fadeInDown 0.5s ease-out forwards;
-        }
-        .fade-in-up {
-            animation: fadeInUp 0.7s ease-out forwards;
-        }
-        /* Body */
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-        }
-        /* Container */
-        .container-main {
-            padding-top: 80px; /* Chỉ áp dụng khi có Navbar */
-        }
-        .container-no-nav {
-            padding-top: 20px; /* Không có Navbar */
-        }
-        /* Alert */
-        .alert {
-            animation: fadeInDown 0.5s ease-out;
-        }
-    </style>
+    {% block extra_css %}
+        <link rel="stylesheet" href="{% static 'assets/css/dashboard.css' %}">
+        <link rel="stylesheet" href="{% static 'assets/css/user_base.css' %}">
+    {% endblock %}
 </head>
 <body>
     <!-- Navbar (chỉ hiển thị cho các trang login, forgot_password, change_password, reset_password) -->
