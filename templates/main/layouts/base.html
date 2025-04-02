@@ -1,0 +1,34 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Humanity OS{% endblock %}</title>
+
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/fonts/fontawesome/fa-solid-900.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/fonts/fontawesome/fa-regular-400.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/fonts/fontawesome/fa-brands-400.css' %}">
+    
+    {% block extra_css %}
+        <link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
+    {% endblock %}
+</head>
+<body>
+    <!-- Scripts -->
+    {% block content %}{% endblock %}
+    <script src="{% static 'assets/js/core/jquery-3.7.1.min.js' %}"></script>
+    <script src="{% static 'assets/js/core/popper.min.js' %}"></script>
+    <script src="{% static 'assets/js/core/bootstrap.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugin/chart.js/chart.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugin/jquery.sparkline/jquery.sparkline.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugin/chart-circle/circles.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugin/jsvectormap/jsvectormap.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugin/jsvectormap/world.js' %}"></script>
+    <script src="{% static 'assets/js/plugin/sweetalert/sweetalert.min.js' %}"></script>
+</body>
+</html>

@@ -1,9 +1,8 @@
 from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect
-from django.contrib import messages, auth
+from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.hashers import make_password
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -29,7 +28,7 @@ def admin_required(view_func):
 @admin_required
 def user_list(request):
     users = Users.objects.all()
-    return render(request, "users/user_list.html", {"users": users})
+    return render(request, "main/pages/users/list.html", {"users": users})
 
 
 @login_required(login_url="login")
@@ -51,7 +50,7 @@ def index(request):
         'personal_goals': get_personal_goals(user.id),
     }
     
-    return render(request, 'users/index.html', context)
+    return render(request, 'main/pages/index.html', context)
 
 
 def login_view(request):
@@ -65,14 +64,14 @@ def login_view(request):
             return redirect("users:index")
         else:
             messages.error(request, "Tên đăng nhập hoặc mật khẩu không đúng!")
-    return render(request, "users/login.html")
+    return render(request, "main/pages/users/login.html")
 
 
 @login_required(login_url="login")
 def logout_view(request):
     logout(request)
     messages.success(request, "Bạn đã đăng xuất!")
-    return redirect("login")
+    return redirect("home")
 
 
 def forgot_password(request):
@@ -100,7 +99,7 @@ def forgot_password(request):
         except Exception as e:
             messages.error(request, "Có lỗi xảy ra! Vui lòng thử lại sau")
 
-    return render(request, "users/forgot_password.html")
+    return render(request, "main/pages/users/forgot_password.html")
 
 
 @login_required(login_url="login")
@@ -122,7 +121,7 @@ def change_password(request):
                 request, "Mật khẩu đã được thay đổi. Vui lòng đăng nhập lại!"
             )
             return redirect("login")
-    return render(request, "users/change_password.html")
+    return render(request, "main/pages/users/change_password.html")
 
 
 def reset_password(request, uidb64, token):
@@ -144,7 +143,7 @@ def reset_password(request, uidb64, token):
                 messages.error(request, "Liên kết không hợp lệ!")
         except (Users.DoesNotExist, ValueError):
             messages.error(request, "Liên kết không hợp lệ!")
-    return render(request, "users/reset_password.html")
+    return render(request, "main/pages/users/reset_password.html")
 
 
 @admin_required

@@ -157,7 +157,7 @@
         </a>
       </li>
       <li class="nav-item mt-5">
-        <a class="nav-link text-danger" href="{% url 'home' %}">
+        <a class="nav-link text-danger" href="{% url 'users:logout' %}">
           <i class="bi bi-box-arrow-right me-2"></i>Đăng xuất
         </a>
       </li>
@@ -170,81 +170,10 @@
   </div>
 </nav>
 
-<!-- Custom Styles -->
-<style>
-  :root {
-    --sidebar-bg: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
-    --sidebar-text: #ffffff;
-    --sidebar-active-bg: #ffffff;
-    --sidebar-active-text: #1e3c72;
-  }
-  [data-theme="dark"] {
-    --sidebar-bg: linear-gradient(180deg, #343a40 0%, #212529 100%);
-    --sidebar-text: #f8f9fa;
-    --sidebar-active-bg: #495057;
-    --sidebar-active-text: #ffffff;
-  }
-  .sidebar {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 1000;
-    padding: 20px 0;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-    background: var(--sidebar-bg);
-    transition: transform 0.3s ease;
-    width: 250px;
-  }
-  .sidebar .nav-link {
-    color: var(--sidebar-text);
-    padding: 12px 20px;
-    transition: all 0.3s ease;
-    border-radius: 0 20px 20px 0;
-    position: relative;
-  }
-  .sidebar .nav-link:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--sidebar-text);
-  }
-  .sidebar .nav-link.active {
-    background: var(--sidebar-active-bg);
-    color: var(--sidebar-active-text);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-  }
-  .sidebar .sub-link {
-    color: #d1e7ff;
-    padding: 8px 30px;
-    font-size: 0.9rem;
-  }
-  [data-theme="dark"] .sidebar .sub-link {
-    color: #adb5bd;
-  }
-  .sidebar .sub-link:hover {
-    color: var(--sidebar-text);
-    background: rgba(255, 255, 255, 0.05);
-  }
-  .toggle-icon {
-    transition: transform 0.3s ease;
-  }
-  .nav-link[aria-expanded="true"] .toggle-icon {
-    transform: rotate(180deg);
-  }
-  /* Responsive */
-  @media (max-width: 767.98px) {
-    .sidebar {
-      transform: translateX(-100%);
-    }
-    .sidebar.show {
-      transform: translateX(0);
-    }
-  }
-  @media (min-width: 768px) {
-    .sidebar {
-      transform: translateX(0);
-    }
-  }
-</style>
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
+{% endblock %}
 
 <!-- Scripts (Sử dụng file có sẵn) -->
 <script src="{% static 'assets/js/core/jquery-3.7.1.min.js' %}"></script>
