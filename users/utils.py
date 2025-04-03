@@ -3,8 +3,8 @@ from django.utils import timezone
 from datetime import timedelta
 import json
 from projects.models import Tasks, TaskAssignments, TimeEntries, Projects
-from users.models import EmployeeKPIs
-from users.models import PersonalGoals
+from kpis.models import EmployeeKPIs
+from users.models import Users
 
 def get_task_counts(user_id, as_json=False):
     task_counts = TaskAssignments.objects.filter(user_id=user_id).values('task__status').annotate(count=Count('task__id'))
@@ -56,7 +56,7 @@ def get_time_tracking(user_id, period='today', as_json=False):
     minutes = int((total_hours - hours) * 60)
     return f"{hours}h {minutes}m" if not as_json else json.dumps([total_hours])
 def get_kpi_snapshot(user_id, metric='completion'):
-    kpi = EmployeeKPIs.objects.filter(user_id=user_id, period='monthly').first()
+    kpi = EmployeeKPIs.objects.filter(user_id=user_id, time_period='monthly').first()
     if not kpi or not kpi.target_value:
         return "0/0" if metric == 'completion' else 0
     
@@ -72,7 +72,7 @@ def get_kpi_snapshot(user_id, metric='completion'):
     return completion if metric == 'completion' else percentage
 
 def get_project_progress(user_id):
-    projects = Projects.objects.filter(tasks__taskassignments__user_id=user_id).distinct()
+    projects = Projects.objects.filter(tasks__task_assignments__user_id=user_id).distinct()
     project_progress = []
     for project in projects:
         total_tasks = Tasks.objects.filter(project_id=project.pk).count()
@@ -83,17 +83,22 @@ def get_project_progress(user_id):
 
 def get_ai_suggestions(user_id):
     return Tasks.objects.filter(
-        taskassignments__user_id=user_id, 
+        task_assignments__user_id=user_id, 
         status__in=['To-do', 'In progress']
     ).values('title', 'difficulty', 'estimated_time')[:2]
 
 def get_recent_tasks(user_id):
-    return Tasks.objects.filter(taskassignments__user_id=user_id).select_related('project').order_by('-deadline')[:5]
+    return Tasks.objects.filter(task_assignments__user_id=user_id).select_related('project').order_by('-deadline')[:5]
 
 def get_personal_goals(user_id):
-    goals = PersonalGoals.objects.filter(user_id=user_id).order_by('target_date')
-    goal_progress = []
-    for goal in goals:
-        progress = 100 if goal.status == 'achieved' else (0 if goal.status == 'missed' else 50)
-        goal_progress.append({'description': goal.goal_description, 'progress': progress})
-    return goal_progress
+    user = Users.objects.filter(id=user_id).first()
+    if not user or not user.goal_description:
+        return []
+    
+    progress = 100 if user.goal_status == 'Achieved' else (0 if user.goal_status == 'Missed' else user.goal_achieved_percentage or 0)
+    return [{
+        'description': user.goal_description, 
+        'progress': progress,
+        'name': user.goal_name,
+        'deadline': user.goal_deadline
+    }]

@@ -1,0 +1,227 @@
+{% extends 'main/layouts/base.html' %}
+{% load static %}
+{% block title %}Tất cả Tasks - Humanity OS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    {% include 'main/includes/sidebar.html' %}
+
+    <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom fade-in-down">
+        <h1 class="h2 fw-bold">
+          <i class="fas fa-tasks me-2"></i>Tất cả Tasks
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <a href="{% url 'projects:my_tasks' %}" class="btn btn-outline-primary me-2">
+            <i class="fas fa-user me-1"></i> Task của tôi
+          </a>
+          <a href="{% url 'projects:overdue_tasks' %}" class="btn btn-outline-danger">
+            <i class="fas fa-exclamation-circle me-1"></i> Task quá hạn
+          </a>
+        </div>
+      </div>
+
+      <div class="row mb-4 fade-in-up">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-body p-3">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">Dự án</label>
+                  <select id="projectFilter" class="form-select">
+                    <option value="">Tất cả dự án</option>
+                    {% for project in projects %}
+                    <option value="{{ project.id }}">{{ project.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Trạng thái</label>
+                  <select id="statusFilter" class="form-select">
+                    <option value="">Tất cả trạng thái</option>
+                    {% for choice in status_choices %}
+                    <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                  <button id="resetFilter" class="btn btn-outline-secondary">
+                    <i class="fas fa-undo me-1"></i> Đặt lại
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row fade-in-up" style="animation-delay: 0.2s">
+        <div class="col-12">
+          <div class="card shadow-sm hover-card">
+            <div class="card-body px-0 pb-2">
+              <div class="table-responsive">
+                <table id="tasksTable" class="table align-items-center mb-0">
+                  <thead>
+                    <tr>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Task</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Dự án</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Deadline</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Trạng thái</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Người phụ trách</th>
+                      <th class="text-secondary opacity-7"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                      <td>
+                        <div class="d-flex px-2 py-1">
+                          <div class="d-flex flex-column justify-content-center">
+                            <h6 class="mb-0 text-sm">{{ task.title }}</h6>
+                            <p class="text-xs text-secondary mb-0">{{ task.description|truncatewords:5 }}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <p class="text-xs font-weight-bold mb-0">{{ task.project.name }}</p>
+                      </td>
+                      <td>
+                        <span class="text-xs font-weight-bold {% if task.deadline < now and task.status != 'Completed' %}text-danger{% endif %}">
+                          {{ task.deadline|date:"d/m/Y" }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="badge badge-sm {% if task.status == 'Completed' %}bg-success{% elif task.status == 'Late' %}bg-danger{% elif task.status == 'In progress' %}bg-warning{% else %}bg-primary{% endif %}">
+                          {{ task.status }}
+                        </span>
+                      </td>
+                      <td>
+                        {% for assignment in task.task_assignments.all %}
+                        <div class="avatar-group mt-2">
+                          <span class="avatar avatar-xs rounded-circle bg-gradient-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ assignment.user.get_full_name }}">
+                            {{ assignment.user.first_name|first }}{{ assignment.user.last_name|first }}
+                          </span>
+                        </div>
+                        {% endfor %}
+                      </td>
+                      <td class="align-middle">
+                        <a href="#" class="text-secondary font-weight-bold text-xs" data-bs-toggle="modal" data-bs-target="#taskModal{{ task.id }}">
+                          Chi tiết
+                        </a>
+                      </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                      <td colspan="6" class="text-center py-4">
+                        <i class="fas fa-tasks fa-2x text-muted mb-3"></i>
+                        <h6 class="text-muted">Không có task nào</h6>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+{% for task in tasks %}
+<!-- Modal chi tiết -->
+<div class="modal fade" id="taskModal{{ task.id }}" tabindex="-1" role="dialog" aria-labelledby="taskModalLabel{{ task.id }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="taskModalLabel{{ task.id }}">{{ task.title }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <h6 class="text-sm text-muted mb-1">Mô tả</h6>
+          <p>{{ task.description }}</p>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <h6 class="text-sm text-muted mb-1">Dự án</h6>
+            <p>{{ task.project.name }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <h6 class="text-sm text-muted mb-1">Deadline</h6>
+            <p class="{% if task.deadline < now and task.status != 'Completed' %}text-danger{% endif %}">
+              {{ task.deadline|date:"d/m/Y" }}
+            </p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <h6 class="text-sm text-muted mb-1">Trạng thái</h6>
+            <span class="badge {% if task.status == 'Completed' %}bg-success{% elif task.status == 'Late' %}bg-danger{% elif task.status == 'In progress' %}bg-warning{% else %}bg-primary{% endif %}">
+              {{ task.status }}
+            </span>
+          </div>
+          <div class="col-md-6 mb-3">
+            <h6 class="text-sm text-muted mb-1">Độ khó</h6>
+            <p>{{ task.difficulty|default:"Chưa xác định" }}</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <h6 class="text-sm text-muted mb-1">Thời gian ước lượng</h6>
+            <p>{{ task.estimated_time|default:"Chưa có" }} giờ</p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <h6 class="text-sm text-muted mb-1">GitHub</h6>
+            {% if task.github_link %}
+            <a href="{{ task.github_link }}" target="_blank" class="text-primary">Xem trên GitHub</a>
+            {% else %}
+            <p>Không có</p>
+            {% endif %}
+          </div>
+        </div>
+        <div class="mb-3">
+          <h6 class="text-sm text-muted mb-1">Người phụ trách</h6>
+          <div class="avatar-group">
+            {% for assignment in task.task_assignments.all %}
+            <span class="avatar avatar-sm rounded-circle bg-gradient-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ assignment.user.get_full_name }}">
+              {{ assignment.user.first_name|first }}{{ assignment.user.last_name|first }}
+            </span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+    var table = $('#tasksTable').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Vietnamese.json"
+        },
+        "dom": "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+               "<'row'<'col-sm-12'tr>>" +
+               "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+    });
+
+    $('#projectFilter, #statusFilter').change(function() {
+        table.column($(this).attr('id') === 'projectFilter' ? 1 : 3).search($(this).val()).draw();
+    });
+
+    $('#resetFilter').click(function() {
+        $('#projectFilter, #statusFilter').val('').trigger('change');
+    });
+
+    // Kích hoạt tooltip
+    $('[data-bs-toggle="tooltip"]').tooltip();
+});
+</script>
+{% endblock %}

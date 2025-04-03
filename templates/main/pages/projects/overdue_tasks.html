@@ -1,0 +1,123 @@
+{% extends 'main/layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <div class="row">
+        {% include 'main/includes/sidebar.html' %}
+
+        <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom fade-in-down">
+              <h1 class="h2 fw-bold">
+                <i class="fas fa-tasks me-2"></i>Task quá hạn
+              </h1>
+              <div class="btn-toolbar mb-2 mb-md-0">
+                <a href="{% url 'projects:my_tasks' %}" class="btn btn-outline-primary me-2">
+                  <i class="fas fa-user me-1"></i> Task của tôi
+                </a>
+                <a href="{% url 'projects:all_tasks' %}" class="btn btn-outline-danger">
+                  <i class="fas fa-exclamation-circle me-1"></i> Tất cả task
+                </a>
+              </div>
+            </div>
+
+            {% if tasks %}
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Bạn có <strong>{{ tasks|length }}</strong> task quá hạn cần xử lý
+            </div>
+            {% endif %}
+        
+            <div class="row">
+                {% for task in tasks %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card card-overdue-task">
+                        <div class="card-header bg-danger text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0 text-white">{{ task.title }}</h5>
+                                <span class="badge bg-white text-danger">
+                                    Quá hạn {{ task.days_overdue }} ngày
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">{{ task.description|truncatewords:20 }}</p>
+                            
+                            <ul class="list-group list-group-flush mb-3">
+                                <li class="list-group-item px-0 py-1">
+                                    <i class="fas fa-project-diagram me-2 text-danger"></i>
+                                    {{ task.project.name }}
+                                </li>
+                                <li class="list-group-item px-0 py-1">
+                                    <i class="fas fa-calendar-day me-2 text-danger"></i>
+                                    Deadline: {{ task.deadline|date:"d/m/Y" }}
+                                </li>
+                                <li class="list-group-item px-0 py-1">
+                                    <i class="fas fa-info-circle me-2 text-danger"></i>
+                                    Trạng thái: {{ task.status }}
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <button class="btn btn-sm btn-danger w-100" data-bs-toggle="modal" data-bs-target="#extendModal{{ task.id }}">
+                                <i class="fas fa-calendar-plus me-1"></i> Yêu cầu gia hạn
+                            </button>
+                        </div>
+                    </div>
+                </div>
+        
+                <!-- Modal gia hạn -->
+                <div class="modal fade" id="extendModal{{ task.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header bg-danger text-white">
+                                <h5 class="modal-title text-white">Yêu cầu gia hạn</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form method="post" action="{% url 'projects:extend_deadline' task.id %}">
+                                {% csrf_token %}
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Task</label>
+                                        <input type="text" class="form-control" value="{{ task.title }}" readonly>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Deadline hiện tại</label>
+                                        <input type="text" class="form-control" value="{{ task.deadline|date:'d/m/Y' }}" readonly>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Deadline mới</label>
+                                        <input type="date" name="new_deadline" class="form-control" required min="{{ now|date:'Y-m-d' }}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Lý do gia hạn</label>
+                                        <textarea class="form-control" rows="3" name="reason" required></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                    <button type="submit" class="btn btn-danger">Gửi yêu cầu</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <h5 class="text-success">Không có task quá hạn</h5>
+                            <p class="text-muted">Bạn đã hoàn thành tất cả task đúng hạn!</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>      
+        </main>
+
+    </div>
+</div>
+
+{% endblock %}

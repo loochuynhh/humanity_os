@@ -5,6 +5,37 @@ from django.db import models
 class Users(AbstractUser):
     avatar = models.ImageField(upload_to="avatars/", null=True, blank=True)
     phone = models.CharField(max_length=20, null=True, blank=True)
+    role = models.CharField(
+        max_length=50,
+        choices=[("Employee", "Employee"), ("Manager", "Manager"), ("Admin", "Admin")],
+        default="Employee",
+    )
+    department = models.CharField(max_length=100, null=True, blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[("Active", "Active"), ("Inactive", "Inactive")],
+        default="Active",
+    )
+    date_of_joining = models.DateField(null=True, blank=True)
+
+    goal_name = models.CharField(max_length=255, null=True, blank=True)
+    goal_description = models.TextField(null=True, blank=True)
+    goal_deadline = models.DateField(null=True, blank=True)
+    goal_status = models.CharField(
+        max_length=10,
+        choices=[("Pending", "Pending"), ("Achieved", "Achieved"), ("Missed", "Missed")],
+        default="Pending",
+        null=True,
+        blank=True,
+    )
+    goal_priority = models.CharField(
+        max_length=10,
+        choices=[("Low", "Low"), ("Medium", "Medium"), ("High", "High")],
+        default="Medium",
+        null=True,
+        blank=True,
+    )
+    goal_achieved_percentage = models.FloatField(default=0.0, null=True, blank=True)
 
     class Meta:
         db_table = "users"
@@ -13,36 +44,20 @@ class Users(AbstractUser):
         return self.username
 
 
-class EmployeeKPIs(models.Model):
+class CheckInCheckOut(models.Model):
     user = models.ForeignKey("users.Users", on_delete=models.CASCADE)
-    kpi = models.ForeignKey("kpis.KPIs", on_delete=models.CASCADE)
-    target_value = models.CharField(max_length=50)
-    actual_value = models.CharField(max_length=50, null=True, blank=True)
-    period = models.CharField(max_length=20)
+    checkin_time = models.DateTimeField()
+    checkout_time = models.DateTimeField(null=True, blank=True)
+    checkin_image = models.ImageField(upload_to="checkin_images/", null=True, blank=True)
+    checkout_image = models.ImageField(upload_to="checkout_images/", null=True, blank=True)
+    date = models.DateField()
 
     class Meta:
-        db_table = "employee_kpis"
+        db_table = "checkin_checkout"
+        indexes = [
+            models.Index(fields=['date']),
+            models.Index(fields=['user', 'date']),
+        ]
 
     def __str__(self):
-        return f"{self.user.username} - {self.kpi.name} ({self.period})"
-
-
-class PersonalGoals(models.Model):
-    user = models.ForeignKey("users.Users", on_delete=models.CASCADE)
-    goal_description = models.TextField()
-    target_date = models.DateField()
-    status = models.CharField(
-        max_length=10,
-        choices=[
-            ("pending", "Pending"),
-            ("achieved", "Achieved"),
-            ("missed", "Missed"),
-        ],
-        default="pending",
-    )
-
-    class Meta:
-        db_table = "personal_goals"
-
-    def __str__(self):
-        return f"{self.user.username} - {self.goal_description[:50]}"
+        return f"{self.user.username} - {self.date}"

@@ -9,7 +9,8 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.urls import reverse
 from django.conf import settings
-from .models import Users
+from django.utils import timezone
+from .models import Users, CheckInCheckOut
 from .utils import (
     get_task_counts, get_time_tracking, get_kpi_snapshot, 
     get_project_progress, get_ai_suggestions, get_recent_tasks, get_personal_goals
@@ -164,14 +165,40 @@ def create_user(request):
             return redirect("user_list")
     return render(request, "users/create_user.html")
 
+@login_required
 def check_in(request):
     if request.method == "POST":
-        return render(request, 'users/action_success.html', {'message': 'Check-in thành công!'})
+        try:
+            CheckInCheckOut.objects.create(
+                user=request.user,
+                checkin_time=timezone.now(),
+                date=timezone.now().date(),
+                # Có thể thêm checkin_image nếu cần
+            )
+            messages.success(request, "Check-in thành công!")
+            return redirect('users:index')
+        except Exception as e:
+            messages.error(request, f"Có lỗi xảy ra: {str(e)}")
     return redirect('users:index')
 
+@login_required
 def check_out(request):
     if request.method == "POST":
-        return render(request, 'users/action_success.html', {'message': 'Check-out thành công!'})
+        try:
+            checkin = CheckInCheckOut.objects.filter(
+                user=request.user,
+                date=timezone.now().date(),
+                checkout_time__isnull=True
+            ).latest('checkin_time')
+            
+            checkin.checkout_time = timezone.now()
+            checkin.save()
+            messages.success(request, "Check-out thành công!")
+            return redirect('users:index')
+        except CheckInCheckOut.DoesNotExist:
+            messages.error(request, "Bạn chưa check-in hôm nay!")
+        except Exception as e:
+            messages.error(request, f"Có lỗi xảy ra: {str(e)}")
     return redirect('users:index')
 
 def set_goal(request):

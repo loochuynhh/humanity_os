@@ -1,0 +1,122 @@
+{% extends 'main/layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        {% include 'main/includes/sidebar.html' %}
+        <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom fade-in-down">
+                <h1 class="h2 fw-bold">
+                  <i class="fas fa-tasks me-2"></i>Task của tôi
+                </h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                  <a href="{% url 'projects:all_tasks' %}" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-user me-1"></i> Xem tất cả
+                  </a>
+                  <a href="{% url 'projects:overdue_tasks' %}" class="btn btn-outline-danger">
+                    <i class="fas fa-exclamation-circle me-1"></i> Task quá hạn
+                  </a>
+                </div>
+              </div>
+
+            <div class="row">
+                {% for task in tasks %}
+                <div class="col-xl-4 col-md-6 mb-4">
+                    <div class="card card-task {% if task.deadline < now and task.status != 'Completed' %}border-danger{% endif %}">
+                        <div class="card-header bg-transparent">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">{{ task.title }}</h5>
+                                <span class="badge bg-{% if task.status == 'Completed' %}success{% elif task.status == 'Late' %}danger{% elif task.status == 'In progress' %}warning{% else %}primary{% endif %}">
+                                    {{ task.status }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text text-muted">{{ task.description|truncatewords:20 }}</p>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-sm">Tiến độ</span>
+                                    <span class="text-sm fw-bold">{{ task.total_time|default:"0" }} giờ</span>
+                                </div>
+                                <div class="progress progress-xs">
+                                    <div class="progress-bar bg-{% if task.status == 'Completed' %}success{% elif task.status == 'Late' %}danger{% else %}info{% endif %}" 
+                                        style="width: {% if task.status == 'Completed' %}100{% else %}50{% endif %}%"></div>
+                                </div>
+                            </div>
+                            
+                            <ul class="list-group list-group-flush mb-3">
+                                <li class="list-group-item px-0 py-1">
+                                    <i class="fas fa-project-diagram me-2 text-primary"></i>
+                                    {{ task.project.name }}
+                                </li>
+                                <li class="list-group-item px-0 py-1">
+                                    <i class="fas fa-calendar-day me-2 text-primary"></i>
+                                    Deadline: {{ task.deadline|date:"d/m/Y" }}
+                                    {% if task.deadline < now and task.status != 'Completed' %}
+                                    <span class="badge bg-danger ms-2">Quá hạn</span>
+                                    {% endif %}
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="card-footer bg-transparent d-flex justify-content-between">
+                            <select class="form-select form-select-sm status-update w-auto" data-task-id="{{ task.id }}">
+                                {% for choice in status_choices %}
+                                <option value="{{ choice.0 }}" {% if task.status == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                                {% endfor %}
+                            </select>
+                            <button class="btn btn-sm {% if task.is_tracking %}btn-danger{% else %}btn-success{% endif %} toggle-time" 
+                                    data-task-id="{{ task.id }}">
+                                <i class="fas {% if task.is_tracking %}fa-stop{% else %}fa-play{% endif %} me-1"></i>
+                                {% if task.is_tracking %}Dừng{% else %}Bắt đầu{% endif %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Không có task nào được giao cho bạn</h5>
+                            <p class="text-muted">Bạn sẽ thấy các task được giao cho mình ở đây</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('.status-update').change(function() {
+        var taskId = $(this).data('task-id');
+        var status = $(this).val();
+        $.post('/projects/tasks/update-status/', { 
+            task_id: taskId, 
+            status: status,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        }, function() {
+            toastr.success('Cập nhật trạng thái thành công!');
+        });
+    });
+
+    $('.toggle-time').click(function() {
+        var taskId = $(this).data('task-id');
+        var action = $(this).text().trim() === 'Bắt đầu' ? 'start' : 'stop';
+        $.post('/projects/tasks/toggle-time/', { 
+            task_id: taskId, 
+            action: action,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        }, function(data) {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

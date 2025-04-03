@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Users, EmployeeKPIs, PersonalGoals
+from .models import Users
+from users.models import CheckInCheckOut
 
 
 class CustomUserAdmin(UserAdmin):
@@ -46,5 +47,4 @@ class CustomUserAdmin(UserAdmin):
 
 
 admin.site.register(Users, CustomUserAdmin)
-admin.site.register(EmployeeKPIs)
-admin.site.register(PersonalGoals)
+admin.site.register(CheckInCheckOut)
