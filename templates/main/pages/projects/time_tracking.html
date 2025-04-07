@@ -1,0 +1,220 @@
+{% extends 'main/layouts/base.html' %}
+{% load static %}
+{% block title %}Time Tracking - Humanity OS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    {% include 'main/includes/sidebar.html' %}
+
+    <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom fade-in-down">
+        <h1 class="h2 fw-bold">
+          <i class="bi bi-clock me-2"></i>Time Tracking
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <button class="btn btn-outline-primary me-2" id="export-pdf">
+            <i class="bi bi-file-earmark-pdf me-1"></i> Xuất PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Tổng hợp thời gian -->
+      <div class="row mb-4 fade-in-up">
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-body text-center">
+              <h6 class="text-muted">Hôm nay</h6>
+              <h4 class="text-success">{{ total_time_today }}</h4>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-body text-center">
+              <h6 class="text-muted">Tuần này</h6>
+              <h4 class="text-primary">{{ total_time_week }}</h4>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-body text-center">
+              <h6 class="text-muted">Tháng này</h6>
+              <h4 class="text-info">{{ total_time_month }}</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Danh sách tasks đang theo dõi -->
+      <div class="row mb-4 fade-in-up">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-header">
+              <h5 class="mb-0">Tasks của tôi</h5>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table align-items-center mb-0">
+                  <thead>
+                    <tr>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Task</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Dự án</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Thời gian</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                      <td>
+                        <div class="d-flex px-2 py-1">
+                          <div class="d-flex flex-column justify-content-center">
+                            <h6 class="mb-0 text-sm">{{ task.title }}</h6>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <p class="text-xs font-weight-bold mb-0">{{ task.project.name }}</p>
+                      </td>
+                      <td>
+                        <span class="text-xs font-weight-bold">{{ task.total_time|floatformat:2 }} giờ</span>
+                      </td>
+                      <td>
+                        <button class="btn btn-sm {% if task.is_tracking %}btn-danger{% else %}btn-success{% endif %} toggle-time" 
+                                data-task-id="{{ task.id }}" 
+                                data-action="{% if task.is_tracking %}stop{% else %}start{% endif %}">
+                          <i class="bi {% if task.is_tracking %}bi-pause{% else %}bi-play{% endif %} me-1"></i>
+                          {% if task.is_tracking %}Dừng{% else %}Bắt đầu{% endif %}
+                        </button>
+                      </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                      <td colspan="4" class="text-center py-4">
+                        <i class="bi bi-clock fa-2x text-muted mb-3"></i>
+                        <h6 class="text-muted">Không có task nào</h6>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lịch sử Time Entries -->
+      <div class="row fade-in-up">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-header">
+              <h5 class="mb-0">Lịch sử theo dõi thời gian</h5>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table id="timeEntriesTable" class="table align-items-center mb-0">
+                  <thead>
+                    <tr>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Task</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Bắt đầu</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Kết thúc</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Thời gian (giờ)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for entry in time_entries %}
+                    <tr>
+                      <td>
+                        <h6 class="mb-0 text-sm">{{ entry.task.title }}</h6>
+                      </td>
+                      <td>
+                        <span class="text-xs">{{ entry.start_time|date:"d/m/Y H:i" }}</span>
+                      </td>
+                      <td>
+                        <span class="text-xs">{{ entry.end_time|date:"d/m/Y H:i"|default:"Đang theo dõi" }}</span>
+                      </td>
+                      <td>
+                        <span class="text-xs font-weight-bold">{{ entry.duration|floatformat:2|default:"0.00" }}</span>
+                      </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                      <td colspan="4" class="text-center py-4">
+                        <i class="bi bi-clock fa-2x text-muted mb-3"></i>
+                        <h6 class="text-muted">Chưa có lịch sử theo dõi</h6>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+  // Khởi tạo DataTable cho lịch sử time entries
+  $('#timeEntriesTable').DataTable({
+    "language": {
+      "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Vietnamese.json"
+    },
+    "order": [[1, "desc"]] // Sắp xếp theo thời gian bắt đầu
+  });
+
+  // Xử lý toggle time tracking
+  $('.toggle-time').click(function() {
+    var taskId = $(this).data('task-id');
+    var action = $(this).data('action');
+    var $btn = $(this);
+
+    $.ajax({
+      url: "{% url 'projects:toggle_time' %}",
+      method: 'POST',
+      data: {
+        'task_id': taskId,
+        'action': action,
+        'csrfmiddlewaretoken': '{{ csrf_token }}'
+      },
+      success: function(response) {
+        if (response.success) {
+          if (response.action === 'started') {
+            $btn.removeClass('btn-success').addClass('btn-danger')
+                .html('<i class="bi bi-pause me-1"></i>Dừng')
+                .data('action', 'stop');
+          } else if (response.action === 'stopped') {
+            $btn.removeClass('btn-danger').addClass('btn-success')
+                .html('<i class="bi bi-play me-1"></i>Bắt đầu')
+                .data('action', 'start');
+          }
+          // Cập nhật badge trên sidebar
+          $.get("{% url 'projects:time_tracking' %}", function(data) {
+            $('#total-time-today').text(data.total_time_today);
+          });
+        } else {
+          alert(response.error);
+        }
+      },
+      error: function() {
+        alert('Có lỗi xảy ra, vui lòng thử lại.');
+      }
+    });
+  });
+
+  // Xuất PDF (có thể mở rộng sau)
+  $('#export-pdf').click(function() {
+    alert('Chức năng xuất PDF đang được phát triển!');
+  });
+});
+</script>
+{% endblock %}

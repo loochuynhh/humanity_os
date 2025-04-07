@@ -11,7 +11,6 @@ urlpatterns = [
         "dashboard/",
         include(("custom_admin.urls", "custom_admin"), namespace="custom_admin"),
     ),
-    path("companies/", include(("companies.urls", "companies"), namespace="companies")),
     path(
         "evaluations/",
         include(("evaluations.urls", "evaluations"), namespace="evaluations"),

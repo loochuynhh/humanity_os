@@ -10,6 +10,8 @@ from .models import Tasks, Projects, TimeEntries, TeamProjectMembership
 from django.http import HttpRequest
 from typing import cast
 from django.http.response import HttpResponseBase
+from datetime import timedelta
+from django.db import models
 
 @login_required
 def all_tasks(request):
@@ -228,3 +230,140 @@ def extend_deadline(request, task_id):
             {'success': False, 'error': str(e)},
             status=400
         )
+
+@login_required
+def time_tracking(request):
+    """Hiển thị trang Time Tracking cho nhân viên"""
+    tasks = Tasks.objects.filter(
+        task_assignments__user=request.user
+    ).select_related('project')
+
+    for task in tasks:
+        task.is_tracking = TimeEntries.objects.filter(
+            task=task,
+            user=request.user,
+            end_time__isnull=True
+        ).exists()
+        task.save()
+
+    time_entries = TimeEntries.objects.filter(
+        user=request.user
+    ).select_related('task').order_by('-start_time')
+
+    today = timezone.now().date()
+    week_start = today - timedelta(days=today.weekday())
+    month_start = today.replace(day=1)
+
+    total_time_today = TimeEntries.objects.filter(
+        user=request.user,
+        start_time__date=today
+    ).aggregate(total=Sum('duration'))['total'] or 0
+    total_time_week = TimeEntries.objects.filter(
+        user=request.user,
+        start_time__gte=week_start
+    ).aggregate(total=Sum('duration'))['total'] or 0
+    total_time_month = TimeEntries.objects.filter(
+        user=request.user,
+        start_time__gte=month_start
+    ).aggregate(total=Sum('duration'))['total'] or 0
+
+    def format_time(hours):
+        if hours is None:
+            return "0h 0m"
+        h = int(hours)
+        m = int((hours - h) * 60)
+        return f"{h}h {m}m"
+
+    context = {
+        'tasks': tasks,
+        'time_entries': time_entries,
+        'total_time_today': format_time(total_time_today),
+        'total_time_week': format_time(total_time_week),
+        'total_time_month': format_time(total_time_month),
+    }
+    return render(request, 'main/pages/projects/time_tracking.html', context)
+
+@login_required
+def all_projects(request):
+    """Hiển thị tất cả dự án"""
+    projects = Projects.objects.all()
+    context = {
+        'projects': projects,
+        'today': timezone.now().date(),
+    }
+    return render(request, 'main/pages/projects/all_projects.html', context)
+
+@login_required
+def my_projects(request):
+    """Hiển thị dự án của tôi"""
+    memberships = TeamProjectMembership.objects.filter(user=request.user).select_related('project')
+    for membership in memberships:
+        tasks = Tasks.objects.filter(project=membership.project)
+        total_tasks = tasks.count()
+        completed_tasks = tasks.filter(status="Completed").count()
+        membership.project_progress = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+    context = {
+        'memberships': memberships,
+    }
+    return render(request, 'main/pages/projects/my_projects.html', context)
+
+@login_required
+def team_members(request):
+    """Hiển thị trang thành viên nhóm"""
+    projects = Projects.objects.filter(team_members=request.user)  # Chỉ hiển thị dự án mà user tham gia
+    context = {
+        'projects': projects,
+    }
+    return render(request, 'main/pages/projects/team_members.html', context)
+
+@login_required
+def team_members_data(request):
+    """Trả về dữ liệu thành viên qua AJAX"""
+    project_id = request.GET.get('project_id')
+    members_data = []
+    if project_id:
+        project = Projects.objects.get(id=project_id)
+        memberships = TeamProjectMembership.objects.filter(project=project).select_related('user')
+        for membership in memberships:
+            user = membership.user
+            task_count = Tasks.objects.filter(task_assignments__user=user, project=project).count()
+            total_time = TimeEntries.objects.filter(user=user, task__project=project).aggregate(
+                total=models.Sum('duration')
+            )['total'] or 0
+            total_time_str = f"{int(total_time)}h {int((total_time % 1) * 60)}m"
+            members_data.append({
+                'name': user.get_full_name(),
+                'role': 'Quản lý' if user == project.manager else 'Thành viên',
+                'join_date': membership.join_date.strftime('%d/%m/%Y'),
+                'task_count': task_count,
+                'total_time': total_time_str,
+            })
+    return JsonResponse({'members': members_data})
+
+@login_required
+def project_progress(request):
+    """Hiển thị trang thống kê tiến độ"""
+    projects = Projects.objects.filter(team_members=request.user) 
+    context = {
+        'projects': projects,
+    }
+    return render(request, 'main/pages/projects/project_progress.html', context)
+
+@login_required
+def project_progress_data(request):
+    """Trả về dữ liệu tiến độ qua AJAX"""
+    project_id = request.GET.get('project_id')
+    if project_id:
+        project = Projects.objects.get(id=project_id)
+        tasks = Tasks.objects.filter(project=project)
+        total_tasks = tasks.count()
+        completed_tasks = tasks.filter(status="Completed").count()
+        task_counts = dict(tasks.values('status').annotate(count=models.Count('status')).values_list('status', 'count'))
+        progress = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+        return JsonResponse({
+            'total_tasks': total_tasks,
+            'completed_tasks': completed_tasks,
+            'progress': round(progress, 1),
+            'task_counts': task_counts,
+        })
+    return JsonResponse({'total_tasks': 0, 'completed_tasks': 0, 'progress': 0, 'task_counts': {}})

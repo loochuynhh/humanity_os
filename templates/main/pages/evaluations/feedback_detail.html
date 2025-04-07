@@ -1,0 +1,16 @@
+<div class="container">
+    <h6 class="mb-3">Form: {{ response.form.name }}</h6>
+    <p><strong>Người đánh giá:</strong> {{ response.user.get_full_name }}</p>
+    <p><strong>Kỳ:</strong> {{ response.form.period }}</p>
+    <p><strong>Loại:</strong> {{ response.form.type|title }}</p>
+    <hr>
+    <h6>Câu hỏi và câu trả lời:</h6>
+    {% for question in questions %}
+    <div class="mb-3">
+      <p><strong>{{ forloop.counter }}. {{ question.question_text }}</strong></p>
+      <p>{{ response.answer|default:"Không có câu trả lời" }}</p>
+    </div>
+    {% empty %}
+    <p class="text-muted">Không có câu hỏi nào trong form này.</p>
+    {% endfor %}
+  </div>

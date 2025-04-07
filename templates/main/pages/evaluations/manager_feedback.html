@@ -1,0 +1,208 @@
+{% extends 'main/layouts/user_base.html' %}
+{% load static %}
+{% block title %}Đánh giá từ quản lý - Humanity OS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    {% include 'main/includes/sidebar.html' %}
+
+    <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom fade-in-down">
+        <h1 class="h2 fw-bold">
+          <i class="bi bi-chat-quote me-2"></i>Đánh giá từ quản lý
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <button class="btn btn-outline-primary me-2" id="export-pdf">
+            <i class="bi bi-file-earmark-pdf me-1"></i> Xuất PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Tổng hợp đánh giá -->
+      <div class="row mb-4 fade-in-up">
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-body text-center">
+              <h6 class="text-muted">Số lượng đánh giá</h6>
+              <h4 class="text-success">{{ total_reviews }}</h4>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-body text-center">
+              <h6 class="text-muted">Tỷ lệ tích cực</h6>
+              <h4 class="text-primary">{{ positive_rate }}%</h4>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-body text-center">
+              <h6 class="text-muted">Điểm trung bình</h6>
+              <h4 class="text-info">{{ average_score|floatformat:1 }}</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lọc đánh giá -->
+      <div class="row mb-4 fade-in-up">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-body p-3">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">Kỳ đánh giá</label>
+                  <select id="periodFilter" class="form-select">
+                    <option value="">Tất cả kỳ</option>
+                    {% for period in periods %}
+                    <option value="{{ period }}">{{ period }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                  <button id="resetFilter" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-repeat me-1"></i> Đặt lại
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Danh sách đánh giá -->
+      <div class="row fade-in-up">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-header">
+              <h5 class="mb-0">Danh sách đánh giá</h5>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table id="feedbackTable" class="table align-items-center mb-0">
+                  <thead>
+                    <tr>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tên Form</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Người đánh giá</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Kỳ</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Loại</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for response in responses %}
+                    <tr>
+                      <td>
+                        <h6 class="mb-0 text-sm">{{ response.form.name }}</h6>
+                      </td>
+                      <td>
+                        <span class="text-xs font-weight-bold">{{ response.user.get_full_name }}</span>
+                      </td>
+                      <td>
+                        <span class="text-xs">{{ response.form.period }}</span>
+                      </td>
+                      <td>
+                        <span class="badge badge-sm {% if response.form.type == 'peer' %}bg-info{% else %}bg-primary{% endif %}">
+                          {{ response.form.type|title }}
+                        </span>
+                      </td>
+                      <td>
+                        <button class="btn btn-sm btn-outline-primary view-feedback" data-response-id="{{ response.id }}">
+                          <i class="bi bi-eye me-1"></i> Xem
+                        </button>
+                      </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                      <td colspan="5" class="text-center py-4">
+                        <i class="bi bi-chat-quote fa-2x text-muted mb-3"></i>
+                        <h6 class="text-muted">Chưa có đánh giá nào</h6>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal chi tiết đánh giá -->
+      <div class="modal fade" id="feedbackModal" tabindex="-1" aria-labelledby="feedbackModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="feedbackModalLabel">Chi tiết đánh giá</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="feedbackDetails">
+              <!-- Nội dung sẽ được tải qua AJAX -->
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+  // Khởi tạo DataTable
+  var table = $('#feedbackTable').DataTable({
+    "language": {
+      "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Vietnamese.json"
+    },
+    "order": [[2, "desc"]] // Sắp xếp theo kỳ
+  });
+
+  // Lọc theo kỳ
+  $('#periodFilter').change(function() {
+    table.column(2).search($(this).val()).draw();
+  });
+
+  $('#resetFilter').click(function() {
+    $('#periodFilter').val('').trigger('change');
+  });
+
+  // Xem chi tiết đánh giá
+  $('.view-feedback').click(function() {
+    var responseId = $(this).data('response-id');
+    $.ajax({
+      url: "{% url 'evaluations:feedback_detail' %}",
+      method: 'GET',
+      data: { 'response_id': responseId },
+      success: function(response) {
+        if (response.success) {
+          $('#feedbackDetails').html(response.html);
+          $('#feedbackModal').modal('show');
+        } else {
+          alert(response.error);
+        }
+      },
+      error: function() {
+        alert('Có lỗi xảy ra, vui lòng thử lại.');
+      }
+    });
+  });
+
+  // Xuất PDF (có thể mở rộng sau)
+  $('#export-pdf').click(function() {
+    alert('Chức năng xuất PDF đang được phát triển!');
+  });
+});
+</script>
+{% endblock %}

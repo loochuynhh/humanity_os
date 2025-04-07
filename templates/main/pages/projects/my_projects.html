@@ -1,0 +1,95 @@
+{% extends 'main/layouts/user_base.html' %}
+{% load static %}
+{% block title %}Dự án của tôi - Humanity OS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    {% include 'main/includes/sidebar.html' %}
+
+    <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom fade-in-down">
+        <h1 class="h2 fw-bold">
+          <i class="bi bi-folder me-2"></i>Dự án của tôi
+        </h1>
+      </div>
+
+      <div class="row fade-in-up">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-header">
+              <h5 class="mb-0">Danh sách dự án</h5>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table id="myProjectsTable" class="table align-items-center mb-0">
+                  <thead>
+                    <tr>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tên dự án</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Mô tả</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ngày tham gia</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Quản lý</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tiến độ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for membership in memberships %}
+                    <tr>
+                      <td>
+                        <h6 class="mb-0 text-sm">{{ membership.project.name }}</h6>
+                      </td>
+                      <td>
+                        <p class="text-xs text-secondary mb-0">{{ membership.project.description|truncatewords:5 }}</p>
+                      </td>
+                      <td>
+                        <span class="text-xs">{{ membership.join_date|date:"d/m/Y" }}</span>
+                      </td>
+                      <td>
+                        <span class="text-xs">{{ membership.project.manager.get_full_name|default:"Chưa có" }}</span>
+                      </td>
+                      <td>
+                        <div class="progress" style="height: 10px;">
+                          <div class="progress-bar" role="progressbar" style="width: {{ membership.project_progress }}%;" 
+                               aria-valuenow="{{ membership.project_progress }}" aria-valuemin="0" aria-valuemax="100">
+                          </div>
+                        </div>
+                        <small>{{ membership.project_progress }}%</small>
+                      </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                      <td colspan="5" class="text-center py-4">
+                        <i class="bi bi-folder fa-2x text-muted mb-3"></i>
+                        <h6 class="text-muted">Bạn chưa tham gia dự án nào</h6>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+  $('#myProjectsTable').DataTable({
+    "language": {
+      "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Vietnamese.json"
+    },
+    "order": [[2, "desc"]] // Sắp xếp theo ngày tham gia
+  });
+});
+</script>
+{% endblock %}

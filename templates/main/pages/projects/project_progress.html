@@ -1,0 +1,131 @@
+{% extends 'main/layouts/user_base.html' %}
+{% load static %}
+{% block title %}Thống kê tiến độ - Humanity OS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    {% include 'main/includes/sidebar.html' %}
+
+    <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom fade-in-down">
+        <h1 class="h2 fw-bold">
+          <i class="bi bi-graph-up me-2"></i>Thống kê tiến độ
+        </h1>
+      </div>
+
+      <div class="row mb-4 fade-in-up">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <select id="projectFilter" class="form-select mb-3">
+                <option value="">Chọn dự án</option>
+                {% for project in projects %}
+                <option value="{{ project.id }}">{{ project.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row fade-in-up">
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-body text-center">
+              <h6 class="text-muted">Tổng số task</h6>
+              <h4 class="text-success" id="totalTasks">0</h4>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-body text-center">
+              <h6 class="text-muted">Task hoàn thành</h6>
+              <h4 class="text-primary" id="completedTasks">0</h4>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-body text-center">
+              <h6 class="text-muted">Tiến độ</h6>
+              <h4 class="text-info" id="progress">0%</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-4 fade-in-up">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-header">
+              <h5 class="mb-0">Biểu đồ tiến độ</h5>
+            </div>
+            <div class="card-body">
+              <canvas id="progressChart" height="100"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'assets/js/plugin/chartjs/chart.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+  var ctx = document.getElementById('progressChart').getContext('2d');
+  var progressChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['To-do', 'In progress', 'Completed', 'Late'],
+      datasets: [{
+        label: 'Số lượng task',
+        data: [0, 0, 0, 0],
+        backgroundColor: ['#dc3545', '#ffc107', '#28a745', '#6c757d'],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: 'Số lượng' }
+        }
+      }
+    }
+  });
+
+  $('#projectFilter').change(function() {
+    var projectId = $(this).val();
+    $.ajax({
+      url: "{% url 'projects:project_progress_data' %}",
+      method: 'GET',
+      data: { 'project_id': projectId },
+      success: function(response) {
+        $('#totalTasks').text(response.total_tasks);
+        $('#completedTasks').text(response.completed_tasks);
+        $('#progress').text(response.progress + '%');
+        progressChart.data.datasets[0].data = [
+          response.task_counts['To-do'] || 0,
+          response.task_counts['In progress'] || 0,
+          response.task_counts['Completed'] || 0,
+          response.task_counts['Late'] || 0
+        ];
+        progressChart.update();
+      },
+      error: function() {
+        alert('Có lỗi xảy ra, vui lòng thử lại.');
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

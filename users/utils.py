@@ -4,7 +4,7 @@ from datetime import timedelta
 import json
 from projects.models import Tasks, TaskAssignments, TimeEntries, Projects
 from kpis.models import EmployeeKPIs
-from users.models import Users
+from users.models import Users, Goals
 
 def get_task_counts(user_id, as_json=False):
     task_counts = TaskAssignments.objects.filter(user_id=user_id).values('task__status').annotate(count=Count('task__id'))
@@ -91,14 +91,11 @@ def get_recent_tasks(user_id):
     return Tasks.objects.filter(task_assignments__user_id=user_id).select_related('project').order_by('-deadline')[:5]
 
 def get_personal_goals(user_id):
-    user = Users.objects.filter(id=user_id).first()
-    if not user or not user.goal_description:
-        return []
-    
-    progress = 100 if user.goal_status == 'Achieved' else (0 if user.goal_status == 'Missed' else user.goal_achieved_percentage or 0)
+    goals = Goals.objects.filter(user_id=user_id).order_by('-deadline')  # Lấy tất cả goals của user
     return [{
-        'description': user.goal_description, 
-        'progress': progress,
-        'name': user.goal_name,
-        'deadline': user.goal_deadline
-    }]
+        'description': goal.description,
+        'progress': goal.achieved_percentage,
+        'name': goal.name,
+        'deadline': goal.deadline,
+        'status': goal.status
+    } for goal in goals]

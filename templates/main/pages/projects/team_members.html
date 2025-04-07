@@ -1,0 +1,104 @@
+{% extends 'main/layouts/user_base.html' %}
+{% load static %}
+{% block title %}Thành viên nhóm - Humanity OS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    {% include 'main/includes/sidebar.html' %}
+
+    <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom fade-in-down">
+        <h1 class="h2 fw-bold">
+          <i class="bi bi-people me-2"></i>Thành viên nhóm
+        </h1>
+      </div>
+
+      <div class="row mb-4 fade-in-up">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <select id="projectFilter" class="form-select mb-3">
+                <option value="">Chọn dự án</option>
+                {% for project in projects %}
+                <option value="{{ project.id }}">{{ project.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row fade-in-up">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-header">
+              <h5 class="mb-0">Danh sách thành viên</h5>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table id="teamMembersTable" class="table align-items-center mb-0">
+                  <thead>
+                    <tr>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tên</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Vai trò</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ngày tham gia</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Số task</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Thời gian làm việc</th>
+                    </tr>
+                  </thead>
+                  <tbody id="teamMembersBody">
+                    <!-- Dữ liệu sẽ được tải qua AJAX -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+  var table = $('#teamMembersTable').DataTable({
+    "language": {
+      "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Vietnamese.json"
+    },
+    "order": [[2, "desc"]] // Sắp xếp theo ngày tham gia
+  });
+
+  $('#projectFilter').change(function() {
+    var projectId = $(this).val();
+    $.ajax({
+      url: "{% url 'projects:team_members_data' %}",
+      method: 'GET',
+      data: { 'project_id': projectId },
+      success: function(response) {
+        table.clear();
+        response.members.forEach(function(member) {
+          table.row.add([
+            member.name,
+            member.role,
+            member.join_date,
+            member.task_count,
+            member.total_time
+          ]).draw();
+        });
+      },
+      error: function() {
+        alert('Có lỗi xảy ra, vui lòng thử lại.');
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

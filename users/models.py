@@ -18,32 +18,19 @@ class Users(AbstractUser):
     )
     date_of_joining = models.DateField(null=True, blank=True)
 
-    goal_name = models.CharField(max_length=255, null=True, blank=True)
-    goal_description = models.TextField(null=True, blank=True)
-    goal_deadline = models.DateField(null=True, blank=True)
-    goal_status = models.CharField(
-        max_length=10,
-        choices=[("Pending", "Pending"), ("Achieved", "Achieved"), ("Missed", "Missed")],
-        default="Pending",
-        null=True,
-        blank=True,
-    )
-    goal_priority = models.CharField(
-        max_length=10,
-        choices=[("Low", "Low"), ("Medium", "Medium"), ("High", "High")],
-        default="Medium",
-        null=True,
-        blank=True,
-    )
-    goal_achieved_percentage = models.FloatField(default=0.0, null=True, blank=True)
-
     class Meta:
         db_table = "users"
 
     def __str__(self):
         return self.username
+    
+    @property
+    def avatar_url(self):
+        if self.avatar and hasattr(self.avatar, 'url'):
+            return self.avatar.url
+        return '/static/assets/img/default-avatar.png'
 
-
+    
 class CheckInCheckOut(models.Model):
     user = models.ForeignKey("users.Users", on_delete=models.CASCADE)
     checkin_time = models.DateTimeField()
@@ -61,3 +48,26 @@ class CheckInCheckOut(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.date}"
+
+class Goals(models.Model):
+    user = models.ForeignKey("users.Users", on_delete=models.CASCADE, related_name="goals")
+    name = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    deadline = models.DateField()
+    status = models.CharField(
+        max_length=10,
+        choices=[("Pending", "Pending"), ("Achieved", "Achieved"), ("Missed", "Missed")],
+        default="Pending"
+    )
+    priority = models.CharField(
+        max_length=10,
+        choices=[("Low", "Low"), ("Medium", "Medium"), ("High", "High")],
+        default="Medium"
+    )
+    achieved_percentage = models.FloatField(default=0.0)
+
+    class Meta:
+        db_table = "goals"
+
+    def __str__(self):
+        return f"{self.name} - {self.user.username}"

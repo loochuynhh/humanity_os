@@ -74,7 +74,7 @@ class TimeEntries(models.Model):
     task = models.ForeignKey("projects.Tasks", on_delete=models.CASCADE, related_name="time_entries")
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True, blank=True)
-    duration = models.FloatField(null=True, blank=True)  # Thêm trường mới (giờ)
+    duration = models.FloatField(null=True, blank=True)  
 
     class Meta:
         db_table = "time_entries"

@@ -1,0 +1,300 @@
+{% extends 'main/layouts/user_base.html' %}
+{% load static %}
+{% block title %}Goals - Humanity OS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    {% include 'main/includes/sidebar.html' %}
+
+    <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom fade-in-down">
+        <h1 class="h2 fw-bold">
+          <i class="bi bi-star me-2"></i>Goals
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <button class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#addGoalModal">
+            <i class="bi bi-plus me-1"></i> Thêm mục tiêu
+          </button>
+          <button class="btn btn-outline-primary" id="export-pdf">
+            <i class="bi bi-file-earmark-pdf me-1"></i> Xuất PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Tổng hợp mục tiêu -->
+      <div class="row mb-4 fade-in-up">
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-body text-center">
+              <h6 class="text-muted">Tổng số mục tiêu</h6>
+              <h4 class="text-success">{{ total_goals }}</h4>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-body text-center">
+              <h6 class="text-muted">Mục tiêu đạt được</h6>
+              <h4 class="text-primary">{{ achieved_goals }}</h4>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-body text-center">
+              <h6 class="text-muted">Tiến độ trung bình</h6>
+              <h4 class="text-info">{{ average_progress }}%</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Danh sách mục tiêu -->
+      <div class="row fade-in-up">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-header">
+              <h5 class="mb-0">Danh sách mục tiêu</h5>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table id="goalsTable" class="table align-items-center mb-0">
+                  <thead>
+                    <tr>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tên mục tiêu</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Mô tả</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Hạn chót</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ưu tiên</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tiến độ</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Trạng thái</th>
+                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for goal in goals %}
+                    <tr>
+                      <td>
+                        <h6 class="mb-0 text-sm">{{ goal.name }}</h6>
+                      </td>
+                      <td>
+                        <p class="text-xs text-secondary mb-0">{{ goal.description|truncatewords:5|default:"Không có mô tả" }}</p>
+                      </td>
+                      <td>
+                        <span class="text-xs {% if goal.deadline < today and goal.status != 'Achieved' %}text-danger{% endif %}">
+                          {{ goal.deadline|date:"d/m/Y" }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="badge badge-sm {% if goal.priority == 'High' %}bg-danger{% elif goal.priority == 'Medium' %}bg-warning{% else %}bg-success{% endif %}">
+                          {{ goal.priority }}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="progress" style="height: 10px;">
+                          <div class="progress-bar" role="progressbar" style="width: {{ goal.achieved_percentage }}%;" 
+                               aria-valuenow="{{ goal.achieved_percentage }}" aria-valuemin="0" aria-valuemax="100">
+                          </div>
+                        </div>
+                        <small>{{ goal.achieved_percentage|floatformat:0 }}%</small>
+                      </td>
+                      <td>
+                        <span class="badge badge-sm {% if goal.status == 'Achieved' %}bg-success{% elif goal.status == 'Missed' %}bg-danger{% else %}bg-warning{% endif %}">
+                          {{ goal.status }}
+                        </span>
+                      </td>
+                      <td>
+                        <button class="btn btn-sm btn-outline-primary update-goal" 
+                                data-goal-id="{{ goal.id }}"
+                                data-name="{{ goal.name }}"
+                                data-description="{{ goal.description }}"
+                                data-deadline="{{ goal.deadline|date:'Y-m-d' }}"
+                                data-priority="{{ goal.priority }}"
+                                data-progress="{{ goal.achieved_percentage }}"
+                                data-status="{{ goal.status }}">
+                          <i class="bi bi-pencil me-1"></i> Cập nhật
+                        </button>
+                      </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                      <td colspan="7" class="text-center py-4">
+                        <i class="bi bi-star fa-2x text-muted mb-3"></i>
+                        <h6 class="text-muted">Chưa có mục tiêu nào</h6>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal thêm mục tiêu -->
+      <div class="modal fade" id="addGoalModal" tabindex="-1" aria-labelledby="addGoalModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="addGoalModalLabel">Thêm mục tiêu mới</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form id="addGoalForm">
+                <div class="mb-3">
+                  <label for="goalName" class="form-label">Tên mục tiêu</label>
+                  <input type="text" class="form-control" id="goalName" name="goal_name" required>
+                </div>
+                <div class="mb-3">
+                  <label for="goalDescription" class="form-label">Mô tả</label>
+                  <textarea class="form-control" id="goalDescription" name="goal_description"></textarea>
+                </div>
+                <div class="mb-3">
+                  <label for="goalDeadline" class="form-label">Hạn chót</label>
+                  <input type="date" class="form-control" id="goalDeadline" name="goal_deadline" required>
+                </div>
+                <div class="mb-3">
+                  <label for="goalPriority" class="form-label">Ưu tiên</label>
+                  <select class="form-select" id="goalPriority" name="goal_priority">
+                    <option value="Low">Thấp</option>
+                    <option value="Medium" selected>Trung bình</option>
+                    <option value="High">Cao</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Thêm</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal cập nhật mục tiêu -->
+      <div class="modal fade" id="updateGoalModal" tabindex="-1" aria-labelledby="updateGoalModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="updateGoalModalLabel">Cập nhật mục tiêu</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form id="updateGoalForm">
+                <input type="hidden" name="goal_id" id="goalId">
+                <div class="mb-3">
+                  <label for="updateGoalName" class="form-label">Tên mục tiêu</label>
+                  <input type="text" class="form-control" id="updateGoalName" name="goal_name" required>
+                </div>
+                <div class="mb-3">
+                  <label for="updateGoalDescription" class="form-label">Mô tả</label>
+                  <textarea class="form-control" id="updateGoalDescription" name="goal_description"></textarea>
+                </div>
+                <div class="mb-3">
+                  <label for="updateGoalDeadline" class="form-label">Hạn chót</label>
+                  <input type="date" class="form-control" id="updateGoalDeadline" name="goal_deadline" required>
+                </div>
+                <div class="mb-3">
+                  <label for="updateGoalPriority" class="form-label">Ưu tiên</label>
+                  <select class="form-select" id="updateGoalPriority" name="goal_priority">
+                    <option value="Low">Thấp</option>
+                    <option value="Medium">Trung bình</option>
+                    <option value="High">Cao</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="updateGoalProgress" class="form-label">Tiến độ (%)</label>
+                  <input type="number" class="form-control" id="updateGoalProgress" name="goal_achieved_percentage" min="0" max="100" required>
+                </div>
+                <div class="mb-3">
+                  <label for="updateGoalStatus" class="form-label">Trạng thái</label>
+                  <select class="form-select" id="updateGoalStatus" name="goal_status">
+                    <option value="Pending">Đang thực hiện</option>
+                    <option value="Achieved">Đạt được</option>
+                    <option value="Missed">Không đạt</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Lưu</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+  // Khởi tạo DataTable
+  var table = $('#goalsTable').DataTable({
+    "language": {
+      "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Vietnamese.json"
+    },
+    "order": [[2, "asc"]] // Sắp xếp theo hạn chót
+  });
+
+  // Thêm mục tiêu
+  $('#addGoalForm').submit(function(e) {
+    e.preventDefault();
+    $.ajax({
+      url: "{% url 'users:add_goal' %}",
+      method: 'POST',
+      data: $(this).serialize() + '&csrfmiddlewaretoken={{ csrf_token }}',
+      success: function(response) {
+        if (response.success) {
+          location.reload();
+        } else {
+          alert(response.error);
+        }
+      },
+      error: function() {
+        alert('Có lỗi xảy ra, vui lòng thử lại.');
+      }
+    });
+  });
+
+  // Cập nhật mục tiêu
+  $('.update-goal').click(function() {
+    var goalId = $(this).data('goal-id');
+    $('#goalId').val(goalId);
+    $('#updateGoalName').val($(this).data('name'));
+    $('#updateGoalDescription').val($(this).data('description'));
+    $('#updateGoalDeadline').val($(this).data('deadline'));
+    $('#updateGoalPriority').val($(this).data('priority'));
+    $('#updateGoalProgress').val($(this).data('progress'));
+    $('#updateGoalStatus').val($(this).data('status'));
+    $('#updateGoalModal').modal('show');
+  });
+
+  $('#updateGoalForm').submit(function(e) {
+    e.preventDefault();
+    $.ajax({
+      url: "{% url 'users:update_goal' %}",
+      method: 'POST',
+      data: $(this).serialize() + '&csrfmiddlewaretoken={{ csrf_token }}',
+      success: function(response) {
+        if (response.success) {
+          location.reload();
+        } else {
+          alert(response.error);
+        }
+      },
+      error: function() {
+        alert('Có lỗi xảy ra, vui lòng thử lại.');
+      }
+    });
+  });
+
+  // Xuất PDF (dự phòng)
+  $('#export-pdf').click(function() {
+    alert('Chức năng xuất PDF đang được phát triển!');
+  });
+});
+</script>
+{% endblock %}

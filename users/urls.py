@@ -9,6 +9,11 @@ from .views import (
     check_in,  
     check_out, 
     set_goal,
+    goals,
+    add_goal,
+    update_goal,
+    profile,
+    update_profile
 )
 
 urlpatterns = [
@@ -21,4 +26,9 @@ urlpatterns = [
     path("check-in/", check_in, name="check_in"), 
     path("check-out/", check_out, name="check_out"),
     path("set-goal/", set_goal, name="set_goal"),
+    path("goals/", goals, name="goals"),
+    path("goals/add/", add_goal, name="add_goal"),
+    path("goals/update/", update_goal, name="update_goal"),
+    path('profile/', profile, name='profile'),
+    path('profile/update/', update_profile, name='update_profile'),
 ]
