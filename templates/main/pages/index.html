@@ -8,7 +8,7 @@
     {% include 'main/includes/sidebar.html' %}
 
     <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
-      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom fade-in-down">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
         <h1 class="h2 fw-bold">
           <i class="bi bi-house-door me-2"></i>Dashboard Cá Nhân
         </h1>
@@ -16,20 +16,20 @@
           <button class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#checkInModal">
             <i class="bi bi-clock me-2"></i>Check-in
           </button>
-          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#setGoalModal">
-            <i class="bi bi-star me-2"></i>Đặt mục tiêu
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#checkOutModal">
+            <i class="bi bi-clock me-2"></i>Check-out
           </button>
         </div>
       </div>
 
-      <div class="row mb-4 fade-in-up">
+      <div class="row mb-4">
         <div class="col-12">
           <div class="card shadow-sm bg-gradient-primary text-white hover-card">
             <div class="card-body d-flex align-items-center flex-column flex-md-row">
-              <img src="{% static 'assets/img/profile.jpg' %}" alt="Avatar" class="rounded-circle me-3 mb-3 mb-md-0" width="60" height="60" />
+              <img src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}{% static 'assets/img/profile.jpg' %}{% endif %}" alt="Avatar" class="rounded-circle me-3 mb-3 mb-md-0" width="60" height="60" />
               <div class="text-center text-md-start">
                 <h4 class="fw-bold mb-1">Xin chào, {{ user.first_name }} {{ user.last_name }}!</h4>
-                <p class="mb-0">Chào mừng bạn đến với Humanity OS - Hôm nay là ngày {{ "now"|date:"d/m/Y" }}</p>
+                <p class="mb-0">Chào mừng bạn đến với Humanity OS - Hôm nay là ngày {{ now|date:"d/m/Y" }}</p>
               </div>
             </div>
           </div>
@@ -37,7 +37,8 @@
       </div>
 
       <div class="row g-4">
-        <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: 0.2s">
+        <!-- Task Overview Card -->
+        <div class="col-12 col-md-6 col-lg-4">
           <div class="card shadow-sm h-100 hover-card">
             <div class="card-body">
               <h5 class="card-title fw-bold"><i class="bi bi-kanban me-2"></i>Tổng quan công việc</h5>
@@ -56,24 +57,25 @@
                 </div>
               </div>
               <canvas id="taskChart" height="100" class="mt-3"></canvas>
-              <a href="#" class="btn btn-outline-primary w-100 mt-3">Xem tất cả Tasks</a>
+              <a href="{% url 'projects:all_tasks' %}" class="btn btn-outline-primary w-100 mt-3">Xem tất cả Tasks</a>
             </div>
           </div>
         </div>
 
-        <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: 0.4s">
+        <!-- Time Tracking Card -->
+        <div class="col-12 col-md-6 col-lg-4">
           <div class="card shadow-sm h-100 hover-card">
             <div class="card-body">
               <h5 class="card-title fw-bold"><i class="bi bi-clock me-2"></i>Thời gian làm việc</h5>
               <p class="text-muted">Hôm nay: <span class="fw-bold">{{ today_time }}</span></p>
               <p class="text-muted">Tuần này: <span class="fw-bold">{{ week_time }}</span></p>
               <canvas id="timeChart" height="100" class="mt-3"></canvas>
-              <button class="btn btn-outline-primary w-100 mt-3" data-bs-toggle="modal" data-bs-target="#checkOutModal">Check-out</button>
             </div>
           </div>
         </div>
 
-        <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: 0.6s">
+        <!-- Performance Card -->
+        <div class="col-12 col-md-6 col-lg-4">
           <div class="card shadow-sm h-100 hover-card">
             <div class="card-body">
               <h5 class="card-title fw-bold"><i class="bi bi-graph-up me-2"></i>Hiệu suất (KPI)</h5>
@@ -84,52 +86,35 @@
                   {{ kpi_percentage }}%
                 </div>
               </div>
-              <a href="#" class="btn btn-outline-primary w-100 mt-3">Xem báo cáo chi tiết</a>
+              <a href="{% url 'kpis:personal_kpis' %}" class="btn btn-outline-primary w-100 mt-3">Xem báo cáo chi tiết</a>
             </div>
           </div>
         </div>
 
-        <div class="col-12 col-md-6 fade-in-up" style="animation-delay: 0.8s">
+        <!-- Productivity Chart -->
+        <div class="col-12 col-md-6">
+            <div class="card shadow-sm hover-card">
+                <div class="card-body">
+                <h5 class="card-title fw-bold"><i class="bi bi-speedometer2 me-2"></i>Năng suất theo giờ</h5>
+                <canvas id="productivityChart" height="200"></canvas>
+                <a href="{% url 'projects:time_tracking' %}" class="btn btn-outline-primary w-100 mt-3">Xem chi tiết thời gian</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Trends Card -->
+        <div class="col-12 col-md-6">
           <div class="card shadow-sm hover-card">
             <div class="card-body">
-              <h5 class="card-title fw-bold"><i class="bi bi-folder me-2"></i>Tiến độ dự án</h5>
-              <ul class="list-group list-group-flush">
-                {% for project in project_progress %}
-                  <li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-center">
-                    {{ project.name }}
-                    <div class="progress w-100 w-md-50 my-2 my-md-0" style="height: 10px">
-                      <div class="progress-bar bg-info" style="width: {{ project.progress }}%"></div>
-                    </div>
-                    <span class="badge bg-info">{{ project.progress }}%</span>
-                  </li>
-                {% empty %}
-                  <li class="list-group-item">Chưa có dự án</li>
-                {% endfor %}
-              </ul>
-              <a href="#" class="btn btn-outline-primary w-100 mt-3">Xem tất cả dự án</a>
+              <h5 class="card-title fw-bold"><i class="bi bi-bar-chart me-2"></i>Xu hướng KPI 6 tháng</h5>
+              <canvas id="kpiTrendChart" height="200"></canvas>
+              <a href="{% url 'kpis:personal_kpis' %}" class="btn btn-outline-primary w-100 mt-3">Xem chi tiết KPI</a>
             </div>
           </div>
         </div>
 
-        <div class="col-12 col-md-6 fade-in-up" style="animation-delay: 1s">
-          <div class="card shadow-sm hover-card">
-            <div class="card-body">
-              <h5 class="card-title fw-bold"><i class="bi bi-robot me-2"></i>Gợi ý từ AI</h5>
-              <ul class="list-group list-group-flush">
-                {% for suggestion in suggestions %}
-                  <li class="list-group-item">
-                    Task "{{ suggestion.title }}": Độ khó - {{ suggestion.difficulty|default:"Chưa xác định" }}, Ước lượng - {{ suggestion.estimated_time|default:"N/A" }}h
-                  </li>
-                {% empty %}
-                  <li class="list-group-item">Chưa có gợi ý</li>
-                {% endfor %}
-              </ul>
-              <button class="btn btn-outline-primary w-100 mt-3">Tự động phân chia Task</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 fade-in-up" style="animation-delay: 1.2s">
+        <!-- Recent Tasks Card -->
+        <div class="col-12">
           <div class="card shadow-sm hover-card">
             <div class="card-body">
               <h5 class="card-title fw-bold"><i class="bi bi-list-task me-2"></i>Công việc gần đây</h5>
@@ -164,7 +149,7 @@
                           {% endif %}
                         </td>
                         <td>
-                          <a href="#" class="btn btn-sm btn-outline-primary">
+                          <a href="{% url 'projects:my_tasks' %}" class="btn btn-sm btn-outline-primary">
                             {% if task.status == 'Completed' %}Xem{% else %}Cập nhật{% endif %}
                           </a>
                         </td>
@@ -175,12 +160,13 @@
                   </tbody>
                 </table>
               </div>
-              <a href="#" class="btn btn-outline-primary w-100 mt-3">Xem tất cả công việc</a>
+              <a href="{% url 'projects:all_tasks' %}" class="btn btn-outline-primary w-100 mt-3">Xem tất cả công việc</a>
             </div>
           </div>
         </div>
 
-        <div class="col-12 col-md-6 fade-in-up" style="animation-delay: 1.4s">
+        <!-- Personal Goals Card -->
+        <div class="col-12 col-md-6">
           <div class="card shadow-sm hover-card">
             <div class="card-body">
               <h5 class="card-title fw-bold"><i class="bi bi-star me-2"></i>Mục tiêu cá nhân</h5>
@@ -194,29 +180,40 @@
                   <li class="list-group-item">Chưa có mục tiêu</li>
                 {% endfor %}
               </ul>
-              <button class="btn btn-outline-primary w-100 mt-3" data-bs-toggle="modal" data-bs-target="#setGoalModal">Thêm mục tiêu</button>
+              <a href="{% url 'users:goals' %}" class="btn btn-outline-primary w-100 mt-3">Quản lý mục tiêu</a>
             </div>
           </div>
         </div>
 
-        <div class="col-12 col-md-6 fade-in-up" style="animation-delay: 1.6s">
-          <div class="card shadow-sm hover-card">
-            <div class="card-body text-center">
-              <h5 class="card-title fw-bold"><i class="bi bi-calendar me-2"></i>Lịch Google</h5>
-              <div class="d-flex justify-content-center">
-                <img src="{% static 'assets/img/undraw/undraw_tabs_jf82.svg' %}" alt="Calendar Placeholder" class="img-fluid" style="max-height: 150px" />
+        <!-- Project Progress Card -->
+        <div class="col-12 col-md-6">
+            <div class="card shadow-sm hover-card">
+              <div class="card-body">
+                <h5 class="card-title fw-bold"><i class="bi bi-folder me-2"></i>Tiến độ dự án</h5>
+                <ul class="list-group list-group-flush">
+                  {% for project in project_progress %}
+                    <li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-center">
+                      {{ project.name }}
+                      <div class="progress w-100 w-md-50 my-2 my-md-0" style="height: 10px">
+                        <div class="progress-bar bg-info" style="width: {{ project.progress }}%"></div>
+                      </div>
+                      <span class="badge bg-info">{{ project.progress }}%</span>
+                    </li>
+                  {% empty %}
+                    <li class="list-group-item">Chưa có dự án</li>
+                  {% endfor %}
+                </ul>
+                <a href="{% url 'projects:all_projects' %}" class="btn btn-outline-primary w-100 mt-3">Xem tất cả dự án</a>
               </div>
-              <a href="#" class="btn btn-outline-primary w-100 mt-3">Xem Google Calendar</a>
             </div>
-          </div>
         </div>
       </div>
-
       <div class="mt-5"></div>
     </main>
   </div>
 </div>
 
+<!-- Check-in Modal -->
 <div class="modal fade" id="checkInModal" tabindex="-1" aria-labelledby="checkInModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -245,6 +242,7 @@
   </div>
 </div>
 
+<!-- Check-out Modal -->
 <div class="modal fade" id="checkOutModal" tabindex="-1" aria-labelledby="checkOutModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -262,51 +260,46 @@
     </div>
   </div>
 </div>
-
-<div class="modal fade" id="setGoalModal" tabindex="-1" aria-labelledby="setGoalModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title fw-bold" id="setGoalModalLabel"><i class="bi bi-star me-2"></i>Đặt Mục Tiêu</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form method="post" action="{% url 'users:set_goal' %}">
-          {% csrf_token %}
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Mục tiêu</label>
-            <input type="text" name="description" class="form-control" placeholder="Ví dụ: Hoàn thành 10 task" required />
-          </div>
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Thời hạn</label>
-            <input type="date" name="target_date" class="form-control" required />
-          </div>
-          <button type="submit" class="btn btn-primary w-100">Thêm mục tiêu</button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'assets/js/core/jquery-3.7.1.min.js' %}"></script>
 <script src="{% static 'assets/js/core/bootstrap.bundle.min.js' %}"></script>
-<script src="{% static 'assets/js/plugins/chartjs.min.js' %}"></script>
+<script src="{% static 'assets/js/core/chart.min.js' %}"></script>
+
 <script>
+  // Task Chart
   const taskCtx = document.getElementById("taskChart").getContext("2d");
   new Chart(taskCtx, {
-    type: "pie",
+    type: "doughnut",
     data: {
       labels: ["To-do", "Đang làm", "Hoàn thành"],
       datasets: [{
         data: {{ task_chart_data|safe }},
-        backgroundColor: ["#0d6efd", "#ffc107", "#198754"]
+        backgroundColor: ["#0d6efd", "#ffc107", "#198754"],
+        borderWidth: 1
       }]
     },
-    options: { plugins: { legend: { position: "bottom" } } }
+    options: { 
+      plugins: { 
+        legend: { position: "bottom" },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.raw || 0;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = Math.round((value / total) * 100);
+              return `${label}: ${value} (${percentage}%)`;
+            }
+          }
+        }
+      },
+      cutout: '65%'
+    }
   });
 
+  // Time Chart
   const timeCtx = document.getElementById("timeChart").getContext("2d");
   new Chart(timeCtx, {
     type: "line",
@@ -317,10 +310,108 @@
         data: {{ week_chart_data|safe }},
         borderColor: "#0d6efd",
         backgroundColor: "rgba(13, 110, 253, 0.1)",
-        fill: true
+        fill: true,
+        tension: 0.3,
+        borderWidth: 2,
+        pointBackgroundColor: "#0d6efd",
+        pointRadius: 4
       }]
     },
-    options: { scales: { y: { beginAtZero: true } } }
+    options: { 
+      scales: { 
+        y: { 
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return value + 'h';
+            }
+          }
+        } 
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return context.parsed.y.toFixed(1) + ' giờ';
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // KPI Trend Chart
+  const kpiTrendCtx = document.getElementById("kpiTrendChart").getContext("2d");
+  new Chart(kpiTrendCtx, {
+    type: "bar",
+    data: {
+      labels: ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6"],
+      datasets: [{
+        label: "Điểm KPI",
+        data: [75, 82, 78, 85, 88, 90],
+        backgroundColor: "rgba(25, 135, 84, 0.7)",
+        borderColor: "rgba(25, 135, 84, 1)",
+        borderWidth: 1
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: false,
+          min: 50,
+          max: 100,
+          ticks: {
+            callback: function(value) {
+              return value + '%';
+            }
+          }
+        }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return context.parsed.y + '%';
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // Productivity Chart
+  const productivityCtx = document.getElementById("productivityChart").getContext("2d");
+  new Chart(productivityCtx, {
+    type: "radar",
+    data: {
+      labels: ["Sáng (8-12h)", "Chiều (12-17h)", "Tối (17-21h)", "Đêm (21-24h)"],
+      datasets: [{
+        label: "Năng suất",
+        data: [85, 92, 78, 45],
+        backgroundColor: "rgba(13, 110, 253, 0.2)",
+        borderColor: "rgba(13, 110, 253, 1)",
+        pointBackgroundColor: "rgba(13, 110, 253, 1)",
+        pointBorderColor: "#fff",
+        pointHoverBackgroundColor: "#fff",
+        pointHoverBorderColor: "rgba(13, 110, 253, 1)"
+      }]
+    },
+    options: {
+      scales: {
+        r: {
+          angleLines: {
+            display: true
+          },
+          suggestedMin: 0,
+          suggestedMax: 100,
+          ticks: {
+            callback: function(value) {
+              return value + '%';
+            }
+          }
+        }
+      }
+    }
   });
 </script>
 {% endblock %}

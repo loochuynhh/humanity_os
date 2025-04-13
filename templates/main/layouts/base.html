@@ -6,29 +6,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Humanity OS{% endblock %}</title>
 
+    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'assets/fonts/fontawesome/fa-solid-900.css' %}">
-    <link rel="stylesheet" href="{% static 'assets/fonts/fontawesome/fa-regular-400.css' %}">
-    <link rel="stylesheet" href="{% static 'assets/fonts/fontawesome/fa-brands-400.css' %}">
-    
+
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="{% static 'assets/fonts/all.min.css' %}">
+
+    <!-- Custom CSS -->
     {% block extra_css %}
         <link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
     {% endblock %}
 </head>
 <body>
-    <!-- Scripts -->
+    <!-- Main Content -->
     {% block content %}{% endblock %}
+
+    <!-- Scripts -->
     <script src="{% static 'assets/js/core/jquery-3.7.1.min.js' %}"></script>
     <script src="{% static 'assets/js/core/popper.min.js' %}"></script>
     <script src="{% static 'assets/js/core/bootstrap.min.js' %}"></script>
-    <script src="{% static 'assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugin/sweetalert/sweetalert2.all.min.js' %}"></script>
     <script src="{% static 'assets/js/plugin/chart.js/chart.min.js' %}"></script>
-    <script src="{% static 'assets/js/plugin/jquery.sparkline/jquery.sparkline.min.js' %}"></script>
-    <script src="{% static 'assets/js/plugin/chart-circle/circles.min.js' %}"></script>
-    <script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
-    <script src="{% static 'assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js' %}"></script>
-    <script src="{% static 'assets/js/plugin/jsvectormap/jsvectormap.min.js' %}"></script>
-    <script src="{% static 'assets/js/plugin/jsvectormap/world.js' %}"></script>
-    <script src="{% static 'assets/js/plugin/sweetalert/sweetalert.min.js' %}"></script>
+    
+    <!-- Script xử lý thông báo bằng SweetAlert2 -->
+    <script>
+        $(document).ready(function() {
+            {% for message in messages %}
+                Swal.fire({
+                    icon: "{{ message.tags }}",
+                    title: "{{ message.tags|capfirst }}",
+                    text: "{{ message }}",
+                    confirmButtonText: "OK",
+                    confirmButtonColor: "#007bff",
+                    timer: {% if message.tags == 'success' %}3000{% else %}null{% endif %},
+                    timerProgressBar: true,
+                    customClass: {
+                        popup: 'swal-popup',
+                        title: 'swal-title',
+                        content: 'swal-content'
+                    }
+                });
+            {% endfor %}
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

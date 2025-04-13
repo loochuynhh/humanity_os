@@ -6,21 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Humanity OS{% endblock %}</title>
 
+    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'assets/fonts/fontawesome/fa-solid-900.css' %}">
-    <link rel="stylesheet" href="{% static 'assets/fonts/fontawesome/fa-regular-400.css' %}">
-    <link rel="stylesheet" href="{% static 'assets/fonts/fontawesome/fa-brands-400.css' %}">
-    
+
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="{% static 'assets/fonts/all.min.css' %}">
+
+    <!-- Custom CSS -->
     {% block extra_css %}
         <link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
     {% endblock %}
 </head>
 <body>
     {% if request.resolver_match.url_name in 'login,forgot_password,change_password,reset_password' %}
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="{% url 'home' %}">
-                <i class="fas fa-cog me-2"></i>Humanity OS 
+                <i class="fas fa-cog me-2"></i>Humanity OS
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -30,18 +32,18 @@
                     {% if request.user.is_authenticated %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'users:change_password' %}">
-                                <i class="fas fa-key me-1"></i>Đổi mật khẩu 
+                                <i class="fas fa-key me-1"></i>Đổi mật khẩu
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'users:logout' %}">
-                                <i class="fas fa-sign-out-alt me-1"></i>Đăng xuất 
+                                <i class="fas fa-sign-out-alt me-1"></i>Đăng xuất
                             </a>
                         </li>
                     {% else %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'users:login' %}">
-                                <i class="fas fa-sign-in-alt me-1"></i>Đăng nhập 
+                                <i class="fas fa-sign-in-alt me-1"></i>Đăng nhập
                             </a>
                         </li>
                     {% endif %}
@@ -53,14 +55,6 @@
 
     <!-- Main Content -->
     <div class="{% if request.resolver_match.url_name in 'login,forgot_password,change_password,reset_password' %}container container-main{% else %}container-fluid container-no-nav{% endif %}">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
         {% block content %}{% endblock %}
     </div>
 
@@ -68,25 +62,43 @@
     <script src="{% static 'assets/js/core/jquery-3.7.1.min.js' %}"></script>
     <script src="{% static 'assets/js/core/popper.min.js' %}"></script>
     <script src="{% static 'assets/js/core/bootstrap.min.js' %}"></script>
-    <script src="{% static 'assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugin/sweetalert/sweetalert2.all.min.js' %}"></script>
     <script src="{% static 'assets/js/plugin/chart.js/chart.min.js' %}"></script>
-    <script src="{% static 'assets/js/plugin/jquery.sparkline/jquery.sparkline.min.js' %}"></script>
-    <script src="{% static 'assets/js/plugin/chart-circle/circles.min.js' %}"></script>
-    <script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
-    <script src="{% static 'assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js' %}"></script>
-    <script src="{% static 'assets/js/plugin/jsvectormap/jsvectormap.min.js' %}"></script>
-    <script src="{% static 'assets/js/plugin/jsvectormap/world.js' %}"></script>
-    <script src="{% static 'assets/js/plugin/sweetalert/sweetalert.min.js' %}"></script>
+    
+    <!-- Script xử lý thông báo bằng SweetAlert2 và hiệu ứng navbar -->
     <script>
-        {% if request.resolver_match.url_name in 'login,forgot_password,change_password,reset_password' %}
-        $(window).scroll(function () {
-            if ($(this).scrollTop() > 50) {
-                $('.navbar').addClass('scrolled');
-            } else {
-                $('.navbar').removeClass('scrolled');
-            }
+        $(document).ready(function() {
+            // Xử lý thông báo bằng SweetAlert2
+            {% for message in messages %}
+                Swal.fire({
+                    icon: "{{ message.tags }}",
+                    title: "{{ message.tags|capfirst }}",
+                    text: "{{ message }}",
+                    confirmButtonText: "OK",
+                    confirmButtonColor: "#007bff",
+                    timer: {% if message.tags == 'success' %}3000{% else %}null{% endif %},
+                    timerProgressBar: true,
+                    customClass: {
+                        popup: 'swal-popup',
+                        title: 'swal-title',
+                        content: 'swal-content'
+                    }
+                });
+            {% endfor %}
+
+            // Hiệu ứng scroll cho navbar
+            {% if request.resolver_match.url_name in 'login,forgot_password,change_password,reset_password' %}
+            $(window).scroll(function () {
+                if ($(this).scrollTop() > 50) {
+                    $('.navbar').addClass('scrolled');
+                } else {
+                    $('.navbar').removeClass('scrolled');
+                }
+            });
+            {% endif %}
         });
-        {% endif %}
     </script>
+
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

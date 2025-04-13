@@ -323,3 +323,29 @@ body {
 .skill-badge {
     font-size: 0.8rem;
 }
+
+.swal-popup {
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.swal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.swal-content {
+    font-size: 1rem;
+    color: #555;
+}
+
+.container-main {
+    margin-top: 80px;
+}
+
+.navbar.scrolled {
+    background-color: #0056b3;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
