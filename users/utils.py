@@ -6,7 +6,11 @@ from datetime import timedelta
 import json
 from projects.models import Tasks, TaskAssignments, TimeEntries, Projects
 from kpis.models import EmployeeKPIs
-from users.models import Goals, Users
+from users.models import Goals, Users, CheckInCheckOut
+import base64
+import io
+from PIL import Image
+from django.core.files.base import ContentFile
 
 
 def get_task_counts(user_id, as_json=False):
@@ -156,3 +160,91 @@ def get_chart_data(user):
         'task_distribution_labels': task_distribution_labels,
         'task_distribution_data': task_distribution_data
     }
+    
+ # Kiểm tra phiên bản Pillow để sử dụng đúng resampling
+try:
+    from PIL.Image import Resampling
+    LANCZOS = Resampling.LANCZOS
+except ImportError:
+    LANCZOS = Image.LANCZOS # type: ignore
+
+def handle_check_in(user, location, image_data):
+    """
+    Xử lý logic check-in, lưu thông tin vào database.
+    """
+    today = timezone.now().date()
+    existing_checkin = CheckInCheckOut.objects.filter(user=user, date=today).first()
+    
+    if existing_checkin:
+        return False, "Bạn đã check-in hôm nay rồi."
+
+    checkin = CheckInCheckOut(
+        user=user,
+        checkin_time=timezone.now(),
+        date=today,
+        checkin_location=location,
+    )
+
+    if image_data:
+        try:
+            if ',' in image_data:
+                image_data = image_data.split(',')[1]
+            img_bytes = base64.b64decode(image_data)
+            img = Image.open(io.BytesIO(img_bytes))
+            img = img.resize((320, 240), LANCZOS)
+            buffer = io.BytesIO()
+            img.save(buffer, format="JPEG", quality=70)
+            img_name = f"checkin_{user.username}_{today}.jpg"
+            checkin.checkin_image.save(img_name, ContentFile(buffer.getvalue()), save=False)
+        except Exception as e:
+            return False, f"Lỗi xử lý ảnh: {str(e)}"
+
+    checkin.save()
+    return True, "Check-in thành công."
+
+def handle_check_out(user, location, image_data):
+    """
+    Xử lý logic check-out, cập nhật thông tin vào database.
+    """
+    today = timezone.now().date()
+    checkin = CheckInCheckOut.objects.filter(user=user, date=today).first()
+    
+    if not checkin:
+        return False, "Bạn chưa check-in hôm nay."
+    if checkin.checkout_time:
+        return False, "Bạn đã check-out hôm nay rồi."
+
+    checkin.checkout_time = timezone.now()
+    checkin.checkout_location = location
+
+    if image_data:
+        try:
+            if ',' in image_data:
+                image_data = image_data.split(',')[1]
+            img_bytes = base64.b64decode(image_data)
+            img = Image.open(io.BytesIO(img_bytes))
+            img = img.resize((320, 240), LANCZOS)
+            buffer = io.BytesIO()
+            img.save(buffer, format="JPEG", quality=70)
+            img_name = f"checkout_{user.username}_{today}.jpg"
+            checkin.checkout_image.save(img_name, ContentFile(buffer.getvalue()), save=False)
+        except Exception as e:
+            return False, f"Lỗi xử lý ảnh: {str(e)}"
+
+    checkin.save()
+    return True, "Check-out thành công."
+
+def get_today_work_hours(user):
+    """
+    Tính số giờ làm việc hôm nay.
+    """
+    today = timezone.now().date()
+    checkin = CheckInCheckOut.objects.filter(user=user, date=today).first()
+    if not checkin:
+        return None
+    if checkin.checkout_time:
+        duration = checkin.checkout_time - checkin.checkin_time
+    else:
+        duration = timezone.now() - checkin.checkin_time
+    hours = duration.total_seconds() / 3600
+    return f"{hours:.2f} giờ"

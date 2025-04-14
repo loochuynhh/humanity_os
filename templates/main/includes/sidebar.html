@@ -40,12 +40,9 @@
         height="40"
       />
       <div class="text-white">
-        <span class="fw-semibold"
-          >{{ request.user.first_name }} {{ request.user.last_name }}</span
-        >
         <a href="{% url 'users:profile' %}" class="nav-link">
-            <i class="bi bi-person me-2"></i>Hồ sơ cá nhân
-          </a>
+            <span class="fw-semibold">{{ request.user.first_name }} {{ request.user.last_name }}</span>
+        </a>
       </div>
     </div>
 

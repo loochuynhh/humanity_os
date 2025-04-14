@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.decorators.http import require_POST
-from .models import CheckInCheckOut, Goals, Users
+from .models import Goals, Users
 from .utils import (
     get_ai_suggestions,
     get_chart_data,
@@ -27,6 +27,8 @@ from .utils import (
     get_task_counts,
     get_task_stats,
     get_time_tracking,
+    handle_check_in,
+    handle_check_out
 )
 
 
@@ -157,40 +159,37 @@ def create_user(request):
 
 
 @login_required
+@require_POST
 def check_in(request):
-    if request.method == "POST":
-        try:
-            CheckInCheckOut.objects.create(
-                user=request.user,
-                checkin_time=timezone.now(),
-                date=timezone.now().date(),
-            )
-            messages.success(request, "Check-in thành công!")
-            return redirect("users:index")
-        except Exception as e:
-            messages.error(request, f"Có lỗi xảy ra: {str(e)}")
-    return redirect("users:index")
+    """
+    Xử lý check-in của người dùng, lưu thời gian, địa điểm và hình ảnh.
+    """
+    location = request.POST.get('checkin_location')
+    image_data = request.POST.get('checkin_image')
+
+    success, message = handle_check_in(request.user, location, image_data)
+    if success:
+        messages.success(request, message)
+    else:
+        messages.error(request, message)
+    return redirect('users:index')
 
 
 @login_required
+@require_POST
 def check_out(request):
-    if request.method == "POST":
-        try:
-            checkin = CheckInCheckOut.objects.filter(
-                user=request.user,
-                date=timezone.now().date(),
-                checkout_time__isnull=True
-            ).latest("checkin_time")
-            checkin.checkout_time = timezone.now()
-            checkin.save()
-            messages.success(request, "Check-out thành công!")
-            return redirect("users:index")
-        except CheckInCheckOut.DoesNotExist:
-            messages.error(request, "Bạn chưa check-in hôm nay!")
-        except Exception as e:
-            messages.error(request, f"Có lỗi xảy ra: {str(e)}")
-    return redirect("users:index")
+    """
+    Xử lý check-out của người dùng, lưu thời gian, địa điểm và hình ảnh.
+    """
+    location = request.POST.get('checkout_location')
+    image_data = request.POST.get('checkout_image')
 
+    success, message = handle_check_out(request.user, location, image_data)
+    if success:
+        messages.success(request, message)
+    else:
+        messages.error(request, message)
+    return redirect('users:index')
 
 @login_required
 def index(request):

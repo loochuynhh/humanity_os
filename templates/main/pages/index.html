@@ -30,7 +30,10 @@
               <div class="text-center text-md-start">
                 <h4 class="fw-bold mb-1">Xin chào, {{ user.first_name }} {{ user.last_name }}!</h4>
                 <p class="mb-0">Chào mừng bạn đến với Humanity OS - Hôm nay là ngày {{ now|date:"d/m/Y" }}</p>
-              </div>
+                {% if today_time %}
+                    <p>Bạn đã làm việc <strong>{{ today_time }}</strong> hôm nay.</p>
+                {% endif %}
+            </div>
             </div>
           </div>
         </div>
@@ -215,203 +218,94 @@
 
 <!-- Check-in Modal -->
 <div class="modal fade" id="checkInModal" tabindex="-1" aria-labelledby="checkInModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+<div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header">
+    <div class="modal-header">
         <h5 class="modal-title fw-bold" id="checkInModalLabel"><i class="bi bi-clock me-2"></i>Check-in</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form method="post" action="{% url 'users:check_in' %}">
-          {% csrf_token %}
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Chọn Task</label>
-            <select class="form-select" name="task_id" required>
-              <option value="">-- Chọn task --</option>
-              {% for task in recent_tasks %}
-                {% if task.status != 'Completed' %}
-                  <option value="{{ task.id }}">{{ task.title }}</option>
-                {% endif %}
-              {% endfor %}
-            </select>
-          </div>
-          <button type="submit" class="btn btn-primary w-100">Check-in</button>
-        </form>
-      </div>
     </div>
-  </div>
+    <div class="modal-body">
+        <form method="post" action="{% url 'users:check_in' %}" enctype="multipart/form-data" id="checkInForm">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Chụp ảnh từ webcam</label>
+            <div class="position-relative">
+            <video id="checkin_video" width="100%" height="auto" autoplay class="rounded"></video>
+            <div id="checkin_loading" class="position-absolute top-50 start-50 translate-middle" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+                </div>
+            </div>
+            </div>
+            <canvas id="checkin_canvas" style="display: none;"></canvas>
+            <img id="checkin_preview" class="img-fluid rounded mt-2 d-none" style="max-height: 100px;" alt="Ảnh preview">
+            <input type="hidden" name="checkin_image" id="checkin_image_data">
+            <button type="button" class="btn btn-secondary w-100 mt-2" id="checkin_snap">Chụp ảnh</button>
+        </div>
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Vị trí</label>
+            <div class="input-group">
+            <input type="text" class="form-control" name="checkin_location" id="checkin_location" readonly required>
+            <span class="input-group-text">
+                <span id="checkin_location_loading" class="spinner-border spinner-border-sm d-none" role="status">
+                <span class="visually-hidden">Đang lấy vị trí...</span>
+                </span>
+            </span>
+            </div>
+            <small class="form-text text-muted">Vị trí của bạn sẽ được tự động lấy.</small>
+        </div>
+        <div id="checkin_error" class="alert alert-danger d-none" role="alert"></div>
+        <button type="submit" class="btn btn-primary w-100" disabled id="checkin_submit">Check-in</button>
+        </form>
+    </div>
+    </div>
+</div>
 </div>
 
 <!-- Check-out Modal -->
 <div class="modal fade" id="checkOutModal" tabindex="-1" aria-labelledby="checkOutModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+<div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header">
+    <div class="modal-header">
         <h5 class="modal-title fw-bold" id="checkOutModalLabel"><i class="bi bi-clock me-2"></i>Check-out</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p>Bạn đã làm việc <strong>{{ today_time }}</strong> hôm nay. Xác nhận Check-out?</p>
-        <form method="post" action="{% url 'users:check_out' %}">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-primary w-100">Xác nhận</button>
-        </form>
-      </div>
     </div>
-  </div>
+    <div class="modal-body">
+        <p>Bạn đã làm việc <strong>{{ today_time }}</strong> hôm nay. Xác nhận Check-out?</p>
+        <form method="post" action="{% url 'users:check_out' %}" enctype="multipart/form-data" id="checkOutForm">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Chụp ảnh từ webcam</label>
+            <div class="position-relative">
+            <video id="checkout_video" width="100%" height="auto" autoplay class="rounded"></video>
+            <div id="checkout_loading" class="position-absolute top-50 start-50 translate-middle" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+                </div>
+            </div>
+            </div>
+            <canvas id="checkout_canvas" style="display: none;"></canvas>
+            <img id="checkout_preview" class="img-fluid rounded mt-2 d-none" style="max-height: 100px;" alt="Ảnh preview">
+            <input type="hidden" name="checkout_image" id="checkout_image_data">
+            <button type="button" class="btn btn-secondary w-100 mt-2" id="checkout_snap">Chụp ảnh</button>
+        </div>
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Vị trí</label>
+            <div class="input-group">
+            <input type="text" class="form-control" name="checkout_location" id="checkout_location" readonly required>
+            <span class="input-group-text">
+                <span id="checkout_location_loading" class="spinner-border spinner-border-sm d-none" role="status">
+                <span class="visually-hidden">Đang lấy vị trí...</span>
+                </span>
+            </span>
+            </div>
+            <small class="form-text text-muted">Vị trí của bạn sẽ được tự động lấy.</small>
+        </div>
+        <div id="checkout_error" class="alert alert-danger d-none" role="alert"></div>
+        <button type="submit" class="btn btn-primary w-100" disabled id="checkout_submit">Xác nhận</button>
+        </form>
+    </div>
+    </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script src="{% static 'assets/js/core/jquery-3.7.1.min.js' %}"></script>
-<script src="{% static 'assets/js/core/bootstrap.bundle.min.js' %}"></script>
-<script src="{% static 'assets/js/core/chart.min.js' %}"></script>
-
-<script>
-  // Task Chart
-  const taskCtx = document.getElementById("taskChart").getContext("2d");
-  new Chart(taskCtx, {
-    type: "doughnut",
-    data: {
-      labels: ["To-do", "Đang làm", "Hoàn thành"],
-      datasets: [{
-        data: {{ task_chart_data|safe }},
-        backgroundColor: ["#0d6efd", "#ffc107", "#198754"],
-        borderWidth: 1
-      }]
-    },
-    options: { 
-      plugins: { 
-        legend: { position: "bottom" },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const label = context.label || '';
-              const value = context.raw || 0;
-              const total = context.dataset.data.reduce((a, b) => a + b, 0);
-              const percentage = Math.round((value / total) * 100);
-              return `${label}: ${value} (${percentage}%)`;
-            }
-          }
-        }
-      },
-      cutout: '65%'
-    }
-  });
-
-  // Time Chart
-  const timeCtx = document.getElementById("timeChart").getContext("2d");
-  new Chart(timeCtx, {
-    type: "line",
-    data: {
-      labels: ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
-      datasets: [{
-        label: "Giờ làm",
-        data: {{ week_chart_data|safe }},
-        borderColor: "#0d6efd",
-        backgroundColor: "rgba(13, 110, 253, 0.1)",
-        fill: true,
-        tension: 0.3,
-        borderWidth: 2,
-        pointBackgroundColor: "#0d6efd",
-        pointRadius: 4
-      }]
-    },
-    options: { 
-      scales: { 
-        y: { 
-          beginAtZero: true,
-          ticks: {
-            callback: function(value) {
-              return value + 'h';
-            }
-          }
-        } 
-      },
-      plugins: {
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              return context.parsed.y.toFixed(1) + ' giờ';
-            }
-          }
-        }
-      }
-    }
-  });
-
-  // KPI Trend Chart
-  const kpiTrendCtx = document.getElementById("kpiTrendChart").getContext("2d");
-  new Chart(kpiTrendCtx, {
-    type: "bar",
-    data: {
-      labels: ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6"],
-      datasets: [{
-        label: "Điểm KPI",
-        data: [75, 82, 78, 85, 88, 90],
-        backgroundColor: "rgba(25, 135, 84, 0.7)",
-        borderColor: "rgba(25, 135, 84, 1)",
-        borderWidth: 1
-      }]
-    },
-    options: {
-      scales: {
-        y: {
-          beginAtZero: false,
-          min: 50,
-          max: 100,
-          ticks: {
-            callback: function(value) {
-              return value + '%';
-            }
-          }
-        }
-      },
-      plugins: {
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              return context.parsed.y + '%';
-            }
-          }
-        }
-      }
-    }
-  });
-
-  // Productivity Chart
-  const productivityCtx = document.getElementById("productivityChart").getContext("2d");
-  new Chart(productivityCtx, {
-    type: "radar",
-    data: {
-      labels: ["Sáng (8-12h)", "Chiều (12-17h)", "Tối (17-21h)", "Đêm (21-24h)"],
-      datasets: [{
-        label: "Năng suất",
-        data: [85, 92, 78, 45],
-        backgroundColor: "rgba(13, 110, 253, 0.2)",
-        borderColor: "rgba(13, 110, 253, 1)",
-        pointBackgroundColor: "rgba(13, 110, 253, 1)",
-        pointBorderColor: "#fff",
-        pointHoverBackgroundColor: "#fff",
-        pointHoverBorderColor: "rgba(13, 110, 253, 1)"
-      }]
-    },
-    options: {
-      scales: {
-        r: {
-          angleLines: {
-            display: true
-          },
-          suggestedMin: 0,
-          suggestedMax: 100,
-          ticks: {
-            callback: function(value) {
-              return value + '%';
-            }
-          }
-        }
-      }
-    }
-  });
-</script>
+</div>
 {% endblock %}

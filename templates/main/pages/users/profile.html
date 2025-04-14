@@ -260,14 +260,14 @@
       <form id="profileForm" enctype="multipart/form-data">
         <div class="modal-body">
           <div class="row">
-            <div class="col-md-4 text-center">
+            <div class="col-md-4 text-center d-flex flex-column justify-content-center">
               <div class="avatar-upload mb-3">
-                <div class="avatar-preview rounded-circle overflow-hidden mx-auto" 
-                     style="width: 120px; height: 120px;">
-                     <img src="{{ user.avatar_url }}" alt="Avatar"
-                     class="img-fluid w-100 h-100 object-fit-cover"
-                     id="avatar-preview">
-                
+                <div class="avatar-preview rounded-circle overflow-hidden mx-auto d-flex justify-content-center align-items-center" 
+                     style="width: 120px; height: 120px; background-color: #f8f9fa;">
+                  <img src="{{ user.avatar_url }}" alt="Avatar"
+                       class="img-fluid object-fit-cover"
+                       id="avatar-preview"
+                       style="max-width: 100%; max-height: 100%;">
                 </div>
                 <div class="mt-3">
                   <input type="file" id="avatarInput" name="avatar" accept="image/*" class="d-none">

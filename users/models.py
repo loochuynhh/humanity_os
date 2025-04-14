@@ -17,7 +17,8 @@ class Users(AbstractUser):
         default="Active",
     )
     date_of_joining = models.DateField(null=True, blank=True)
-
+    fixed_location = models.CharField(max_length=255, null=True, blank=True)
+    
     class Meta:
         db_table = "users"
 
@@ -37,6 +38,8 @@ class CheckInCheckOut(models.Model):
     checkout_time = models.DateTimeField(null=True, blank=True)
     checkin_image = models.ImageField(upload_to="checkin_images/", null=True, blank=True)
     checkout_image = models.ImageField(upload_to="checkout_images/", null=True, blank=True)
+    checkin_location = models.CharField(max_length=255, null=True, blank=True) 
+    checkout_location = models.CharField(max_length=255, null=True, blank=True) 
     date = models.DateField()
 
     class Meta:
