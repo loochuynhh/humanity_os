@@ -3,11 +3,6 @@
 
 {% block title %}Hồ sơ cá nhân - Humanity OS{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
-
-{% endblock %}
-
 {% block content %}
 <div class="container-fluid">
   <div class="row">
@@ -37,212 +32,201 @@
         </div>
         
         <div class="card-body">
-          <div class="row">
-            <!-- Thông tin cơ bản -->
-            <div class="col-md-6">
-              <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-white">
-                  <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Thông tin cá nhân</h5>
-                </div>
-                <div class="card-body">
-                  <table class="table table-sm table-borderless">
-                    <tr>
-                      <th width="40%">Họ và tên:</th>
-                      <td>{{ user.get_full_name }}</td>
-                    </tr>
-                    <tr>
-                      <th>Email:</th>
-                      <td>{{ user.email }}</td>
-                    </tr>
-                    <tr>
-                      <th>Số điện thoại:</th>
-                      <td>{{ user.phone|default:"Chưa cập nhật" }}</td>
-                    </tr>
-                    <tr>
-                      <th>Ngày vào công ty:</th>
-                      <td>{{ user.date_of_joining|date:"d/m/Y"|default:"Chưa cập nhật" }}</td>
-                    </tr>
-                    <tr>
-                      <th>Vị trí:</th>
-                      <td>
-                        <span class="badge bg-primary">{{ user.get_role_display }}</span>
-                      </td>
-                    </tr>
-                  </table>
-                </div>
-              </div>
-            </div>
-
-            <!-- Thống kê hiệu suất -->
-            <div class="col-md-6">
-              <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-white">
-                  <h5 class="mb-0"><i class="bi bi-speedometer2 me-2"></i>Hiệu suất công việc</h5>
-                </div>
-                <div class="card-body">
-                  <div class="mb-3">
-                    <h6 class="d-flex justify-content-between">
-                      <span>Hoàn thành công việc</span>
-                      <span>{{ task_stats.completed }}/{{ task_stats.total }}</span>
-                    </h6>
-                    <div class="progress progress-thin">
-                      <div class="progress-bar bg-success" 
-                           style="width: {{ task_stats.completion_rate }}%"></div>
-                    </div>
+            <div class="row">
+              <!-- Thông tin cá nhân -->
+              <div class="col-md-6">
+                <div class="card mb-4 shadow-sm">
+                  <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Thông tin cá nhân</h5>
                   </div>
-
-                  <div class="mb-3">
-                    <h6 class="d-flex justify-content-between">
-                      <span>Đánh giá KPI</span>
-                      <span>{{ kpi_score }}%</span>
-                    </h6>
-                    <div class="progress progress-thin">
-                      <div class="progress-bar bg-info" 
-                           style="width: {{ kpi_score }}%"></div>
-                    </div>
-                  </div>
-
-                  <div class="mb-3">
-                    <h6 class="d-flex justify-content-between">
-                      <span>Mục tiêu cá nhân</span>
-                      <span>{{ goals.achieved }}/{{ goals.total }}</span>
-                    </h6>
-                    <div class="progress progress-thin">
-                      <div class="progress-bar bg-warning" 
-                           style="width: {{ goals.completion_rate }}%"></div>
-                    </div>
-                  </div>
-
-                  <div class="mt-4">
-                    <h6><i class="bi bi-award me-2"></i>Kỹ năng chính</h6>
-                    <div class="d-flex flex-wrap gap-2">
-                      {% for skill in skills %}
-                      <span class="badge skill-badge bg-light text-dark">
-                        {{ skill.name }} <span class="text-muted">{{ skill.level }}%</span>
-                      </span>
-                      {% empty %}
-                      <small class="text-muted">Chưa cập nhật kỹ năng</small>
-                      {% endfor %}
-                    </div>
+                  <div class="card-body">
+                    <table class="table table-sm table-borderless">
+                      <tr>
+                        <th width="40%">Họ và tên:</th>
+                        <td>{{ user.get_full_name }}</td>
+                      </tr>
+                      <tr>
+                        <th>Email:</th>
+                        <td>{{ user.email }}</td>
+                      </tr>
+                      <tr>
+                        <th>Số điện thoại:</th>
+                        <td>{{ user.phone|default:"Chưa cập nhật" }}</td>
+                      </tr>
+                      <tr>
+                        <th>Ngày vào công ty:</th>
+                        <td>{{ user.date_of_joining|date:"d/m/Y"|default:"Chưa cập nhật" }}</td>
+                      </tr>
+                      <tr>
+                        <th>Vị trí:</th>
+                        <td>
+                          <span class="badge bg-primary">{{ user.get_role_display }}</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Trạng thái:</th>
+                        <td>
+                          <span class="badge bg-{% if user.status == 'Active' %}success{% else %}secondary{% endif %}">
+                            {{ user.get_status_display }}
+                          </span>
+                        </td>
+                      </tr>
+                      {% if user.bio %}
+                      <tr>
+                        <th>Giới thiệu:</th>
+                        <td>{{ user.bio }}</td>
+                      </tr>
+                      {% endif %}
+                    </table>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Thống kê theo tab -->
-          <ul class="nav nav-tabs mb-4" id="profileTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-              <button class="nav-link active" id="activity-tab" data-bs-toggle="tab" 
-                      data-bs-target="#activity" type="button" role="tab">
-                <i class="bi bi-activity me-1"></i>Hoạt động gần đây
-              </button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button class="nav-link" id="projects-tab" data-bs-toggle="tab" 
-                      data-bs-target="#projects" type="button" role="tab">
-                <i class="bi bi-folder me-1"></i>Dự án tham gia
-              </button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button class="nav-link" id="performance-tab" data-bs-toggle="tab" 
-                      data-bs-target="#performance" type="button" role="tab">
-                <i class="bi bi-graph-up me-1"></i>Thống kê hiệu suất
-              </button>
-            </li>
-          </ul>
-
-          <div class="tab-content" id="profileTabsContent">
-            <!-- Tab Hoạt động -->
-            <div class="tab-pane fade show active" id="activity" role="tabpanel">
-              <div class="list-group">
-                {% for activity in recent_activities %}
-                <div class="list-group-item border-0 py-3">
-                  <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                      <i class="bi bi-{{ activity.icon }} fs-4 text-{{ activity.color }}"></i>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
-                      <h6 class="mb-1">{{ activity.title }}</h6>
-                      <p class="mb-0 text-muted small">{{ activity.description }}</p>
-                    </div>
-                    <small class="text-muted">{{ activity.time }}</small>
+                
+                <!-- Mục tiêu cá nhân -->
+                <div class="card shadow-sm">
+                  <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-star me-2"></i>Mục tiêu cá nhân</h5>
                   </div>
-                </div>
-                {% empty %}
-                <div class="text-center py-4 text-muted">
-                  <i class="bi bi-inbox fs-1"></i>
-                  <p class="mt-2">Không có hoạt động gần đây</p>
-                </div>
-                {% endfor %}
-              </div>
-            </div>
-
-            <!-- Tab Dự án -->
-            <div class="tab-pane fade" id="projects" role="tabpanel">
-              <div class="table-responsive">
-                <table class="table table-hover">
-                  <thead>
-                    <tr>
-                      <th>Tên dự án</th>
-                      <th>Vai trò</th>
-                      <th>Tiến độ</th>
-                      <th>Trạng thái</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for project in projects %}
-                    <tr>
-                      <td>
-                        <a href="{% url 'projects:project_detail' project.id %}">{{ project.name }}</a>
-                      </td>
-                      <td>{{ project.role }}</td>
-                      <td>
-                        <div class="progress progress-thin">
-                          <div class="progress-bar" style="width: {{ project.progress }}%"></div>
+                  <div class="card-body">
+                    {% if personal_goals %}
+                      <div class="list-group">
+                        {% for goal in personal_goals|slice:":3" %}
+                        <div class="list-group-item border-0 px-0 py-2">
+                          <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-1">{{ goal.name }}</h6>
+                            <span class="badge bg-{% if goal.status == 'Achieved' %}success{% else %}warning{% endif %}">
+                              {{ goal.status }}
+                            </span>
+                          </div>
+                          <div class="progress progress-thin mt-2">
+                            <div class="progress-bar" 
+                                 style="width: {{ goal.progress }}%"></div>
+                          </div>
+                          <small class="text-muted">Hoàn thành: {{ goal.progress }}% • Hạn: {{ goal.deadline|date:"d/m/Y" }}</small>
                         </div>
-                        <small>{{ project.progress }}%</small>
-                      </td>
-                      <td>
-                        <span class="badge bg-{{ project.status_color }}">
-                          {{ project.status }}
-                        </span>
-                      </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                      <td colspan="4" class="text-center py-4 text-muted">
-                        Không tham gia dự án nào
-                      </td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Tab Hiệu suất -->
-            <div class="tab-pane fade" id="performance" role="tabpanel">
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="card mb-4 shadow-sm">
-                    <div class="card-body">
-                      <h6 class="mb-3">Hiệu suất theo tháng</h6>
-                      <canvas id="performanceChart" height="250"></canvas>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="card shadow-sm">
-                    <div class="card-body">
-                      <h6 class="mb-3">Phân bổ công việc</h6>
-                      <canvas id="taskDistributionChart" height="250"></canvas>
-                    </div>
+                        {% endfor %}
+                      </div>
+                      <a href="{% url 'users:goals' %}" class="btn btn-sm btn-outline-primary mt-2">
+                        Xem tất cả mục tiêu
+                      </a>
+                    {% else %}
+                      <div class="text-center py-3 text-muted">
+                        <i class="bi bi-info-circle fs-4"></i>
+                        <p class="mt-2">Chưa có mục tiêu nào được thiết lập</p>
+                        <a href="{% url 'users:goals' %}" class="btn btn-sm btn-primary">
+                          Thêm mục tiêu mới
+                        </a>
+                      </div>
+                    {% endif %}
                   </div>
                 </div>
               </div>
+  
+              <!-- Thống kê công việc -->
+              <div class="col-md-6">
+                <div class="card mb-4 shadow-sm">
+                  <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-speedometer2 me-2"></i>Hiệu suất công việc</h5>
+                  </div>
+                  <div class="card-body">
+                    <div class="mb-3">
+                      <h6 class="d-flex justify-content-between">
+                        <span>Hoàn thành công việc</span>
+                        <span>{{ task_stats.completed }}/{{ task_stats.total }}</span>
+                      </h6>
+                      <div class="progress progress-thin">
+                        <div class="progress-bar bg-success" 
+                             style="width: {{ task_stats.completion_rate }}%"></div>
+                      </div>
+                    </div>
+  
+                    <div class="mb-3">
+                      <h6 class="d-flex justify-content-between">
+                        <span>Đánh giá KPI</span>
+                        <span>{{ kpi_score }}%</span>
+                      </h6>
+                      <div class="progress progress-thin">
+                        <div class="progress-bar bg-info" 
+                             style="width: {{ kpi_score }}%"></div>
+                      </div>
+                    </div>
+  
+                    <div class="mb-3">
+                      <h6 class="d-flex justify-content-between">
+                        <span>Thời gian làm việc hôm nay</span>
+                        <span>{{ time_tracking }}</span>
+                      </h6>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Công việc gần đây -->
+                <div class="card mb-4 shadow-sm">
+                  <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-list-task me-2"></i>Công việc gần đây</h5>
+                  </div>
+                  <div class="card-body">
+                    {% if recent_tasks %}
+                      <div class="list-group">
+                        {% for task in recent_tasks|slice:":3" %}
+                        <div class="list-group-item border-0 px-0 py-2">
+                          <div class="d-flex justify-content-between">
+                            <h6 class="mb-1">{{ task.title }}</h6>
+                            <span class="badge bg-{% if task.status == 'Completed' %}success{% elif task.status == 'Late' %}danger{% else %}warning{% endif %}">
+                              {{ task.get_status_display }}
+                            </span>
+                          </div>
+                          <small class="text-muted">
+                            {% if task.project %}Dự án: {{ task.project.name }}{% endif %}
+                            {% if task.deadline %} • Hạn: {{ task.deadline|date:"d/m/Y" }}{% endif %}
+                          </small>
+                        </div>
+                        {% endfor %}
+                      </div>
+                      <a href="{% url 'projects:my_tasks' %}" class="btn btn-sm btn-outline-primary mt-2">
+                        Xem tất cả công việc
+                      </a>
+                    {% else %}
+                      <div class="text-center py-3 text-muted">
+                        <i class="bi bi-check-circle fs-4"></i>
+                        <p class="mt-2">Không có công việc nào gần đây</p>
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+                
+                <!-- Dự án tham gia -->
+                <div class="card shadow-sm">
+                  <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-folder me-2"></i>Dự án tham gia</h5>
+                  </div>
+                  <div class="card-body">
+                    {% if projects %}
+                      <div class="list-group">
+                        {% for project in projects|slice:":3" %}
+                        <div class="list-group-item border-0 px-0 py-2">
+                          <h6 class="mb-1">
+                            <a href="{% url 'projects:project_detail' project.id %}">{{ project.name }}</a>
+                          </h6>
+                          <div class="progress progress-thin mt-2">
+                            <div class="progress-bar" style="width: {{ project.progress }}%"></div>
+                          </div>
+                          <small class="text-muted">Tiến độ: {{ project.progress }}%</small>
+                        </div>
+                        {% endfor %}
+                      </div>
+                      <a href="{% url 'projects:my_projects' %}" class="btn btn-sm btn-outline-primary mt-2">
+                        Xem tất cả dự án
+                      </a>
+                    {% else %}
+                      <div class="text-center py-3 text-muted">
+                        <i class="bi bi-folder-x fs-4"></i>
+                        <p class="mt-2">Không tham gia dự án nào</p>
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
         </div>
       </div>
     </main>
@@ -257,7 +241,8 @@
         <h5 class="modal-title">Chỉnh sửa hồ sơ</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form id="profileForm" enctype="multipart/form-data">
+      <form id="profileForm" method="POST" enctype="multipart/form-data" action="{% url 'users:update_profile' %}">
+        {% csrf_token %} 
         <div class="modal-body">
           <div class="row">
             <div class="col-md-4 text-center d-flex flex-column justify-content-center">
@@ -306,7 +291,7 @@
                 </div>
                 <div class="col-12">
                   <label class="form-label">Giới thiệu bản thân</label>
-                  <textarea class="form-control" name="bio" rows="3"></textarea>
+                  <textarea class="form-control" name="bio" rows="3">{{ user.bio|default:'' }}</textarea>
                 </div>
               </div>
             </div>
@@ -323,97 +308,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-$(document).ready(function() {
-  // Xử lý upload avatar preview
-  $('#avatarInput').change(function(e) {
-    if (this.files && this.files[0]) {
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        $('#avatar-edit-preview').attr('src', e.target.result);
-      }
-      reader.readAsDataURL(this.files[0]);
-    }
-  });
-
-  // Xử lý submit form
-  $('#profileForm').submit(function(e) {
-    e.preventDefault();
-    var formData = new FormData(this);
-    
-    $.ajax({
-      url: "{% url 'users:update_profile' %}",
-      type: 'POST',
-      data: formData,
-      processData: false,
-      contentType: false,
-      headers: {
-        'X-CSRFToken': '{{ csrf_token }}'
-      },
-      success: function(response) {
-        if (response.success) {
-          location.reload();
-        } else {
-          alert(response.error || 'Có lỗi xảy ra khi cập nhật');
-        }
-      },
-      error: function() {
-        alert('Lỗi kết nối, vui lòng thử lại');
-      }
-    });
-  });
-
-  // In hồ sơ
-  $('#print-profile').click(function() {
-    window.print();
-  });
-
-  // Biểu đồ hiệu suất
-  var ctx1 = document.getElementById('performanceChart').getContext('2d');
-  new Chart(ctx1, {
-    type: 'line',
-    data: {
-      labels: {{ performance_labels|safe }},
-      datasets: [{
-        label: 'Điểm hiệu suất',
-        data: {{ performance_data|safe }},
-        borderColor: '#4e73df',
-        backgroundColor: 'rgba(78, 115, 223, 0.05)',
-        tension: 0.4,
-        fill: true
-      }]
-    },
-    options: {
-      scales: {
-        y: {
-          beginAtZero: true,
-          max: 100
-        }
-      }
-    }
-  });
-
-  var ctx2 = document.getElementById('taskDistributionChart').getContext('2d');
-  new Chart(ctx2, {
-    type: 'doughnut',
-    data: {
-      labels: {{ task_distribution_labels|safe }},
-      datasets: [{
-        data: {{ task_distribution_data|safe }},
-        backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'],
-        hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a'],
-        hoverBorderColor: "rgba(234, 236, 244, 1)",
-      }],
-    },
-    options: {
-      cutout: '70%',
-      plugins: {
-        legend: {
-          position: 'right'
-        }
-      }
-    },
-  });
-});
-</script>
+    <script src="{% static 'assets/js/user/profile.js' %}"></script>
 {% endblock %}

@@ -18,6 +18,7 @@ class Users(AbstractUser):
     )
     date_of_joining = models.DateField(null=True, blank=True)
     fixed_location = models.CharField(max_length=255, null=True, blank=True)
+    bio = models.TextField(null=True, blank=True)
     
     class Meta:
         db_table = "users"

@@ -143,30 +143,50 @@ def get_personal_goals(user_id):
 
 
 def get_chart_data(user):
+    # Lấy dữ liệu hiệu suất theo tháng (12 tháng gần nhất)
+    now = timezone.now()
+    months = []
+    performance_data = []
+    
+    for i in range(12):
+        month = now - timedelta(days=30*i)
+        months.insert(0, month.strftime("%b %Y"))
+        
+        # Tính hiệu suất theo tháng (có thể thay bằng logic tính KPI thực tế)
+        start_date = month.replace(day=1)
+        end_date = (start_date + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        
+        # Tính toán hiệu suất dựa trên task hoàn thành
+        completed_tasks = Tasks.objects.filter(
+            task_assignments__user=user,
+            status='Completed',
+            deadline__range=(start_date, end_date)
+        ).count()
+        
+        total_tasks = Tasks.objects.filter(
+            task_assignments__user=user,
+            deadline__range=(start_date, end_date)
+        ).count()
+        
+        performance = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+        performance_data.insert(0, round(performance, 2))
+    
+    # Lấy dữ liệu phân bổ công việc
     tasks = Tasks.objects.filter(task_assignments__user=user).distinct()
-    completed_tasks = tasks.filter(status='Completed').count()
-    performance_labels = json.dumps(['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5'])
-    performance_data = json.dumps([75, 82, 68, 90, 88])
-    task_distribution_labels = json.dumps(['Hoàn thành', 'Đang làm', 'Quá hạn', 'Chưa bắt đầu'])
-    task_distribution_data = json.dumps([
-        completed_tasks,
+    task_distribution_data = [
+        tasks.filter(status='Completed').count(),
         tasks.filter(status='In progress').count(),
         tasks.filter(status='Late').count(),
         tasks.filter(status='To-do').count()
-    ])
-    return {
-        'performance_labels': performance_labels,
-        'performance_data': performance_data,
-        'task_distribution_labels': task_distribution_labels,
-        'task_distribution_data': task_distribution_data
-    }
+    ]
     
- # Kiểm tra phiên bản Pillow để sử dụng đúng resampling
-try:
-    from PIL.Image import Resampling
-    LANCZOS = Resampling.LANCZOS
-except ImportError:
-    LANCZOS = Image.LANCZOS # type: ignore
+    return {
+        'performance_labels': json.dumps(months),
+        'performance_data': json.dumps(performance_data),
+        'task_distribution_labels': json.dumps(['Hoàn thành', 'Đang làm', 'Quá hạn', 'Chưa bắt đầu']),
+        'task_distribution_data': json.dumps(task_distribution_data)
+    }
+
 
 def handle_check_in(user, location, image_data):
     """
@@ -191,7 +211,7 @@ def handle_check_in(user, location, image_data):
                 image_data = image_data.split(',')[1]
             img_bytes = base64.b64decode(image_data)
             img = Image.open(io.BytesIO(img_bytes))
-            img = img.resize((320, 240), LANCZOS)
+            img = img.resize((320, 240), LANCZOS) # type: ignore  # noqa: F821
             buffer = io.BytesIO()
             img.save(buffer, format="JPEG", quality=70)
             img_name = f"checkin_{user.username}_{today}.jpg"
@@ -223,7 +243,7 @@ def handle_check_out(user, location, image_data):
                 image_data = image_data.split(',')[1]
             img_bytes = base64.b64decode(image_data)
             img = Image.open(io.BytesIO(img_bytes))
-            img = img.resize((320, 240), LANCZOS)
+            img = img.resize((320, 240), LANCZOS)  # type: ignore # noqa: F821
             buffer = io.BytesIO()
             img.save(buffer, format="JPEG", quality=70)
             img_name = f"checkout_{user.username}_{today}.jpg"

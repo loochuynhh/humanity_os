@@ -272,29 +272,15 @@ def update_goal(request):
 @login_required
 def profile(request):
     user = request.user
-    recent_activities = [
-        {
-            "icon": "check-circle",
-            "color": "success",
-            "title": 'Hoàn thành task "Fix bug đăng nhập"',
-            "description": "Dự án HR Management",
-            "time": "2 giờ trước",
-        },
-    ]
-    skills = [
-        {"name": "Python", "level": 85},
-        {"name": "Django", "level": 90},
-        {"name": "JavaScript", "level": 70},
-    ]
     context = {
         "user": user,
         "task_stats": get_task_stats(user),
         "kpi_score": get_kpi_score(user),
         "goals": get_goals_stats(user),
-        "skills": skills,
-        "recent_activities": recent_activities,
         "projects": get_project_data(user),
-        **get_chart_data(user),
+        "time_tracking": get_time_tracking(user.id),
+        "recent_tasks": get_recent_tasks(user.id),
+        "personal_goals": get_personal_goals(user.id),
     }
     return render(request, "main/pages/users/profile.html", context)
 
@@ -308,6 +294,7 @@ def update_profile(request):
             user.last_name = request.POST.get("last_name", user.last_name)
             user.phone = request.POST.get("phone", user.phone)
             user.department = request.POST.get("department", user.department)
+            user.bio = request.POST.get("bio", user.bio) 
             date_of_joining = request.POST.get("date_of_joining")
             if date_of_joining:
                 user.date_of_joining = date_of_joining
