@@ -11,17 +11,20 @@ import base64
 import io
 from PIL import Image
 from django.core.files.base import ContentFile
-
+from django.utils.safestring import mark_safe
+from django.utils.html import escape
+from django.utils.text import slugify
 
 def get_task_counts(user_id, as_json=False):
     task_counts = TaskAssignments.objects.filter(user_id=user_id).values('task__status').annotate(count=Count('task__id'))
-    task_status = {'To_do': 0, 'In_progress': 0, 'Completed': 0, 'Late': 0}
+    task_status = {'To_do': 0, 'In_progress': 0, 'Completed': 0}
     for item in task_counts:
         status = item['task__status'].replace(' ', '_').replace('-', '_')
         if status in task_status:
             task_status[status] = item['count']
-    return json.dumps(list(task_status.values())) if as_json else task_status
-
+    if as_json:
+        return mark_safe(json.dumps(list(task_status.values()), ensure_ascii=False))
+    return task_status
 
 def get_time_tracking(user_id, period='today', as_json=False):
     today = timezone.now().date()
@@ -32,17 +35,16 @@ def get_time_tracking(user_id, period='today', as_json=False):
         entries = TimeEntries.objects.filter(user_id=user_id, start_time__gte=week_start)
     total_hours = entries.filter(duration__isnull=False).aggregate(total=Sum('duration'))['total'] or 0
     if period == 'week' and as_json:
-        week_data = []
+        week_data = [0] * 7
         for i in range(7):
             day = week_start + timedelta(days=i)
             day_entries = entries.filter(start_time__date=day, duration__isnull=False)
             day_hours = day_entries.aggregate(total=Sum('duration'))['total'] or 0
-            week_data.append(day_hours)
-        return json.dumps(week_data)
+            week_data[i] = float(day_hours)
+        return mark_safe(json.dumps(week_data, ensure_ascii=False))
     hours = int(total_hours)
     minutes = int((total_hours - hours) * 60)
-    return f"{hours}h {minutes}m" if not as_json else json.dumps([total_hours])
-
+    return f"{hours}h {minutes}m" if not as_json else mark_safe(json.dumps([float(total_hours)], ensure_ascii=False))
 
 def get_kpi_snapshot(user_id, metric='completion'):
     kpi = EmployeeKPIs.objects.filter(user_id=user_id, time_period='monthly').first()
@@ -57,11 +59,6 @@ def get_kpi_snapshot(user_id, metric='completion'):
         completion = "0/0"
         percentage = 0
     return completion if metric == 'completion' else percentage
-
-
-def get_kpi_score(user):
-    latest_kpi = EmployeeKPIs.objects.filter(user=user).order_by('-id').first()
-    return latest_kpi.actual_value if latest_kpi and latest_kpi.actual_value else "0"
 
 
 def get_project_data(user):
@@ -86,40 +83,6 @@ def get_project_progress(user_id):
     ]
 
 
-def get_task_stats(user):
-    tasks = Tasks.objects.filter(task_assignments__user=user).distinct()
-    total_tasks = tasks.count()
-    completed_tasks = tasks.filter(status='Completed').count()
-    return {
-        'total': total_tasks,
-        'completed': completed_tasks,
-        'completion_rate': round(completed_tasks / total_tasks * 100, 2) if total_tasks else 0
-    }
-
-
-def get_goals_stats(user):
-    goals = Goals.objects.filter(user=user)
-    total_goals = goals.count()
-    achieved_goals = goals.filter(status='Achieved').count()
-    return {
-        'total': total_goals,
-        'achieved': achieved_goals,
-        'completion_rate': round(achieved_goals / total_goals * 100, 2) if total_goals else 0
-    }
-
-
-def get_goals_summary(user):
-    goals = Goals.objects.filter(user=user)
-    total_goals = goals.count()
-    achieved_goals = goals.filter(status='Achieved').count()
-    average_progress = goals.aggregate(models.Avg('achieved_percentage'))['achieved_percentage__avg'] or 0
-    return {
-        'total_goals': total_goals,
-        'achieved_goals': achieved_goals,
-        'average_progress': round(average_progress, 1)
-    }
-
-
 def get_ai_suggestions(user_id):
     return Tasks.objects.filter(
         task_assignments__user_id=user_id,
@@ -140,54 +103,77 @@ def get_personal_goals(user_id):
         'deadline': goal.deadline,
         'status': goal.status
     } for goal in goals]
+  
+  
+def get_project_time_allocation(user_id, as_json=False):
+    today = timezone.now().date()
+    week_start = today - timedelta(days=today.weekday())
+    entries = TimeEntries.objects.filter(
+        user_id=user_id,
+        start_time__gte=week_start
+    ).select_related('task__project')
+    
+    project_times = {}
+    for entry in entries:
+        if entry.task and entry.task.project:
+            project_name = escape(entry.task.project.name.strip())
+            project_name = slugify(project_name, allow_unicode=True)
+            duration = entry.duration or 0
+            project_times[project_name] = project_times.get(project_name, 0) + duration
+    data = {
+        'labels': list(project_times.keys()) or ['Không có dự án'],
+        'data': list(project_times.values()) or [1]
+    }
+    if as_json:
+        json_str = json.dumps(data, ensure_ascii=False)
+        return mark_safe(json_str)
+    return project_times
 
+def get_goals_progress(user_id, as_json=False):
+    goals = Goals.objects.filter(user_id=user_id).order_by('-deadline')[:5]
+    data = {
+        'labels': [slugify(escape(goal.name.strip()), allow_unicode=True) for goal in goals] or ['Không có mục tiêu'],
+        'data': [float(goal.achieved_percentage) for goal in goals] or [0]
+    }
+    if as_json:
+        json_str = json.dumps(data, ensure_ascii=False)
+        return mark_safe(json_str)
+    return data 
 
-def get_chart_data(user):
-    # Lấy dữ liệu hiệu suất theo tháng (12 tháng gần nhất)
-    now = timezone.now()
-    months = []
-    performance_data = []
-    
-    for i in range(12):
-        month = now - timedelta(days=30*i)
-        months.insert(0, month.strftime("%b %Y"))
-        
-        # Tính hiệu suất theo tháng (có thể thay bằng logic tính KPI thực tế)
-        start_date = month.replace(day=1)
-        end_date = (start_date + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-        
-        # Tính toán hiệu suất dựa trên task hoàn thành
-        completed_tasks = Tasks.objects.filter(
-            task_assignments__user=user,
-            status='Completed',
-            deadline__range=(start_date, end_date)
-        ).count()
-        
-        total_tasks = Tasks.objects.filter(
-            task_assignments__user=user,
-            deadline__range=(start_date, end_date)
-        ).count()
-        
-        performance = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
-        performance_data.insert(0, round(performance, 2))
-    
-    # Lấy dữ liệu phân bổ công việc
-    tasks = Tasks.objects.filter(task_assignments__user=user).distinct()
-    task_distribution_data = [
-        tasks.filter(status='Completed').count(),
-        tasks.filter(status='In progress').count(),
-        tasks.filter(status='Late').count(),
-        tasks.filter(status='To-do').count()
-    ]
-    
+def get_goals_summary(user):
+    goals = Goals.objects.filter(user=user)
+    total_goals = goals.count()
+    achieved_goals = goals.filter(status='Achieved').count()
+    average_progress = goals.aggregate(models.Avg('achieved_percentage'))['achieved_percentage__avg'] or 0
     return {
-        'performance_labels': json.dumps(months),
-        'performance_data': json.dumps(performance_data),
-        'task_distribution_labels': json.dumps(['Hoàn thành', 'Đang làm', 'Quá hạn', 'Chưa bắt đầu']),
-        'task_distribution_data': json.dumps(task_distribution_data)
+        'total_goals': total_goals,
+        'achieved_goals': achieved_goals,
+        'average_progress': round(average_progress, 1)
+    }
+    
+    
+def get_task_stats(user):
+    tasks = Tasks.objects.filter(task_assignments__user=user).distinct()
+    total_tasks = tasks.count()
+    completed_tasks = tasks.filter(status='Completed').count()
+    return {
+        'total': total_tasks,
+        'completed': completed_tasks,
+        'completion_rate': round(completed_tasks / total_tasks * 100, 2) if total_tasks else 0
     }
 
 
+def get_goals_stats(user):
+    goals = Goals.objects.filter(user=user)
+    total_goals = goals.count()
+    achieved_goals = goals.filter(status='Achieved').count()
+    return {
+        'total': total_goals,
+        'achieved': achieved_goals,
+        'completion_rate': round(achieved_goals / total_goals * 100, 2) if total_goals else 0
+    }
+    
+    
 def handle_check_in(user, location, image_data):
     """
     Xử lý logic check-in, lưu thông tin vào database.
@@ -211,7 +197,7 @@ def handle_check_in(user, location, image_data):
                 image_data = image_data.split(',')[1]
             img_bytes = base64.b64decode(image_data)
             img = Image.open(io.BytesIO(img_bytes))
-            img = img.resize((320, 240), LANCZOS) # type: ignore  # noqa: F821
+            img = img.resize((320, 240), Image.Resampling.LANCZOS) # type: ignore  # noqa: F821
             buffer = io.BytesIO()
             img.save(buffer, format="JPEG", quality=70)
             img_name = f"checkin_{user.username}_{today}.jpg"
@@ -243,7 +229,7 @@ def handle_check_out(user, location, image_data):
                 image_data = image_data.split(',')[1]
             img_bytes = base64.b64decode(image_data)
             img = Image.open(io.BytesIO(img_bytes))
-            img = img.resize((320, 240), LANCZOS)  # type: ignore # noqa: F821
+            img = img.resize((320, 240), Image.Resampling.LANCZOS)
             buffer = io.BytesIO()
             img.save(buffer, format="JPEG", quality=70)
             img_name = f"checkout_{user.username}_{today}.jpg"

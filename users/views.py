@@ -14,21 +14,20 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.decorators.http import require_POST
 from .models import Goals, Users
 from .utils import (
-    get_ai_suggestions,
-    get_chart_data,
-    get_goals_stats,
-    get_goals_summary,
-    get_kpi_score,
+    get_task_counts,
+    get_time_tracking,
     get_kpi_snapshot,
-    get_personal_goals,
-    get_project_data,
     get_project_progress,
     get_recent_tasks,
-    get_task_counts,
-    get_task_stats,
-    get_time_tracking,
+    get_personal_goals,
+    get_project_time_allocation,
+    get_goals_progress,
     handle_check_in,
-    handle_check_out
+    handle_check_out,
+    get_goals_summary,
+    get_task_stats,
+    get_goals_stats,
+    get_project_data,
 )
 
 
@@ -195,19 +194,21 @@ def check_out(request):
 def index(request):
     user = request.user
     context = {
-        "user": user,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "avatar_url": user.avatar_url,  
         "task_counts": get_task_counts(user.id),
         "task_chart_data": get_task_counts(user.id, as_json=True),
         "today_time": get_time_tracking(user.id, period="today"),
         "week_time": get_time_tracking(user.id, period="week"),
         "week_chart_data": get_time_tracking(user.id, period="week", as_json=True),
         "kpi_completion": get_kpi_snapshot(user.id, "completion"),
-        "kpi_percentage": get_kpi_snapshot(user.id, "percentage"),
+        "kpi_percentage": round(float(get_kpi_snapshot(user.id, "percentage")), 2),
         "project_progress": get_project_progress(user.id),
-        "suggestions": get_ai_suggestions(user.id),
         "recent_tasks": get_recent_tasks(user.id),
         "personal_goals": get_personal_goals(user.id),
-        "now": timezone.now().date(),
+        "project_time_allocation": get_project_time_allocation(user.id, as_json=True),
+        "goals_progress": get_goals_progress(user.id, as_json=True),
     }
     return render(request, "main/pages/index.html", context)
 
@@ -275,7 +276,6 @@ def profile(request):
     context = {
         "user": user,
         "task_stats": get_task_stats(user),
-        "kpi_score": get_kpi_score(user),
         "goals": get_goals_stats(user),
         "projects": get_project_data(user),
         "time_tracking": get_time_tracking(user.id),

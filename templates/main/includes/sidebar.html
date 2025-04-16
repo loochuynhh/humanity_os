@@ -22,18 +22,18 @@
     </div>
 
     <!-- Logo and Branding -->
-    <div class="text-center mb-4 fade-in-down">
+    <div class="text-center mb-4">
       <h6 class="fw-bold text-white">Humanity OS</h6>
       <small class="text-white-50">Employee Dashboard</small>
     </div>
 
     <!-- User Info -->
     <div
-      class="d-flex align-items-center px-3 mb-4 fade-in-down"
+      class="d-flex align-items-center px-3 mb-4"
       style="animation-delay: 0.2s"
     >
       <img
-        src="{% static 'assets/img/profile.jpg' %}"
+        src="{{ user.avatar_url }}"
         alt="Avatar"
         class="rounded-circle me-2"
         width="40"
@@ -131,12 +131,6 @@
             </li>
           </ul>
         </div>
-      </li>
-      <!-- Dark Mode Toggle -->
-      <li class="nav-item">
-        <a class="nav-link" href="#" id="darkModeToggle">
-          <i class="bi bi-moon-stars me-2"></i>Chế độ tối
-        </a>
       </li>
       <li class="nav-item mt-5">
         <a class="nav-link text-danger" href="{% url 'users:logout' %}">

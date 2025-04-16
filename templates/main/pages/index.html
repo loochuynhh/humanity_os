@@ -26,14 +26,14 @@
         <div class="col-12">
           <div class="card shadow-sm bg-gradient-primary text-white hover-card">
             <div class="card-body d-flex align-items-center flex-column flex-md-row">
-              <img src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}{% static 'assets/img/profile.jpg' %}{% endif %}" alt="Avatar" class="rounded-circle me-3 mb-3 mb-md-0" width="60" height="60" />
-              <div class="text-center text-md-start">
-                <h4 class="fw-bold mb-1">Xin chào, {{ user.first_name }} {{ user.last_name }}!</h4>
-                <p class="mb-0">Chào mừng bạn đến với Humanity OS - Hôm nay là ngày {{ now|date:"d/m/Y" }}</p>
-                {% if today_time %}
-                    <p>Bạn đã làm việc <strong>{{ today_time }}</strong> hôm nay.</p>
-                {% endif %}
-            </div>
+                <img src="{{ avatar_url }}" alt="Avatar" class="rounded-circle me-3 mb-3 mb-md-0" width="60" height="60" />
+                <div class="text-center text-md-start">
+                    <h4 class="fw-bold mb-1">Xin chào, {{ first_name }} {{ last_name }}!</h4>
+                    <p class="mb-0">Chào mừng bạn đến với Humanity OS - Hôm nay là ngày {% now "d/m/Y" %}</p>
+                    {% if today_time %}
+                        <p>Bạn đã làm việc <strong>{{ today_time }}</strong> hôm nay.</p>
+                    {% endif %}
+                </div>
             </div>
           </div>
         </div>
@@ -59,7 +59,7 @@
                   <h4 class="fw-bold text-success">{{ task_counts.Completed }}</h4>
                 </div>
               </div>
-              <canvas id="taskChart" height="100" class="mt-3"></canvas>
+              <canvas id="taskChart" height="100" class="mt-3" data-chart-data="{{ task_chart_data|safe }}"></canvas>
               <a href="{% url 'projects:all_tasks' %}" class="btn btn-outline-primary w-100 mt-3">Xem tất cả Tasks</a>
             </div>
           </div>
@@ -72,7 +72,7 @@
               <h5 class="card-title fw-bold"><i class="bi bi-clock me-2"></i>Thời gian làm việc</h5>
               <p class="text-muted">Hôm nay: <span class="fw-bold">{{ today_time }}</span></p>
               <p class="text-muted">Tuần này: <span class="fw-bold">{{ week_time }}</span></p>
-              <canvas id="timeChart" height="100" class="mt-3"></canvas>
+              <canvas id="timeChart" height="100" class="mt-3" data-chart-data="{{ week_chart_data|safe }}"></canvas>
             </div>
           </div>
         </div>
@@ -94,27 +94,32 @@
           </div>
         </div>
 
-        <!-- Productivity Chart -->
         <div class="col-12 col-md-6">
             <div class="card shadow-sm hover-card">
                 <div class="card-body">
-                <h5 class="card-title fw-bold"><i class="bi bi-speedometer2 me-2"></i>Năng suất theo giờ</h5>
-                <canvas id="productivityChart" height="200"></canvas>
-                <a href="{% url 'projects:time_tracking' %}" class="btn btn-outline-primary w-100 mt-3">Xem chi tiết thời gian</a>
+                    <h5 class="card-title fw-bold"><i class="bi bi-pie-chart me-2"></i>Phân bổ thời gian theo dự án</h5>
+                    <canvas id="projectTimeChart" height="200"></canvas>
+                    <a href="{% url 'projects:time_tracking' %}" class="btn btn-outline-primary w-100 mt-3">Xem chi tiết thời gian</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 col-md-6">
+            <div class="card shadow-sm hover-card">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold"><i class="bi bi-target me-2"></i>Tiến độ mục tiêu cá nhân</h5>
+                    <canvas id="goalsProgressChart" height="200"></canvas>
+                    <a href="{% url 'users:goals' %}" class="btn btn-outline-primary w-100 mt-3">Xem chi tiết mục tiêu</a>
                 </div>
             </div>
         </div>
 
-        <!-- KPI Trends Card -->
-        <div class="col-12 col-md-6">
-          <div class="card shadow-sm hover-card">
-            <div class="card-body">
-              <h5 class="card-title fw-bold"><i class="bi bi-bar-chart me-2"></i>Xu hướng KPI 6 tháng</h5>
-              <canvas id="kpiTrendChart" height="200"></canvas>
-              <a href="{% url 'kpis:personal_kpis' %}" class="btn btn-outline-primary w-100 mt-3">Xem chi tiết KPI</a>
-            </div>
-          </div>
-        </div>
+        <script>
+            window.djangoChartData = {
+                projectTimeChart: {{ project_time_allocation|safe|default:'{"labels":["Không có dự án"],"data":[1]}' }},
+                goalsProgressChart: {{ goals_progress|safe|default:'{"labels":["Không có mục tiêu"],"data":[0]}' }}
+            };
+        </script>
 
         <!-- Recent Tasks Card -->
         <div class="col-12">
