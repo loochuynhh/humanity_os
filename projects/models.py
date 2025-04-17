@@ -1,5 +1,6 @@
 # projects/models.py
 from django.db import models
+from django.utils import timezone
 
 
 class Projects(models.Model):
@@ -34,17 +35,24 @@ class Tasks(models.Model):
         ("Completed", "Completed"),
         ("Late", "Late"),
     ]
-    
+
+    DIFFICULTY_CHOICES = [
+        ("Easy", "Easy"),
+        ("Medium", "Medium"),
+        ("Hard", "Hard"),
+    ]
+
     project = models.ForeignKey("projects.Projects", on_delete=models.CASCADE, related_name="tasks")
     title = models.CharField(max_length=255)
     description = models.TextField()
     deadline = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="To-do")
-    difficulty = models.CharField(max_length=20, null=True, blank=True)
+    difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default="Medium")  # Bỏ null=True
     estimated_time = models.FloatField(null=True, blank=True)
     github_link = models.URLField(null=True, blank=True)
-    total_time = models.FloatField(default=0.0)  # Thêm trường mới
-    is_tracking = models.BooleanField(default=False)  # Thêm trường mới
+    total_time = models.FloatField(default=0.0)
+    is_tracking = models.BooleanField(default=False)
+    notes = models.TextField(null=True, blank=True)
 
     class Meta:
         db_table = "tasks"
@@ -55,6 +63,14 @@ class Tasks(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def is_overdue(self):
+        return self.deadline < timezone.now().date() and self.status != "Completed"
+
+    @property
+    def days_until_deadline(self):
+        return (self.deadline - timezone.now().date()).days
 
 
 class TaskAssignments(models.Model):
@@ -74,7 +90,7 @@ class TimeEntries(models.Model):
     task = models.ForeignKey("projects.Tasks", on_delete=models.CASCADE, related_name="time_entries")
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True, blank=True)
-    duration = models.FloatField(null=True, blank=True)  
+    duration = models.FloatField(null=True, blank=True)
 
     class Meta:
         db_table = "time_entries"
@@ -86,6 +102,27 @@ class TimeEntries(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.task.title} ({self.start_time})"
+
+
+class DeadlineExtensionRequest(models.Model):
+    STATUS_CHOICES = [
+        ("Pending", "Pending"),
+        ("Approved", "Approved"),
+        ("Rejected", "Rejected"),
+    ]
+
+    task = models.ForeignKey("projects.Tasks", on_delete=models.CASCADE, related_name="deadline_requests")
+    requested_by = models.ForeignKey("users.Users", on_delete=models.CASCADE, related_name="deadline_requests")
+    requested_deadline = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Pending")
+    reason = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "deadline_extension_requests"
+
+    def __str__(self):
+        return f"Request for {self.task.title} by {self.requested_by.username}"
 
 
 class TeamProjectMembership(models.Model):

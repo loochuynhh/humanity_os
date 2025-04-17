@@ -1,0 +1,536 @@
+/* ==========================================================================
+   DataTables Custom Styles for my_tasks.html
+   ========================================================================== */
+
+/* --------------------------------------
+   General Styles
+   -------------------------------------- */
+   body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f4f6f9;
+}
+
+/* --------------------------------------
+   General Table Wrapper
+   -------------------------------------- */
+#tasksTable_wrapper {
+    font-family: 'Roboto', sans-serif;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+/* Show table with fade-in effect after loading */
+#tasksTable_wrapper.loaded {
+    opacity: 1;
+}
+
+/* --------------------------------------
+   Filter and Length Controls (Project Filter, Status Filter, Reset Button)
+   -------------------------------------- */
+#projectFilter, #statusFilter, #resetFilter {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+    border-radius: 0.375rem;
+    border: 1px solid #e0e6ed;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+#projectFilter, #statusFilter {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23495057'%3E%3Cpath d='M4.646 6.646a.5.5 0 0 1 .708 0L8 9.293l2.646-2.647a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 12px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+#projectFilter:hover, #statusFilter:hover, #resetFilter:hover {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+}
+
+#projectFilter:focus, #statusFilter:focus {
+    border-color: #007bff;
+    background-color: #fff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+    outline: none;
+}
+
+/* Card containing filters */
+.card.shadow-sm {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s ease;
+}
+
+.card.shadow-sm:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* --------------------------------------
+   Table Styles
+   -------------------------------------- */
+/* Table container */
+#tasksTable {
+    border: 1px solid #dee2e6;
+    border-collapse: collapse;
+}
+
+/* Table header */
+#tasksTable thead th {
+    padding: 1rem 0.75rem;
+    background: linear-gradient(180deg, #e6f0fa 0%, #c3e0ff 100%);
+    border-bottom: 2px solid #dee2e6;
+    border-right: 1px solid #dee2e6;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #343a40;
+    letter-spacing: 0.05em;
+    position: relative;
+}
+
+#tasksTable thead th:last-child {
+    border-right: none;
+}
+
+/* Table body rows */
+#tasksTable tbody tr {
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#tasksTable tbody tr:hover {
+    background-color: #f1f3f5;
+    transform: translateY(-1px);
+}
+
+/* Table body cells */
+#tasksTable tbody td {
+    padding: 0.75rem;
+    vertical-align: middle;
+    font-size: 0.875rem;
+    color: #343a40;
+    border-right: 1px solid #dee2e6;
+}
+
+#tasksTable tbody td:last-child {
+    border-right: none;
+}
+
+/* --------------------------------------
+   Sorting Arrows
+   -------------------------------------- */
+table.dataTable thead th.sorting,
+table.dataTable thead th,
+table.dataTable thead th.sorting_asc,
+table.dataTable thead th.sorting_desc {
+    padding-right: 2rem;
+    background-image: none !important;
+    cursor: pointer;
+}
+
+table.dataTable thead th.sorting::after {
+    content: '';
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%239aa0a6'%3E%3Cpath d='M8 4a.5.5 0 0 1 .5.5v7.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 .708-.708L7.5 12.293V4.5A.5.5 0 0 1 8 4z'/%3E%3Cpath d='M8 12a.5.5 0 0 1-.5-.5V3.707L5.354 5.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 3.707V11.5a.5.5 0 0 1-.5.5z'/%3E%3C/svg%3E") no-repeat center center;
+    background-size: 10px;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+}
+
+table.dataTable thead th.sorting_asc::after {
+    content: '';
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23007bff'%3E%3Cpath d='M8 4a.5.5 0 0 1 .5.5v7.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 .708-.708L7.5 12.293V4.5A.5.5 0 0 1 8 4z'/%3E%3C/svg%3E") no-repeat center center;
+    background-size: 10px;
+    opacity: 1;
+}
+
+table.dataTable thead th.sorting_desc::after {
+    content: '';
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23007bff'%3E%3Cpath d='M8 12a.5.5 0 0 1-.5-.5V3.707L5.354 5.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 3.707V11.5a.5.5 0 0 1-.5.5z'/%3E%3C/svg%3E") no-repeat center center;
+    background-size: 10px;
+    opacity: 1;
+}
+
+/* --------------------------------------
+   Status Badges (Cột Trạng thái)
+   -------------------------------------- */
+#tasksTable .badge {
+    display: inline-block;
+    min-width: 90px;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+    border-radius: 1rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#tasksTable .badge:hover {
+    transform: scale(1.05);
+}
+
+#tasksTable .badge.bg-success {
+    background-color: #28a745 !important;
+}
+
+#tasksTable .badge.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+#tasksTable .badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #343a40 !important;
+}
+
+#tasksTable .badge.bg-primary {
+    background-color: #007bff !important;
+}
+
+/* --------------------------------------
+   Progress Bar (Cột Tiến độ)
+   -------------------------------------- */
+#tasksTable .progress {
+    height: 6px;
+    border-radius: 3px;
+    background-color: #e9ecef;
+}
+
+#tasksTable .progress-bar {
+    transition: width 0.3s ease;
+}
+
+#tasksTable .progress-bar.bg-success {
+    background-color: #28a745;
+}
+
+#tasksTable .progress-bar.bg-danger {
+    background-color: #dc3545;
+}
+
+#tasksTable .progress-bar.bg-info {
+    background-color: #17a2b8;
+}
+
+/* --------------------------------------
+   Action Buttons (Cột Hành động)
+   -------------------------------------- */
+#tasksTable .btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#tasksTable .btn-sm:hover {
+    transform: translateY(-1px);
+}
+
+#tasksTable .btn-outline-primary {
+    border-color: #007bff;
+    color: #007bff;
+}
+
+#tasksTable .btn-outline-primary:hover {
+    background-color: #007bff;
+    color: #fff;
+}
+
+#tasksTable .btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: #fff;
+}
+
+#tasksTable .btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+#tasksTable .btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: #fff;
+}
+
+#tasksTable .btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
+#tasksTable .form-select-sm {
+    padding: 0.375rem 1.75rem 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23495057'%3E%3Cpath d='M4.646 6.646a.5.5 0 0 1 .708 0L8 9.293l2.646-2.647a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 10px;
+}
+
+/* --------------------------------------
+   Pagination (Phân trang)
+   -------------------------------------- */
+#tasksTable_wrapper .dataTables_paginate {
+    margin-top: 0.75rem;
+}
+
+#tasksTable_wrapper .dataTables_paginate .pagination {
+    justify-content: flex-end;
+    gap: 0.15rem;
+}
+
+#tasksTable_wrapper .dataTables_paginate .page-item {
+    padding: 0;
+    margin: 0;
+}
+
+#tasksTable_wrapper .dataTables_paginate .paginate_button.page-item .page-link {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.65rem;
+    line-height: 1.5;
+    color: #007bff;
+    background-color: #fff;
+    border: 1px solid #e0e6ed;
+    border-radius: 0.2rem;
+    transition: all 0.3s ease;
+}
+
+#tasksTable_wrapper .dataTables_paginate .paginate_button.page-item .page-link:hover {
+    background-color: #d6e9ff;
+    border-color: #b3d4ff;
+    color: #004085;
+}
+
+#tasksTable_wrapper .dataTables_paginate .paginate_button.page-item.active .page-link {
+    background-color: #4a90e2;
+    border-color: #4a90e2;
+    color: #fff;
+}
+
+#tasksTable_wrapper .dataTables_paginate .paginate_button.page-item.disabled .page-link {
+    color: #adb5bd;
+    background-color: #f8f9fa;
+    border-color: #e0e6ed;
+    cursor: not-allowed;
+}
+
+#tasksTable_wrapper .dataTables_paginate .page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: #fff;
+}
+
+#tasksTable_wrapper .dataTables_paginate .page-item.disabled .page-link {
+    color: #adb5bd;
+    background-color: #f8f9fa;
+    border-color: #e0e6ed;
+    cursor: not-allowed;
+}
+
+/* Pagination info */
+#tasksTable_wrapper .dataTables_info {
+    padding-top: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6c757d;
+}
+
+/* --------------------------------------
+   Task Detail Modal (Overlay)
+   -------------------------------------- */
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out;
+    transform: translateY(-50px);
+}
+
+.modal.show .modal-dialog {
+    transform: translateY(0);
+}
+
+.modal-content {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    background-color: #fff;
+}
+
+.modal-header {
+    background: linear-gradient(90deg, #007bff 0%, #0056b3 100%);
+    color: #fff;
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+    padding: 1.25rem;
+}
+
+.modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal-header .btn-close {
+    filter: invert(1);
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.modal-header .btn-close:hover {
+    opacity: 1;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-body .form-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+}
+
+.modal-body .form-control,
+.modal-body .form-select {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    border: 1px solid #e0e6ed;
+    transition: all 0.3s ease;
+}
+
+.modal-body .form-control:focus,
+.modal-body .form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+    outline: none;
+}
+
+.modal-body textarea.form-control {
+    resize: vertical;
+}
+
+#timeEntries {
+    background-color: #f8f9fa;
+    font-size: 0.875rem;
+    color: #343a40;
+}
+
+#timeEntries ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#timeEntries li {
+    padding: 0.25rem 0;
+    border-bottom: 1px solid #e0e6ed;
+}
+
+#timeEntries li:last-child {
+    border-bottom: none;
+}
+
+.modal-footer {
+    padding: 1rem;
+    border-top: 1px solid #e0e6ed;
+}
+
+.modal-footer .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 0.375rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.modal-footer .btn:hover {
+    transform: translateY(-1px);
+}
+
+.modal-footer .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.modal-footer .btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #004085;
+}
+
+.modal-footer .btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #343a40;
+}
+
+.modal-footer .btn-warning:hover {
+    background-color: #e0a800;
+    border-color: #d39e00;
+}
+
+.modal-footer .btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.modal-footer .btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+}
+
+/* --------------------------------------
+   Animation Effects
+   -------------------------------------- */
+.fade-in-down {
+    animation: fadeInDown 0.5s ease-in-out;
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-in-out;
+}
+
+@keyframes fadeInDown {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

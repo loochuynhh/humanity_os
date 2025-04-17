@@ -62,22 +62,18 @@
           href="#"
           data-bs-toggle="collapse"
           data-bs-target="#tasksSubmenu"
-          aria-expanded="false"
+          aria-expanded="{% if request.resolver_match.url_name in 'all_tasks,my_tasks' %}true{% else %}false{% endif %}"
         >
           <i class="bi bi-kanban me-2"></i>Tasks
-          <span class="badge bg-danger ms-2">3</span>
           <i class="bi bi-chevron-down float-end mt-1 toggle-icon"></i>
         </a>
-        <div class="collapse" id="tasksSubmenu">
+        <div class="collapse {% if request.resolver_match.url_name in 'all_tasks,my_tasks' %}show{% endif %}" id="tasksSubmenu">
             <ul class="nav flex-column ms-3">
                 <li class="nav-item">
-                    <a class="nav-link sub-link" href="{% url 'projects:all_tasks' %}">Tất cả Tasks</a>
+                    <a class="nav-link sub-link {% if request.resolver_match.url_name == 'all_tasks' %}active{% endif %}" href="{% url 'projects:all_tasks' %}">Tất cả Tasks</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link sub-link" href="{% url 'projects:my_tasks' %}">Task của tôi</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link sub-link" href="{% url 'projects:overdue_tasks' %}">Task quá hạn</a>
+                    <a class="nav-link sub-link {% if request.resolver_match.url_name == 'my_tasks' %}active{% endif %}" href="{% url 'projects:my_tasks' %}">Task của tôi</a>
                 </li>
             </ul>
         </div>
@@ -85,11 +81,10 @@
       <li class="nav-item">
         <a class="nav-link {% if request.resolver_match.url_name == 'time_tracking' %}active{% endif %}" href="{% url 'projects:time_tracking' %}">
           <i class="bi bi-clock me-2"></i>Time Tracking
-          <span class="badge bg-success ms-2" id="total-time-today">{{ total_time_today|default:"0h 0m" }}</span>
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#performanceSubmenu" aria-expanded="false">
+        <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#performanceSubmenu" aria-expanded="{% if request.resolver_match.url_name in 'personal_kpis,manager_feedback' %}true{% else %}false{% endif %}">
           <i class="bi bi-graph-up me-2"></i>Performance
           <i class="bi bi-chevron-down float-end mt-1 toggle-icon"></i>
         </a>
@@ -107,15 +102,14 @@
       <li class="nav-item">
         <a class="nav-link {% if request.resolver_match.url_name == 'goals' %}active{% endif %}" href="{% url 'users:goals' %}">
           <i class="bi bi-star me-2"></i>Goals
-          <span class="badge bg-warning ms-2">{{ achieved_goals }}/{{ total_goals }}</span>
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#projectsSubmenu" aria-expanded="false">
+        <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#projectsSubmenu" aria-expanded="{% if request.resolver_match.url_name in 'all_projects,my_projects,team_members,project_progress' %}true{% else %}false{% endif %}">
           <i class="bi bi-folder me-2"></i>Dự án
           <i class="bi bi-chevron-down float-end mt-1 toggle-icon"></i>
         </a>
-        <div class="collapse {% if 'projects' in request.resolver_match.url_name %}show{% endif %}" id="projectsSubmenu">
+        <div class="collapse {% if request.resolver_match.url_name in 'all_projects,my_projects,team_members,project_progress' %}show{% endif %}" id="projectsSubmenu">
           <ul class="nav flex-column ms-3">
             <li class="nav-item">
               <a class="nav-link sub-link {% if request.resolver_match.url_name == 'all_projects' %}active{% endif %}" href="{% url 'projects:all_projects' %}">Tất cả dự án</a>
@@ -145,34 +139,3 @@
     </div>
   </div>
 </nav>
-
-
-{% block extra_css %}
-    <link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
-{% endblock %}
-
-<script>
-  // Dark Mode Toggle
-  document
-    .getElementById("darkModeToggle")
-    .addEventListener("click", function (e) {
-      e.preventDefault();
-      const body = document.body;
-      if (body.getAttribute("data-theme") === "dark") {
-        body.removeAttribute("data-theme");
-        localStorage.setItem("theme", "light");
-        this.innerHTML = '<i class="bi bi-moon-stars me-2"></i>Chế độ tối';
-      } else {
-        body.setAttribute("data-theme", "dark");
-        localStorage.setItem("theme", "dark");
-        this.innerHTML = '<i class="bi bi-sun me-2"></i>Chế độ sáng';
-      }
-    });
-
-  // Load theme from localStorage
-  if (localStorage.getItem("theme") === "dark") {
-    document.body.setAttribute("data-theme", "dark");
-    document.getElementById("darkModeToggle").innerHTML =
-      '<i class="bi bi-sun me-2"></i>Chế độ sáng';
-  }
-</script>

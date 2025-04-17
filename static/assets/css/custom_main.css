@@ -349,3 +349,30 @@ body {
     background-color: #0056b3;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
+
+/* Common Styles */
+.progress-thin {
+    height: 8px;
+}
+
+.nav-tabs .nav-link {
+    color: #495057;
+    font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+    color: #007bff;
+    border-color: #007bff;
+}
+
+.card {
+    border-radius: 0.5rem;
+}
+
+.list-group-item {
+    transition: background-color 0.2s;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+}

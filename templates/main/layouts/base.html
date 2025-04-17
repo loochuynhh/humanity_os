@@ -12,10 +12,14 @@
     <!-- Font Awesome CSS -->
     <link rel="stylesheet" href="{% static 'assets/fonts/all.min.css' %}">
 
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+
     <!-- Custom CSS -->
-    {% block extra_css %}
-        <link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
-    {% endblock %}
+    <link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
+    
+    <!-- Block for additional CSS -->
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
     <!-- Main Content -->
@@ -27,6 +31,7 @@
     <script src="{% static 'assets/js/core/bootstrap.min.js' %}"></script>
     <script src="{% static 'assets/js/plugin/sweetalert/sweetalert2.all.min.js' %}"></script>
     <script src="{% static 'assets/js/plugin/chart.js/chart.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
     
     <!-- Script xử lý thông báo bằng SweetAlert2 -->
     <script>

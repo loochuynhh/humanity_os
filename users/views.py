@@ -25,14 +25,13 @@ from .utils import (
     handle_check_in,
     handle_check_out,
     get_goals_summary,
-    get_task_stats,
     get_goals_stats,
     get_project_data,
 )
 
 
 def admin_required(view_func):
-    @login_required(login_url="login")
+    @login_required(login_url="users:login")
     def wrapper(request, *args, **kwargs):
         if not (request.user.is_staff or request.user.is_superuser):
             return HttpResponseForbidden("Bạn không có quyền truy cập.")
@@ -54,7 +53,7 @@ def login_view(request):
     return render(request, "main/pages/users/login.html")
 
 
-@login_required(login_url="login")
+@login_required(login_url="users:login")
 def logout_view(request):
     logout(request)
     messages.success(request, "Bạn đã đăng xuất!")
@@ -88,25 +87,35 @@ def forgot_password(request):
     return render(request, "main/pages/users/forgot_password.html")
 
 
-@login_required(login_url="login")
+@login_required(login_url="users:login") 
 def change_password(request):
     if request.method == "POST":
         current_password = request.POST.get("current_password")
         new_password = request.POST.get("new_password")
         confirm_password = request.POST.get("confirm_password")
         user = request.user
+        
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
         if not user.check_password(current_password):
+            if is_ajax:
+                return JsonResponse({"success": False, "message": "Mật khẩu hiện tại không chính xác!"})
             messages.error(request, "Mật khẩu hiện tại không chính xác!")
+            return redirect("users:profile")
         elif new_password != confirm_password:
+            if is_ajax:
+                return JsonResponse({"success": False, "message": "Mật khẩu mới không khớp!"})
             messages.error(request, "Mật khẩu mới không khớp!")
+            return redirect("users:profile")
         else:
             user.set_password(new_password)
             user.save()
             logout(request)
-            messages.success(
-                request, "Mật khẩu đã được thay đổi. Vui lòng đăng nhập lại!"
-            )
-            return redirect("login")
+            if is_ajax:
+                return JsonResponse({"success": True, "message": "Mật khẩu đã được thay đổi. Vui lòng đăng nhập lại!"})
+            messages.success(request, "Mật khẩu đã được thay đổi. Vui lòng đăng nhập lại!")
+            return redirect("users:login")
+        
     return render(request, "main/pages/users/change_password.html")
 
 
@@ -122,7 +131,7 @@ def reset_password(request, uidb64, token):
                     user.set_password(new_password)
                     user.save()
                     messages.success(request, "Mật khẩu đã được đặt lại!")
-                    return redirect("login")
+                    return redirect("users:login")
                 else:
                     messages.error(request, "Mật khẩu không khớp!")
             else:
@@ -153,7 +162,7 @@ def create_user(request):
             user.set_password(password)
             user.save()
             messages.success(request, "Tài khoản đã được tạo!")
-            return redirect("user_list")
+            return redirect("users:user_list")
     return render(request, "users/create_user.html")
 
 
@@ -275,10 +284,8 @@ def profile(request):
     user = request.user
     context = {
         "user": user,
-        "task_stats": get_task_stats(user),
         "goals": get_goals_stats(user),
         "projects": get_project_data(user),
-        "time_tracking": get_time_tracking(user.id),
         "recent_tasks": get_recent_tasks(user.id),
         "personal_goals": get_personal_goals(user.id),
     }
