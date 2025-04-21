@@ -7,14 +7,8 @@
    -------------------------------------- */
    #tasksTable_wrapper {
     font-family: 'Roboto', sans-serif;
-    opacity: 0;
-    transition: opacity 0.5s ease-in-out;
 }
 
-/* Show table with fade-in effect after loading */
-#tasksTable_wrapper.loaded {
-    opacity: 1;
-}
 
 /* --------------------------------------
    Filter and Length Controls (Xem 10 mục & Tìm)
@@ -471,4 +465,54 @@ table.dataTable thead th.sorting_desc::after {
 
 .modal-footer .btn:hover {
     transform: translateY(-1px);
+}
+.task-detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.task-header {
+    background: linear-gradient(90deg, #007bff, #0056b3);
+    border-radius: 0.75rem 0.75rem 0 0;
+}
+
+.task-body {
+    padding: 2rem;
+    border-radius: 0 0 0.75rem 0.75rem;
+}
+
+.task-section {
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    border-bottom: 2px solid #e0e6ed;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.progress-bar {
+    transition: width 0.3s ease-in-out;
+}
+
+.time-entries-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.badge {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+}
+
+.avatar:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    transition: box-shadow 0.3s ease-in-out;
 }

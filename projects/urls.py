@@ -10,7 +10,7 @@ urlpatterns = [
     path('tasks/request-deadline-extension/', views.request_deadline_extension, name='request_deadline_extension'),
     path('tasks/extend-deadline/<int:task_id>/', views.extend_deadline, name='extend_deadline'),
     path("time-tracking/", views.time_tracking, name="time_tracking"),
-    
+    path('tasks/<int:task_id>/', views.task_detail, name='task_detail'),
     path('all/', views.all_projects, name='all_projects'),
     path('my-projects/', views.my_projects, name='my_projects'),
     path('team-members/', views.team_members, name='team_members'),

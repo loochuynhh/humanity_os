@@ -2,7 +2,7 @@
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.db.models import Sum
 from django.views.decorators.http import require_POST, require_http_methods
@@ -92,7 +92,6 @@ def project_progress_data(request):
     }
     return JsonResponse(progress_data)
 
-
 @login_required
 def my_tasks(request):
     tasks = Tasks.objects.filter(task_assignments__user=request.user).select_related('project').prefetch_related('task_assignments__user')
@@ -101,24 +100,15 @@ def my_tasks(request):
     tasks_with_details = []
     for task in tasks:
         warning = check_deadline_warnings(task)
-        time_entries = TimeEntries.objects.filter(task=task, user=request.user).order_by('-start_time')[:5]  # Lấy 5 entries gần nhất
-        # Tính phần trăm tiến độ
+        time_entries = TimeEntries.objects.filter(task=task, user=request.user).order_by('-start_time')[:5]
         progress_percentage = 0
-        if task.estimated_time and task.estimated_time > 0:  # Kiểm tra để tránh chia cho 0
+        if task.estimated_time and task.estimated_time > 0:
             progress_percentage = (task.total_time / task.estimated_time) * 100
-            progress_percentage = min(100, max(0, round(progress_percentage)))  # Giới hạn trong khoảng 0-100
-        # Chuẩn bị dữ liệu time_entries để truyền vào HTML
-        time_entries_html = ""
-        for entry in time_entries:
-            end_time = entry.end_time.strftime("%d/%m/%Y %H:%M") if entry.end_time else "Đang tracking"
-            # Định dạng duration bằng Python
-            duration = round(float(entry.duration), 1) if entry.duration is not None else 0.0
-            time_entries_html += f'<li>{entry.start_time.strftime("%d/%m/%Y %H:%M")} - {end_time} ({duration} giờ)</li>'
+            progress_percentage = min(100, max(0, round(progress_percentage)))
         tasks_with_details.append({
             'task': task,
             'warning': warning,
             'time_entries': time_entries,
-            'time_entries_html': time_entries_html,  # Dữ liệu HTML để JavaScript sử dụng
             'progress_percentage': progress_percentage,
         })
     return render(request, 'main/pages/projects/my_tasks.html', {
@@ -128,6 +118,23 @@ def my_tasks(request):
         'now': timezone.now().date()
     })
 
+@login_required
+def task_detail(request, task_id):
+    task = get_object_or_404(Tasks.objects.select_related('project').prefetch_related('task_assignments__user'), 
+                             id=task_id, task_assignments__user=request.user)
+    time_entries = TimeEntries.objects.filter(task=task, user=request.user).order_by('-start_time')[:10]
+    progress_percentage = 0
+    if task.estimated_time and task.estimated_time > 0:
+        progress_percentage = (task.total_time / task.estimated_time) * 100
+        progress_percentage = min(100, max(0, round(progress_percentage)))
+    context = {
+        'task': task,
+        'time_entries': time_entries,
+        'progress_percentage': progress_percentage,
+        'status_choices': Tasks.STATUS_CHOICES,
+        'difficulty_choices': Tasks.DIFFICULTY_CHOICES,
+    }
+    return render(request, 'main/pages/projects/task_detail.html', context)
 
 @require_POST
 @login_required
