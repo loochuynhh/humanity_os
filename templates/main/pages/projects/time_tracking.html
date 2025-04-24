@@ -1,6 +1,11 @@
 {% extends 'main/layouts/base.html' %}
 {% load static %}
+
 {% block title %}Time Tracking - Humanity OS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/css/projects/time_tracking.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -13,8 +18,8 @@
           <i class="bi bi-clock me-2"></i>Time Tracking
         </h1>
         <div class="btn-toolbar mb-2 mb-md-0">
-          <button class="btn btn-outline-primary me-2" id="export-pdf">
-            <i class="bi bi-file-earmark-pdf me-1"></i> Xuất PDF
+          <button class="btn btn-outline-primary btn-sm" id="export-pdf">
+            <i class="bi bi-file-earmark-pdf me-1"></i>Xuất PDF
           </button>
         </div>
       </div>
@@ -47,60 +52,25 @@
         </div>
       </div>
 
-      <!-- Danh sách tasks đang theo dõi -->
+      <!-- Biểu đồ -->
       <div class="row mb-4 fade-in-up">
-        <div class="col-12">
+        <div class="col-md-6">
           <div class="card shadow-sm">
             <div class="card-header">
-              <h5 class="mb-0">Tasks của tôi</h5>
+              <h5 class="mb-0">Thời gian làm việc theo ngày</h5>
             </div>
-            <div class="card-body p-0">
-              <div class="table-responsive">
-                <table class="table align-items-center mb-0">
-                  <thead>
-                    <tr>
-                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Task</th>
-                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Dự án</th>
-                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Thời gian</th>
-                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Hành động</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for task in tasks %}
-                    <tr>
-                      <td>
-                        <div class="d-flex px-2 py-1">
-                          <div class="d-flex flex-column justify-content-center">
-                            <h6 class="mb-0 text-sm">{{ task.title }}</h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <p class="text-xs font-weight-bold mb-0">{{ task.project.name }}</p>
-                      </td>
-                      <td>
-                        <span class="text-xs font-weight-bold">{{ task.total_time|floatformat:2 }} giờ</span>
-                      </td>
-                      <td>
-                        <button class="btn btn-sm {% if task.is_tracking %}btn-danger{% else %}btn-success{% endif %} toggle-time" 
-                                data-task-id="{{ task.id }}" 
-                                data-action="{% if task.is_tracking %}stop{% else %}start{% endif %}">
-                          <i class="bi {% if task.is_tracking %}bi-pause{% else %}bi-play{% endif %} me-1"></i>
-                          {% if task.is_tracking %}Dừng{% else %}Bắt đầu{% endif %}
-                        </button>
-                      </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                      <td colspan="4" class="text-center py-4">
-                        <i class="bi bi-clock fa-2x text-muted mb-3"></i>
-                        <h6 class="text-muted">Không có task nào</h6>
-                      </td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
+            <div class="card-body">
+              <canvas id="timeByDayChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card shadow-sm">
+            <div class="card-header">
+              <h5 class="mb-0">Phân bổ thời gian theo task</h5>
+            </div>
+            <div class="card-body">
+              <canvas id="timeByTaskChart"></canvas>
             </div>
           </div>
         </div>
@@ -115,34 +85,53 @@
             </div>
             <div class="card-body p-0">
               <div class="table-responsive">
-                <table id="timeEntriesTable" class="table align-items-center mb-0">
+                <table id="timeEntriesTable" class="table table-hover align-items-center mb-0">
                   <thead>
                     <tr>
-                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Task</th>
-                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Bắt đầu</th>
-                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Kết thúc</th>
-                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Thời gian (giờ)</th>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Task</th>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Trạng thái</th>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Bắt đầu</th>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Kết thúc</th>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Thời gian (giờ)</th>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Hành động</th>
                     </tr>
                   </thead>
                   <tbody>
                     {% for entry in time_entries %}
-                    <tr>
+                    <tr data-entry-id="{{ entry.id }}">
                       <td>
                         <h6 class="mb-0 text-sm">{{ entry.task.title }}</h6>
                       </td>
                       <td>
-                        <span class="text-xs">{{ entry.start_time|date:"d/m/Y H:i" }}</span>
+                        <select class="form-select form-select-sm status-select" data-task-id="{{ entry.task.id }}">
+                          {% for status, status_label in status_choices %}
+                          <option value="{{ status }}"
+                                  {% if entry.task.task_assignments.get.user == request.user and entry.task.task_assignments.get.status == status %}selected{% endif %}>
+                            {{ status_label }}
+                          </option>
+                          {% endfor %}
+                        </select>
                       </td>
                       <td>
-                        <span class="text-xs">{{ entry.end_time|date:"d/m/Y H:i"|default:"Đang theo dõi" }}</span>
+                        <span class="text-xs editable" data-field="start_time">{{ entry.start_time|date:"d/m/Y H:i" }}</span>
+                        <input type="datetime-local" class="form-control form-control-sm d-none" name="start_time" value="{{ entry.start_time|date:'Y-m-d\TH:i' }}">
+                      </td>
+                      <td>
+                        <span class="text-xs editable" data-field="end_time">{{ entry.end_time|date:"d/m/Y H:i"|default:"Đang theo dõi" }}</span>
+                        <input type="datetime-local" class="form-control form-control-sm d-none" name="end_time" value="{{ entry.end_time|date:'Y-m-d\TH:i'|default_if_none:'' }}">
                       </td>
                       <td>
                         <span class="text-xs font-weight-bold">{{ entry.duration|floatformat:2|default:"0.00" }}</span>
                       </td>
+                      <td>
+                        <button class="btn btn-outline-primary btn-sm edit-entry">Chỉnh sửa</button>
+                        <button class="btn btn-primary btn-sm save-entry d-none">Lưu</button>
+                        <button class="btn btn-secondary btn-sm cancel-entry d-none">Hủy</button>
+                      </td>
                     </tr>
                     {% empty %}
                     <tr>
-                      <td colspan="4" class="text-center py-4">
+                      <td colspan="6" class="text-center py-4">
                         <i class="bi bi-clock fa-2x text-muted mb-3"></i>
                         <h6 class="text-muted">Chưa có lịch sử theo dõi</h6>
                       </td>
@@ -162,59 +151,10 @@
 
 {% block extra_js %}
 <script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
+<script src="{% static 'assets/js/projects/time_tracking.js' %}"></script>
 <script>
-$(document).ready(function() {
-  // Khởi tạo DataTable cho lịch sử time entries
-  $('#timeEntriesTable').DataTable({
-    "language": {
-      "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Vietnamese.json"
-    },
-    "order": [[1, "desc"]] // Sắp xếp theo thời gian bắt đầu
-  });
-
-  // Xử lý toggle time tracking
-  $('.toggle-time').click(function() {
-    var taskId = $(this).data('task-id');
-    var action = $(this).data('action');
-    var $btn = $(this);
-
-    $.ajax({
-      url: "{% url 'projects:toggle_time' %}",
-      method: 'POST',
-      data: {
-        'task_id': taskId,
-        'action': action,
-        'csrfmiddlewaretoken': '{{ csrf_token }}'
-      },
-      success: function(response) {
-        if (response.success) {
-          if (response.action === 'started') {
-            $btn.removeClass('btn-success').addClass('btn-danger')
-                .html('<i class="bi bi-pause me-1"></i>Dừng')
-                .data('action', 'stop');
-          } else if (response.action === 'stopped') {
-            $btn.removeClass('btn-danger').addClass('btn-success')
-                .html('<i class="bi bi-play me-1"></i>Bắt đầu')
-                .data('action', 'start');
-          }
-          // Cập nhật badge trên sidebar
-          $.get("{% url 'projects:time_tracking' %}", function(data) {
-            $('#total-time-today').text(data.total_time_today);
-          });
-        } else {
-          alert(response.error);
-        }
-      },
-      error: function() {
-        alert('Có lỗi xảy ra, vui lòng thử lại.');
-      }
-    });
-  });
-
-  // Xuất PDF (có thể mở rộng sau)
-  $('#export-pdf').click(function() {
-    alert('Chức năng xuất PDF đang được phát triển!');
-  });
-});
+  // Dữ liệu cho biểu đồ
+  const timeByDayData = {{ time_by_day|safe }};
+  const timeByTaskData = {{ time_by_task|safe }};
 </script>
 {% endblock %}

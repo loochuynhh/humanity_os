@@ -1,6 +1,7 @@
 # projects/models.py
 from django.db import models
 from django.utils import timezone
+from django.db.models import Sum
 
 
 class Projects(models.Model):
@@ -47,18 +48,21 @@ class Tasks(models.Model):
     description = models.TextField()
     deadline = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="To-do")
-    difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default="Medium")  # Bỏ null=True
+    difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default="Medium") 
     estimated_time = models.FloatField(null=True, blank=True)
     github_link = models.URLField(null=True, blank=True)
     total_time = models.FloatField(default=0.0)
     is_tracking = models.BooleanField(default=False)
     notes = models.TextField(null=True, blank=True)
-
+    start_date = models.DateField(null=True, blank=True) 
+    completed_date = models.DateField(null=True, blank=True)
+    
     class Meta:
         db_table = "tasks"
         indexes = [
             models.Index(fields=['deadline']),
             models.Index(fields=['status']),
+            models.Index(fields=['start_date']),
         ]
 
     def __str__(self):
@@ -71,12 +75,36 @@ class Tasks(models.Model):
     @property
     def days_until_deadline(self):
         return (self.deadline - timezone.now().date()).days
+    
+    def update_start_date(self):
+        earliest_entry = self.time_entries.order_by('start_time').first() # type: ignore
+        self.start_date = earliest_entry.start_time.date() if earliest_entry else None
+        self.save()
+
+    def update_total_time(self):
+        self.total_time = self.time_entries.aggregate(total=Sum('duration'))['total'] or 0 # type: ignore
+        self.save()
+
+    def update_status_from_assignments(self):
+        assignments = self.task_assignments.all() # type: ignore
+        if all(assignment.status == "Completed" for assignment in assignments):
+            self.status = "Completed"
+            self.completed_date = timezone.now().date()
+        elif any(assignment.status == "Late" for assignment in assignments) and self.deadline < timezone.now().date():
+            self.status = "Late"
+        self.save()
 
 
 class TaskAssignments(models.Model):
     task = models.ForeignKey("projects.Tasks", on_delete=models.CASCADE, related_name="task_assignments")
     user = models.ForeignKey("users.Users", on_delete=models.CASCADE, related_name="task_assignments")
-
+    estimated_time = models.FloatField(null=True, blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=Tasks.STATUS_CHOICES,
+        default="To-do"
+    )
+    
     class Meta:
         db_table = "task_assignments"
         unique_together = ("task", "user")

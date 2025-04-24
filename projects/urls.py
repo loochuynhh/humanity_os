@@ -17,4 +17,6 @@ urlpatterns = [
     path('team-members/data/', views.team_members_data, name='team_members_data'),
     path('progress/', views.project_progress, name='project_progress'),
     path('progress/data/', views.project_progress_data, name='project_progress_data'),
+    path('time-entries/update/', views.update_time_entry, name='update_time_entry'),
+    path('tasks/update-assignment-status/', views.update_assignment_status, name='update_assignment_status'),
 ]

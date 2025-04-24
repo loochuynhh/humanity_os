@@ -27,13 +27,14 @@ def update_task_tracking(task, user):
         user=user,
         end_time__isnull=True
     ).exists()
-    task.total_time = TimeEntries.objects.filter(task=task, user=user).aggregate(total=Sum('duration'))['total'] or 0
+    task.update_total_time()
+    task.update_start_date()
     task.save()
 
 
 def update_task_status(task, status):
     task.status = status
-    if task.deadline < timezone.now().date() and status != 'Completed':
+    if task.deadline < timezone.now().date() and status != 'Completed' and not task.completed_date:
         task.status = 'Late'
     task.save()
 
@@ -134,3 +135,37 @@ def get_project_progress_data(project_id):
         'progress': round(progress, 1),
         'task_counts': task_counts
     }
+    
+
+def calculate_time_by_day(user):
+    today = timezone.now().date()
+    week_start = today - timedelta(days=6)  # 7 ngày gần nhất
+    data = []
+    for i in range(7):
+        day = week_start + timedelta(days=i)
+        total_time = TimeEntries.objects.filter(
+            user=user,
+            start_time__date=day
+        ).aggregate(total=Sum('duration'))['total'] or 0
+        data.append({
+            'day': day.strftime('%d/%m'),
+            'total_time': round(total_time, 2)
+        })
+    return data
+
+def calculate_time_by_task(user):
+    data = []
+    tasks = Tasks.objects.filter(
+        task_assignments__user=user
+    )
+    for task in tasks:
+        total_time = TimeEntries.objects.filter(
+            user=user,
+            task=task
+        ).aggregate(total=Sum('duration'))['total'] or 0
+        if total_time > 0:
+            data.append({
+                'task_title': task.title,
+                'total_time': round(total_time, 2)
+            })
+    return data

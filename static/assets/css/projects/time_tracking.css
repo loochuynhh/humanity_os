@@ -1,0 +1,444 @@
+/* ==========================================================================
+   DataTables Custom Styles for time_tracking.html
+   ========================================================================== */
+
+/* --------------------------------------
+   General Styles
+   -------------------------------------- */
+   #timeEntriesTable_wrapper {
+    font-family: 'Roboto', sans-serif;
+}
+
+/* --------------------------------------
+   Filter and Length Controls (Xem 10 mục & Tìm)
+   -------------------------------------- */
+#timeEntriesTable_wrapper .dataTables_length,
+#timeEntriesTable_wrapper .dataTables_filter {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem;
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s ease;
+}
+
+#timeEntriesTable_wrapper .dataTables_length:hover,
+#timeEntriesTable_wrapper .dataTables_filter:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+#timeEntriesTable_wrapper .dataTables_length label,
+#timeEntriesTable_wrapper .dataTables_filter label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+}
+
+/* Dropdown for "Xem 10 mục" */
+#timeEntriesTable_wrapper .dataTables_length select {
+    width: 90px;
+    margin: 0 12px;
+    padding: 0.5rem 2rem 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+    border-radius: 0.375rem;
+    border: 1px solid #e0e6ed;
+    background-color: #f8f9fa;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23495057'%3E%3Cpath d='M4.646 6.646a.5.5 0 0 1 .708 0L8 9.293l2.646-2.647a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 12px;
+    transition: all 0.3s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+#timeEntriesTable_wrapper .dataTables_length select:hover {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+}
+
+#timeEntriesTable_wrapper .dataTables_length select:focus {
+    border-color: #007bff;
+    background-color: #fff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+    outline: none;
+}
+
+/* Search input (Tìm) */
+#timeEntriesTable_wrapper .dataTables_filter input {
+    width: 220px;
+    padding: 0.5rem 2.5rem 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+    border-radius: 0.375rem;
+    border: 1px solid #e0e6ed;
+    background: #f8f9fa url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23495057'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E") no-repeat right 0.75rem center/14px 14px;
+    transition: all 0.3s ease;
+}
+
+#timeEntriesTable_wrapper .dataTables_filter input:hover {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+}
+
+#timeEntriesTable_wrapper .dataTables_filter input:focus {
+    border-color: #007bff;
+    background-color: #fff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+    outline: none;
+}
+
+/* --------------------------------------
+   Pagination (Phân trang)
+   -------------------------------------- */
+#timeEntriesTable_wrapper .dataTables_paginate {
+    margin-top: 0.75rem;
+}
+
+#timeEntriesTable_wrapper .dataTables_paginate .pagination {
+    justify-content: flex-end;
+    gap: 0.15rem;
+}
+
+#timeEntriesTable_wrapper .dataTables_paginate .page-item {
+    padding: 0;
+    margin: 0;
+}
+
+#timeEntriesTable_wrapper .dataTables_paginate .paginate_button.page-item .page-link {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.65rem;
+    line-height: 1.5;
+    color: #007bff;
+    background-color: #fff;
+    border: 1px solid #e0e6ed;
+    border-radius: 0.2rem;
+    transition: all 0.3s ease;
+}
+
+#timeEntriesTable_wrapper .dataTables_paginate .paginate_button.page-item .page-link:hover {
+    background-color: #d6e9ff;
+    border-color: #b3d4ff;
+    color: #004085;
+}
+
+#timeEntriesTable_wrapper .dataTables_paginate .paginate_button.page-item.active .page-link {
+    background-color: #4a90e2;
+    border-color: #4a90e2;
+    color: #fff;
+}
+
+#timeEntriesTable_wrapper .dataTables_paginate .paginate_button.page-item.disabled .page-link {
+    color: #adb5bd;
+    background-color: #f8f9fa;
+    border-color: #e0e6ed;
+    cursor: not-allowed;
+}
+
+#timeEntriesTable_wrapper .dataTables_paginate .page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: #fff;
+}
+
+#timeEntriesTable_wrapper .dataTables_paginate .page-item.disabled .page-link {
+    color: #adb5bd;
+    background-color: #f8f9fa;
+    border-color: #e0e6ed;
+    cursor: not-allowed;
+}
+
+/* Pagination info */
+#timeEntriesTable_wrapper .dataTables_info {
+    padding-top: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6c757d;
+}
+
+/* --------------------------------------
+   Table Styles
+   -------------------------------------- */
+#timeEntriesTable {
+    border: 1px solid #dee2e6;
+    border-collapse: collapse;
+}
+
+/* Table header */
+#timeEntriesTable thead th {
+    padding: 1rem 0.75rem;
+    background: linear-gradient(180deg, #e6f0fa 0%, #c3e0ff 100%);
+    border-bottom: 2px solid #dee2e6;
+    border-right: 1px solid #dee2e6;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #343a40;
+    letter-spacing: 0.05em;
+    position: relative;
+}
+
+#timeEntriesTable thead th:last-child {
+    border-right: none;
+}
+
+/* Table body rows */
+#timeEntriesTable tbody tr {
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#timeEntriesTable tbody tr:hover {
+    background-color: #f1f3f5;
+    transform: translateY(-1px);
+}
+
+/* Table body cells */
+#timeEntriesTable tbody td {
+    padding: 0.75rem;
+    vertical-align: middle;
+    font-size: 0.875rem;
+    color: #343a40;
+    border-right: 1px solid #dee2e6;
+}
+
+#timeEntriesTable tbody td:last-child {
+    border-right: none;
+}
+
+/* --------------------------------------
+   Sorting Arrows
+   -------------------------------------- */
+table.dataTable thead th.sorting,
+table.dataTable thead th,
+table.dataTable thead th.sorting_asc,
+table.dataTable thead th.sorting_desc {
+    padding-right: 2rem;
+    background-image: none !important;
+    cursor: pointer;
+}
+
+table.dataTable thead th.sorting::after {
+    content: '';
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%239aa0a6'%3E%3Cpath d='M8 4a.5.5 0 0 1 .5.5v7.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 .708-.708L7.5 12.293V4.5A.5.5 0 0 1 8 4z'/%3E%3Cpath d='M8 12a.5.5 0 0 1-.5-.5V3.707L5.354 5.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 3.707V11.5a.5.5 0 0 1-.5.5z'/%3E%3C/svg%3E") no-repeat center center;
+    background-size: 10px;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+}
+
+table.dataTable thead th.sorting_asc::after {
+    content: '';
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23007bff'%3E%3Cpath d='M8 4a.5.5 0 0 1 .5.5v7.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 .708-.708L7.5 12.293V4.5A.5.5 0 0 1 8 4z'/%3E%3C/svg%3E") no-repeat center center;
+    background-size: 10px;
+    opacity: 1;
+}
+
+table.dataTable thead th.sorting_desc::after {
+    content: '';
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23007bff'%3E%3Cpath d='M8 12a.5.5 0 0 1-.5-.5V3.707L5.354 5.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 3.707V11.5a.5.5 0 0 1-.5.5z'/%3E%3C/svg%3E") no-repeat center center;
+    background-size: 10px;
+    opacity: 1;
+}
+
+/* --------------------------------------
+   Status Select Box
+   -------------------------------------- */
+#timeEntriesTable .form-select-sm.status-select {
+    width: 120px;
+    padding: 0.375rem 1.75rem 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #343a40;
+    border-radius: 0.375rem;
+    border: 1px solid #e0e6ed;
+    background-color: #f8f9fa;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23495057'%3E%3Cpath d='M4.646 6.646a.5.5 0 0 1 .708 0L8 9.293l2.646-2.647a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 10px;
+    transition: all 0.3s ease;
+}
+
+#timeEntriesTable .form-select-sm.status-select:hover {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+}
+
+#timeEntriesTable .form-select-sm.status-select:focus {
+    border-color: #007bff;
+    background-color: #fff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+    outline: none;
+}
+
+/* --------------------------------------
+   Editable Inputs
+   -------------------------------------- */
+#timeEntriesTable .form-control-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #343a40;
+    border-radius: 0.375rem;
+    border: 1px solid #e0e6ed;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+#timeEntriesTable .form-control-sm:hover {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+}
+
+#timeEntriesTable .form-control-sm:focus {
+    border-color: #007bff;
+    background-color: #fff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+    outline: none;
+}
+
+/* --------------------------------------
+   Action Buttons
+   -------------------------------------- */
+#timeEntriesTable .btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#timeEntriesTable .btn-sm:hover {
+    transform: translateY(-1px);
+}
+
+#timeEntriesTable .btn-outline-primary {
+    color: #007bff;
+    border-color: #007bff;
+}
+
+#timeEntriesTable .btn-outline-primary:hover {
+    background-color: #007bff;
+    color: #fff;
+}
+
+#timeEntriesTable .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+#timeEntriesTable .btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+#timeEntriesTable .btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+#timeEntriesTable .btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #5a6268;
+}
+
+/* --------------------------------------
+   Card and Container Styles
+   -------------------------------------- */
+.card {
+    border: none;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: #fff;
+    padding: 1.5rem;
+    border-bottom: none;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* --------------------------------------
+   Fade Animation
+   -------------------------------------- */
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-in-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --------------------------------------
+   Responsive
+   -------------------------------------- */
+@media (max-width: 768px) {
+    #timeEntriesTable_wrapper .dataTables_length select {
+        width: 80px;
+    }
+
+    #timeEntriesTable_wrapper .dataTables_filter input {
+        width: 180px;
+    }
+
+    #timeEntriesTable_wrapper .dataTables_paginate .paginate_button.page-item .page-link {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.6rem;
+    }
+
+    #timeEntriesTable thead th,
+    #timeEntriesTable tbody td {
+        padding: 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    #timeEntriesTable .form-select-sm.status-select,
+    #timeEntriesTable .form-control-sm,
+    #timeEntriesTable .btn-sm {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+    }
+}

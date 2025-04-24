@@ -516,3 +516,108 @@ table.dataTable thead th.sorting_desc::after {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     transition: box-shadow 0.3s ease-in-out;
 }
+
+.task-detail-container {
+    --primary-color: #007bff;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --success-color: #28a745;
+    --border-radius: 8px;
+}
+
+.task-detail-container .card {
+    border: none;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.task-detail-container .card-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #0056b3 100%);
+    padding: 1.5rem;
+}
+
+.task-detail-container .section-title {
+    color: #333;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 0.5rem;
+}
+
+.task-detail-container .badge {
+    font-size: 0.9rem;
+    padding: 0.5em 1em;
+    transition: all 0.2s ease;
+}
+
+.task-detail-container .progress {
+    height: 1.5rem;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.task-detail-container .progress-bar {
+    transition: width 0.3s ease-in-out;
+}
+
+.task-detail-container .avatar {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    transition: transform 0.2s ease;
+}
+
+.task-detail-container .avatar:hover {
+    transform: scale(1.1);
+}
+
+.task-detail-container .time-entries-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border-radius: var(--border-radius);
+}
+
+.task-detail-container .nav-tabs {
+    border-bottom: 2px solid #dee2e6;
+}
+
+.task-detail-container .nav-tabs .nav-link {
+    color: #495057;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    transition: all 0.2s ease;
+}
+
+.task-detail-container .nav-tabs .nav-link.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.task-detail-container .nav-tabs .nav-link:hover {
+    background-color: #f8f9fa;
+    border-color: transparent;
+}
+
+.task-detail-container .form-control,
+.task-detail-container .form-select {
+    border-radius: var(--border-radius);
+    transition: border-color 0.2s ease;
+}
+
+.task-detail-container .form-control:focus,
+.task-detail-container .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.task-detail-container .btn {
+    border-radius: var(--border-radius);
+    padding: 0.5rem 1.5rem;
+    transition: all 0.2s ease;
+}
+
+.task-detail-container .btn:hover {
+    transform: translateY(-2px);
+}

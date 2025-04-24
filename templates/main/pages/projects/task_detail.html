@@ -13,170 +13,233 @@
         {% include 'main/includes/sidebar.html' %}
 
         <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
-            <div class="task-detail-container">
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header task-header">
-                        <h1 class="h3 mb-0 text-white">{{ task.title }}</h1>
-                        <p class="text-sm mb-0 text-white-50">Dự án: {{ task.project.name }}</p>
+            <div class="task-detail-container mt-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">{{ task.title }}</h1>
+                        <small class="text-white-50">Dự án: {{ task.project.name }}</small>
                     </div>
-                    <div class="card-body task-body">
-                        <!-- Thông tin cơ bản -->
-                        <div class="task-section">
-                            <h5 class="section-title">Thông tin Task</h5>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Mô tả</label>
-                                    <p class="text-muted">{{ task.description|default:"Không có mô tả" }}</p>
+                    <div class="card-body">
+                        <!-- Tabs -->
+                        <ul class="nav nav-tabs mb-4" id="taskTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab" aria-controls="info" aria-selected="true">Thông tin</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="time-entries-tab" data-bs-toggle="tab" data-bs-target="#time-entries" type="button" role="tab" aria-controls="time-entries" aria-selected="false">Lịch sử thời gian</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="extension-tab" data-bs-toggle="tab" data-bs-target="#extension" type="button" role="tab" aria-controls="extension" aria-selected="false">Gia hạn Deadline</button>
+                            </li>
+                        </ul>
+                    
+                        <div class="tab-content" id="taskTabsContent">
+                            <!-- Tab Thông tin -->
+                            <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="info-tab">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="section-title mb-0">Thông tin Task</h5>
+                                    <button id="editTaskBtn" class="btn btn-outline-primary btn-sm">Chỉnh sửa</button>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Trạng thái</label>
-                                    <p>
-                                        <span class="badge {% if task.status == 'Completed' %}bg-success{% elif task.status == 'Late' %}bg-danger{% elif task.status == 'In progress' %}bg-warning{% else %}bg-primary{% endif %}">
-                                            {{ task.status }}
-                                        </span>
-                                    </p>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Deadline</label>
-                                    <p class="{% if task.is_overdue %}text-danger{% endif %}">
-                                        {{ task.deadline|date:"d/m/Y" }}
-                                    </p>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Độ khó</label>
-                                    <p class="text-muted">{{ task.difficulty|default:"Chưa xác định" }}</p>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Thời gian ước lượng</label>
-                                    <p class="text-muted">{{ task.estimated_time|default:"Chưa có" }} giờ</p>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Tổng thời gian</label>
-                                    <p class="text-muted">{{ task.total_time|floatformat:1 }} giờ</p>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Tiến độ</label>
-                                    <div class="progress w-75">
-                                        <div class="progress-bar bg-{% if task.status == 'Completed' %}success{% elif task.status == 'Late' %}danger{% else %}info{% endif %}" 
-                                             style="width: {{ progress_percentage }}%">{{ progress_percentage }}%</div>
+                    
+                                <!-- Thông tin hiển thị -->
+                                <div id="taskInfoView">
+                                    <div class="row">
+                                        <div class="col-12 mb-3">
+                                            <label class="form-label fw-bold">Mô tả</label>
+                                            <p class="text-muted">{{ task.description|default:"Không có mô tả" }}</p>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">GitHub</label>
-                                    <p>
-                                        {% if task.github_link %}
-                                        <a href="{{ task.github_link }}" target="_blank" class="text-primary">Xem trên GitHub</a>
-                                        {% else %}
-                                        Không có
-                                        {% endif %}
-                                    </p>
-                                </div>
-                                <div class="col-12 mb-3">
-                                    <label class="form-label fw-bold">Ghi chú</label>
-                                    <p class="text-muted">{{ task.notes|default:"Không có ghi chú" }}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Người phụ trách -->
-                        <div class="task-section">
-                            <h5 class="section-title">Người phụ trách</h5>
-                            <div class="d-flex flex-wrap">
-                                {% for assignment in task.task_assignments.all %}
-                                <div class="d-flex align-items-center me-3 mb-2">
-                                    <span class="avatar avatar-sm rounded-circle bg-gradient-primary me-1" 
-                                          data-bs-toggle="tooltip" 
-                                          data-bs-placement="top" 
-                                          title="{{ assignment.user.get_full_name }}">
-                                        {{ assignment.user.first_name|first }}{{ assignment.user.last_name|first }}
-                                    </span>
-                                    <span class="text-sm">{{ assignment.user.get_full_name }}</span>
-                                </div>
-                                {% empty %}
-                                <p class="text-muted">Chưa có người phụ trách</p>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Lịch sử thời gian -->
-                        <div class="task-section">
-                            <h5 class="section-title">Lịch sử thời gian</h5>
-                            <div class="time-entries-list border p-3 rounded bg-light">
-                                {% if time_entries %}
-                                <ul class="list-unstyled">
-                                    {% for entry in time_entries %}
-                                    <li class="mb-2">
-                                        {{ entry.start_time|date:"d/m/Y H:i" }} - 
-                                        {% if entry.end_time %}
-                                        {{ entry.end_time|date:"d/m/Y H:i" }} ({{ entry.duration|floatformat:1 }} giờ)
-                                        {% else %}
-                                        Đang tracking
-                                        {% endif %}
-                                    </li>
-                                    {% endfor %}
-                                </ul>
-                                {% else %}
-                                <p class="text-muted">Chưa có lịch sử thời gian</p>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Yêu cầu gia hạn -->
-                        <div class="task-section">
-                            <h5 class="section-title">Yêu cầu gia hạn Deadline</h5>
-                            <form id="extensionRequestForm" method="POST" data-extension-url="{% url 'projects:request_deadline_extension' %}">
-                                {% csrf_token %}
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="requestDeadline" class="form-label">Ngày yêu cầu</label>
-                                        <input type="date" class="form-control" id="requestDeadline" name="requested_deadline" required>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Ngày bắt đầu</label>
+                                            <p class="text-muted">{{ task.start_date|date:"d/m/Y"|default:"Chưa có" }}</p>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Ngày kết thúc</label>
+                                            <p class="text-muted">{{ task.completed_date|date:"d/m/Y"|default:"Chưa hoàn thành" }}</p>
+                                        </div>
                                     </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="requestReason" class="form-label">Lý do</label>
-                                        <textarea class="form-control" id="requestReason" name="reason" rows="3" required></textarea>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Độ khó</label>
+                                            <p class="text-muted">{{ task.difficulty|default:"Chưa xác định" }}</p>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Deadline</label>
+                                            <p class="{% if task.is_overdue %}text-danger{% endif %}">
+                                                {{ task.deadline|date:"d/m/Y" }}
+                                            </p>
+                                        </div>
                                     </div>
-                                </div>
-                                <button type="submit" class="btn btn-warning">Gửi yêu cầu gia hạn</button>
-                            </form>
-                        </div>
-
-                        <!-- Cập nhật thông tin task -->
-                        <div class="task-section">
-                            <h5 class="section-title">Cập nhật Task</h5>
-                            <form id="taskUpdateForm" method="POST" data-update-url="{% url 'projects:update_task_details' %}" data-task-id="{{ task.id }}">
-                                {% csrf_token %}
-                                <div class="mb-3">
-                                    <label for="taskTitle" class="form-label">Tiêu đề</label>
-                                    <input type="text" class="form-control" id="taskTitle" name="title" value="{{ task.title }}" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="taskDescription" class="form-label">Mô tả</label>
-                                    <textarea class="form-control" id="taskDescription" name="description" rows="3">{{ task.description }}</textarea>
-                                </div>
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="taskDifficulty" class="form-label">Độ khó</label>
-                                        <select class="form-select" id="taskDifficulty" name="difficulty">
-                                            {% for choice in difficulty_choices %}
-                                            <option value="{{ choice.0 }}" {% if task.difficulty == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Thời gian ước lượng</label>
+                                            <p class="text-muted">{{ task.estimated_time|floatformat:1|default:"Chưa có" }} giờ</p>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Tổng thời gian sử dụng</label>
+                                            <p class="text-muted">{{ task.total_time|floatformat:1 }} giờ</p>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Ghi chú</label>
+                                            <p class="text-muted">{{ task.notes|default:"Không có ghi chú" }}</p>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">GitHub</label>
+                                            <p>
+                                                {% if task.github_link %}
+                                                <a href="{{ task.github_link }}" target="_blank" class="text-primary">Xem trên GitHub</a>
+                                                {% else %}
+                                                Không có
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Tiến độ</label>
+                                            <div class="progress w-75">
+                                                <div class="progress-bar bg-{% if task.status == 'Completed' %}success{% elif task.status == 'Late' %}danger{% else %}info{% endif %}" 
+                                                    style="width: {{ progress_percentage }}%">{{ progress_percentage }}%</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Trạng thái</label>
+                                            <p>
+                                                <span class="badge {% if task.status == 'Completed' %}bg-success{% elif task.status == 'Late' %}bg-danger{% elif task.status == 'In progress' %}bg-warning{% else %}bg-primary{% endif %}">
+                                                    {{ task.status }}
+                                                </span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4">
+                                        <h6 class="fw-bold">Người phụ trách</h6>
+                                        <div class="d-flex flex-wrap">
+                                            {% for assignment in task_assignments %}
+                                            <div class="d-flex align-items-center me-3 mb-2">
+                                                <span class="avatar avatar-sm rounded-circle bg-gradient-primary me-1" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    title="{{ assignment.user.get_full_name }}">
+                                                    {{ assignment.user.first_name|first }}{{ assignment.user.last_name|first }}
+                                                </span>
+                                                <span class="text-sm">
+                                                    {{ assignment.user.get_full_name }} 
+                                                    (Ước lượng: {{ assignment.estimated_time|floatformat:1|default:"Chưa có" }} giờ, 
+                                                    Trạng thái: {{ assignment.status }})
+                                                </span>
+                                            </div>
+                                            {% empty %}
+                                            <p class="text-muted">Chưa có người phụ trách</p>
                                             {% endfor %}
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="taskEstimatedTime" class="form-label">Thời gian ước lượng (giờ)</label>
-                                        <input type="number" class="form-control" id="taskEstimatedTime" name="estimated_time" value="{{ task.estimated_time|default_if_none:'' }}" step="0.1">
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="taskGithubLink" class="form-label">GitHub Link</label>
-                                    <input type="url" class="form-control" id="taskGithubLink" name="github_link" value="{{ task.github_link|default_if_none:'' }}">
+                    
+                                <!-- Form chỉnh sửa -->
+                                <form id="taskUpdateForm" method="POST" data-update-url="{% url 'projects:update_task_details' %}" data-task-id="{{ task.id }}" class="d-none">
+                                    {% csrf_token %}
+                                    <div class="mb-3">
+                                        <label for="taskTitle" class="form-label">Tiêu đề</label>
+                                        <input type="text" class="form-control" id="taskTitle" name="title" value="{{ task.title }}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="taskDescription" class="form-label">Mô tả</label>
+                                        <textarea class="form-control" id="taskDescription" name="description" rows="3">{{ task.description }}</textarea>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="taskDifficulty" class="form-label">Độ khó</label>
+                                            <select class="form-select" id="taskDifficulty" name="difficulty">
+                                                {% for choice in difficulty_choices %}
+                                                <option value="{{ choice.0 }}" {% if task.difficulty == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            {% for assignment in task_assignments %}
+                                                {% if assignment.user == request.user %}
+                                                <label for="taskEstimatedTimeUser{{ assignment.user.id }}" class="form-label">Thời gian ước lượng của bạn (giờ)</label>
+                                                <input type="number" class="form-control" id="taskEstimatedTimeUser{{ assignment.user.id }}" 
+                                                    name="estimated_time_{{ assignment.user.id }}" value="{{ assignment.estimated_time|default_if_none:'' }}" step="0.1">
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="taskStatus" class="form-label">Trạng thái của bạn</label>
+                                            <select class="form-select" id="taskStatus" name="status">
+                                                {% for choice in status_choices %}
+                                                <option value="{{ choice.0 }}" {% if task.task_assignments.get.user == request.user and task.task_assignments.get.status == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="taskGithubLink" class="form-label">GitHub Link</label>
+                                            <input type="url" class="form-control" id="taskGithubLink" name="github_link" value="{{ task.github_link|default_if_none:'' }}">
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="taskNotes" class="form-label">Ghi chú</label>
+                                        <textarea class="form-control" id="taskNotes" name="notes" rows="3">{{ task.notes|default_if_none:'' }}</textarea>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                                        <button type="button" id="cancelEditBtn" class="btn btn-secondary">Hủy</button>
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="time-entries" role="tabpanel" aria-labelledby="time-entries-tab">
+                                <h5 class="section-title">Lịch sử thời gian</h5>
+                                <div class="time-entries-list">
+                                    {% for entry in time_entries %}
+                                    <div class="d-flex align-items-center mb-3 border-bottom pb-2">
+                                        <span class="avatar avatar-sm rounded-circle bg-gradient-primary me-2" 
+                                              data-bs-toggle="tooltip" 
+                                              data-bs-placement="top" 
+                                              title="{{ entry.user.get_full_name }}">
+                                            {{ entry.user.first_name|first }}{{ entry.user.last_name|first }}
+                                        </span>
+                                        <div class="flex-grow-1">
+                                            <p class="mb-0 text-sm">
+                                                <strong>{{ entry.user.get_full_name }}</strong> - 
+                                                {{ entry.task.title }}
+                                            </p>
+                                            <p class="mb-0 text-muted text-sm">
+                                                Bắt đầu: {{ entry.start_time|date:"d/m/Y H:i" }} | 
+                                                Kết thúc: {{ entry.end_time|date:"d/m/Y H:i"|default:"Đang theo dõi" }} | 
+                                                Thời gian: {{ entry.duration|floatformat:2|default:"0.00" }} giờ
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <p class="text-muted">Chưa có lịch sử thời gian</p>
+                                    {% endfor %}
                                 </div>
-                                <div class="mb-3">
-                                    <label for="taskNotes" class="form-label">Ghi chú</label>
-                                    <textarea class="form-control" id="taskNotes" name="notes" rows="3">{{ task.notes|default_if_none:'' }}</textarea>
-                                </div>
-                                <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
-                            </form>
+                            </div>
+
+                            <!-- Tab Yêu cầu gia hạn (giữ nguyên) -->
+                            <div class="tab-pane fade" id="extension" role="tabpanel" aria-labelledby="extension-tab">
+                                <h5 class="section-title">Yêu cầu gia hạn Deadline</h5>
+                                <form id="extensionRequestForm" method="POST" data-extension-url="{% url 'projects:request_deadline_extension' %}">
+                                    {% csrf_token %}
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="requestDeadline" class="form-label">Ngày yêu cầu</label>
+                                            <input type="date" class="form-control" id="requestDeadline" name="requested_deadline" required min="{{ task.deadline|date:'Y-m-d' }}">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="requestReason" class="form-label">Lý do</label>
+                                            <textarea class="form-control" id="requestReason" name="reason" rows="3" required></textarea>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-warning">Gửi yêu cầu gia hạn</button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
