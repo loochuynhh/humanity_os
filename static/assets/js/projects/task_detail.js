@@ -220,4 +220,59 @@ $(document).ready(function() {
             });
         }
     }
+
+    const startTaskBtn = document.getElementById('startTaskBtn');
+    if (startTaskBtn) {
+        startTaskBtn.addEventListener('click', function() {
+            const taskId = this.getAttribute('data-task-id');
+            const url = this.getAttribute('data-url'); // Lấy URL từ data-url
+            if (!url) {
+                alert('Lỗi: Không tìm thấy URL API!');
+                return;
+            }
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: `task_id=${taskId}&action=start`
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    startTaskBtn.disabled = true;
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Thành công',
+                        text: 'Bắt đầu thực hiện task thành công!',
+                        confirmButtonColor: '#007bff',
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: data.error || 'Có lỗi xảy ra!',
+                        confirmButtonColor: '#007bff'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi kết nối',
+                    text: 'Không thể kết nối đến server, vui lòng thử lại!',
+                    confirmButtonColor: '#007bff'
+                });
+            });
+        });
+    }
 });

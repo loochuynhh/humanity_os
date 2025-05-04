@@ -7,8 +7,8 @@ from django.db.models import Sum
 class Projects(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
-    start_date = models.DateField()
-    end_date = models.DateField()
+    start_date = models.DateTimeField()  # Đổi từ DateField sang DateTimeField
+    end_date = models.DateTimeField()    # Đổi từ DateField sang DateTimeField
     manager = models.ForeignKey(
         "users.Users",
         on_delete=models.SET_NULL,
@@ -46,7 +46,7 @@ class Tasks(models.Model):
     project = models.ForeignKey("projects.Projects", on_delete=models.CASCADE, related_name="tasks")
     title = models.CharField(max_length=255)
     description = models.TextField()
-    deadline = models.DateField()
+    deadline = models.DateTimeField()    # Đổi từ DateField sang DateTimeField
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="To-do")
     difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default="Medium") 
     estimated_time = models.FloatField(null=True, blank=True)
@@ -54,8 +54,8 @@ class Tasks(models.Model):
     total_time = models.FloatField(default=0.0)
     is_tracking = models.BooleanField(default=False)
     notes = models.TextField(null=True, blank=True)
-    start_date = models.DateField(null=True, blank=True) 
-    completed_date = models.DateField(null=True, blank=True)
+    start_date = models.DateTimeField(null=True, blank=True)  # Đổi từ DateField sang DateTimeField
+    completed_date = models.DateTimeField(null=True, blank=True)  # Đổi từ DateField sang DateTimeField
     
     class Meta:
         db_table = "tasks"
@@ -70,15 +70,15 @@ class Tasks(models.Model):
 
     @property
     def is_overdue(self):
-        return self.deadline < timezone.now().date() and self.status != "Completed"
+        return self.deadline.date() < timezone.now().date() and self.status != "Completed"
 
     @property
     def days_until_deadline(self):
-        return (self.deadline - timezone.now().date()).days
+        return (self.deadline.date() - timezone.now().date()).days
     
     def update_start_date(self):
         earliest_entry = self.time_entries.order_by('start_time').first() # type: ignore
-        self.start_date = earliest_entry.start_time.date() if earliest_entry else None
+        self.start_date = earliest_entry.start_time if earliest_entry else None
         self.save()
 
     def update_total_time(self):
@@ -86,11 +86,11 @@ class Tasks(models.Model):
         self.save()
 
     def update_status_from_assignments(self):
-        assignments = self.task_assignments.all() # type: ignore
+        assignments = self.time_entries.all() # type: ignore
         if all(assignment.status == "Completed" for assignment in assignments):
             self.status = "Completed"
-            self.completed_date = timezone.now().date()
-        elif any(assignment.status == "Late" for assignment in assignments) and self.deadline < timezone.now().date():
+            self.completed_date = timezone.now()
+        elif any(assignment.status == "Late" for assignment in assignments) and self.deadline.date() < timezone.now().date():
             self.status = "Late"
         self.save()
 
@@ -141,7 +141,7 @@ class DeadlineExtensionRequest(models.Model):
 
     task = models.ForeignKey("projects.Tasks", on_delete=models.CASCADE, related_name="deadline_requests")
     requested_by = models.ForeignKey("users.Users", on_delete=models.CASCADE, related_name="deadline_requests")
-    requested_deadline = models.DateField()
+    requested_deadline = models.DateTimeField()  # Đổi từ DateField sang DateTimeField
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Pending")
     reason = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -156,7 +156,7 @@ class DeadlineExtensionRequest(models.Model):
 class TeamProjectMembership(models.Model):
     project = models.ForeignKey(Projects, on_delete=models.CASCADE)
     user = models.ForeignKey("users.Users", on_delete=models.CASCADE)
-    join_date = models.DateField(auto_now_add=True)
+    join_date = models.DateTimeField(auto_now_add=True)  # Đổi từ DateField sang DateTimeField
 
     class Meta:
         db_table = "team_project_memberships"

@@ -1,0 +1,46 @@
+.card {
+    border: none;
+    border-radius: 10px;
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0;
+}
+
+.section-title {
+    color: #004aad;
+    border-bottom: 2px solid #004aad;
+    padding-bottom: 5px;
+}
+
+.form-label {
+    color: #333;
+}
+
+.progress {
+    border-radius: 5px;
+}
+
+.badge {
+    font-size: 0.9em;
+    padding: 6px 12px;
+}
+
+.text-muted {
+    font-size: 0.95em;
+}
+
+.btn-outline-primary {
+    border-radius: 5px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-outline-primary:hover {
+    background-color: #004aad;
+    color: white;
+}

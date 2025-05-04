@@ -84,14 +84,14 @@
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#performanceSubmenu" aria-expanded="{% if request.resolver_match.url_name in 'personal_kpis,manager_feedback' %}true{% else %}false{% endif %}">
+        <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#performanceSubmenu" aria-expanded="{% if request.resolver_match.url_name in 'performance_dashboard,manager_feedback' %}true{% else %}false{% endif %}">
           <i class="bi bi-graph-up me-2"></i>Performance
           <i class="bi bi-chevron-down float-end mt-1 toggle-icon"></i>
         </a>
-        <div class="collapse {% if request.resolver_match.url_name in 'personal_kpis,manager_feedback' %}show{% endif %}" id="performanceSubmenu">
+        <div class="collapse {% if request.resolver_match.url_name in 'performance_dashboard,manager_feedback' %}show{% endif %}" id="performanceSubmenu">
           <ul class="nav flex-column ms-3">
             <li class="nav-item">
-              <a class="nav-link sub-link {% if request.resolver_match.url_name == 'personal_kpis' %}active{% endif %}" href="{% url 'kpis:personal_kpis' %}">KPI cá nhân</a>
+                <a class="nav-link sub-link {% if request.resolver_match.url_name == 'performance_dashboard' %}active{% endif %}" href="{% url 'kpis:performance_dashboard' %}">Performance Dashboard</a>
             </li>
             <li class="nav-item">
               <a class="nav-link sub-link {% if request.resolver_match.url_name == 'manager_feedback' %}active{% endif %}" href="{% url 'evaluations:manager_feedback' %}">Đánh giá từ quản lý</a>

@@ -34,7 +34,7 @@ def update_task_tracking(task, user):
 
 def update_task_status(task, status):
     task.status = status
-    if task.deadline < timezone.now().date() and status != 'Completed' and not task.completed_date:
+    if task.deadline.date() < timezone.now().date() and status != 'Completed' and not task.completed_date:
         task.status = 'Late'
     task.save()
 
@@ -43,17 +43,23 @@ def calculate_time_totals(user):
     today = timezone.now().date()
     week_start = today - timedelta(days=today.weekday())
     month_start = today.replace(day=1)
+    # Chuyển đổi sang offset-aware DateTime
+    today_start = timezone.make_aware(timezone.datetime.combine(today, timezone.datetime.min.time()))
+    week_start_dt = timezone.make_aware(timezone.datetime.combine(week_start, timezone.datetime.min.time()))
+    month_start_dt = timezone.make_aware(timezone.datetime.combine(month_start, timezone.datetime.min.time()))
+    
     total_time_today = TimeEntries.objects.filter(
         user=user,
-        start_time__date=today
+        start_time__gte=today_start,
+        start_time__lt=today_start + timedelta(days=1)
     ).aggregate(total=Sum('duration'))['total'] or 0
     total_time_week = TimeEntries.objects.filter(
         user=user,
-        start_time__gte=week_start
+        start_time__gte=week_start_dt
     ).aggregate(total=Sum('duration'))['total'] or 0
     total_time_month = TimeEntries.objects.filter(
         user=user,
-        start_time__gte=month_start
+        start_time__gte=month_start_dt
     ).aggregate(total=Sum('duration'))['total'] or 0
 
     def format_time(hours):
@@ -136,21 +142,40 @@ def get_project_progress_data(project_id):
         'task_counts': task_counts
     }
     
-
 def calculate_time_by_day(user):
     today = timezone.now().date()
     week_start = today - timedelta(days=6)  # 7 ngày gần nhất
     data = []
+    
     for i in range(7):
         day = week_start + timedelta(days=i)
-        total_time = TimeEntries.objects.filter(
+        # Đảm bảo day_start và day_end là offset-aware
+        day_start = timezone.make_aware(timezone.datetime.combine(day, timezone.datetime.min.time()))
+        day_end = day_start + timedelta(days=1)
+        total_time = 0.0
+        
+        entries = TimeEntries.objects.filter(
             user=user,
-            start_time__date=day
-        ).aggregate(total=Sum('duration'))['total'] or 0
+            start_time__lte=day_end,
+            end_time__gte=day_start
+        ).exclude(end_time__isnull=True)
+        
+        for entry in entries:
+            # Giới hạn thời gian trong ngày
+            start = max(entry.start_time, day_start)
+            end = min(entry.end_time, day_end)  # end_time đã được lọc không null
+            if start < end:
+                duration = (end - start).total_seconds() / 3600
+                total_time += duration
+        
+        # Đảm bảo tổng thời gian không vượt quá 24 giờ
+        total_time = min(total_time, 24.0)
+        
         data.append({
             'day': day.strftime('%d/%m'),
             'total_time': round(total_time, 2)
         })
+    
     return data
 
 def calculate_time_by_task(user):

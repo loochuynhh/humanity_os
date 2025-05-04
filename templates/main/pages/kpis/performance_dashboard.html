@@ -1,0 +1,248 @@
+{% extends 'main/layouts/base.html' %}
+{% load static %}
+
+{% block title %}Performance Dashboard - Humanity OS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/css/kpis/performance_dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        {% include 'main/includes/sidebar.html' %}
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+                <h1 class="h2 fw-bold">
+                    <i class="bi bi-graph-up me-2"></i>Performance Dashboard
+                </h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="{% url 'kpis:generate_pdf' %}?period={{ period }}" class="btn btn-primary">
+                        <i class="bi bi-file-earmark-pdf me-2"></i>In báo cáo
+                    </a>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card shadow-sm bg-gradient-primary text-white hover-card">
+                        <div class="card-body">
+                            <h4 class="fw-bold mb-1">Thống kê hiệu suất</h4>
+                            <p class="mb-0">Hiển thị dữ liệu từ {{ start_date|date:"d/m/Y" }} đến {{ end_date|date:"d/m/Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Select box filter -->
+            <div class="row mb-4">
+                <div class="col-12 col-md-6">
+                    <form method="get" class="d-flex align-items-center">
+                        <select name="period" id="period" class="form-select me-2" style="width: 150px;">
+                            <option value="Weekly" {% if period == 'Weekly' %}selected{% endif %}>Tuần</option>
+                            <option value="Monthly" {% if period == 'Monthly' %}selected{% endif %}>Tháng</option>
+                            <option value="Quarterly" {% if period == 'Quarterly' %}selected{% endif %}>Quý</option>
+                            <option value="Yearly" {% if period == 'Yearly' %}selected{% endif %}>Năm</option>
+                        </select>
+                        <select name="project_id" id="project_id" class="form-select me-2" style="width: 200px;">
+                            <option value="all" {% if project_id == 'all' %}selected{% endif %}>Tất cả dự án</option>
+                            {% for project in projects %}
+                                <option value="{{ project.id }}" {% if project_id == project.id|stringformat:"s" %}selected{% endif %}>{{ project.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-outline-primary btn-sm">Áp dụng</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card shadow-sm h-100 hover-card">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold"><i class="bi bi-list-task me-2"></i>Tổng số KPI</h5>
+                            <h4 class="fw-bold text-primary">{{ total_kpis }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card shadow-sm h-100 hover-card">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold"><i class="bi bi-check-circle me-2"></i>Số KPI đạt được</h5>
+                            <h4 class="fw-bold text-success">{{ achieved_kpis }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card shadow-sm h-100 hover-card">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold"><i class="bi bi-graph-up me-2"></i>Tỷ lệ hoàn thành</h5>
+                            <div class="progress" style="height: 20px">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ completion_rate|floatformat:2 }}%" aria-valuenow="{{ completion_rate|floatformat:2 }}" aria-valuemin="0" aria-valuemax="100">
+                                    {{ completion_rate|floatformat:2 }}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card shadow-sm h-100 hover-card">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold"><i class="bi bi-folder me-2"></i>Số dự án tham gia</h5>
+                            <h4 class="fw-bold text-primary">{{ num_projects }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card shadow-sm h-100 hover-card">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold"><i class="bi bi-kanban me-2"></i>Số task tham gia</h5>
+                            <h4 class="fw-bold text-primary">{{ num_tasks }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card shadow-sm h-100 hover-card">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold"><i class="bi bi-check-circle me-2"></i>Số task hoàn thành</h5>
+                            <h4 class="fw-bold text-success">{{ completed_tasks }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card shadow-sm h-100 hover-card">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold"><i class="bi bi-hourglass-split me-2"></i>Số task đang làm</h5>
+                            <h4 class="fw-bold text-warning">{{ in_progress_tasks }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card shadow-sm h-100 hover-card">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold"><i class="bi bi-exclamation-triangle me-2"></i>Số task bị trễ</h5>
+                            <h4 class="fw-bold text-danger">{{ delayed_tasks }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card shadow-sm h-100 hover-card">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold"><i class="bi bi-clock me-2"></i>Tổng thời gian làm việc</h5>
+                            <h4 class="fw-bold text-primary">{{ total_time|floatformat:2 }} giờ</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4 hover-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0 fw-bold">Biểu đồ hiệu suất</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="kpiChart" height="300" style="max-width: 100%;"></canvas>
+                </div>
+            </div>
+
+            <div class="card shadow-sm hover-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0 fw-bold">Danh sách KPI</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="kpiTable">
+                            <thead>
+                                <tr>
+                                    <th>Tên KPI</th>
+                                    <th>Mục tiêu</th>
+                                    <th>Thực tế</th>
+                                    <th>Đánh giá</th>
+                                    <th>Khoảng thời gian</th>
+                                    <th>Dự án</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for kpi in kpis %}
+                                <tr>
+                                    <td>{{ kpi.kpi.name }}</td>
+                                    <td>{{ kpi.target_value|floatformat:2 }}</td>
+                                    <td>{{ kpi.actual_value|floatformat:2|default:"N/A" }}</td>
+                                    <td>
+                                        <span class="badge {% if kpi.evaluation == 'Achieved' or kpi.evaluation == 'Exceeded' %}bg-success{% elif kpi.evaluation == 'Not Achieved' %}bg-danger{% else %}bg-warning{% endif %}">
+                                            {{ kpi.evaluation|default:"N/A" }}
+                                        </span>
+                                    </td>
+                                    <td>{{ kpi.start_date|date:"d/m/Y" }} - {{ kpi.end_date|date:"d/m/Y" }}</td>
+                                    <td>
+                                        {% if kpi.kpi.project %}
+                                            <a href="{% url 'projects:project_progress' %}?project_id={{ kpi.kpi.project.id }}">{{ kpi.kpi.project.name }}</a>
+                                        {% elif kpi.task and kpi.task.project %}
+                                            <a href="{% url 'projects:project_progress' %}?project_id={{ kpi.task.project.id }}">{{ kpi.task.project.name }}</a>
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'kpis:kpi_detail' kpi.id %}" class="btn btn-sm btn-outline-primary">Xem chi tiết</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="7">Chưa có KPI</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'assets/js/kpis/performance_dashboard.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('kpiChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ kpi_chart_data.labels|safe }},
+                datasets: [{
+                    label: 'Tỷ lệ đạt (%)',
+                    data: {{ kpi_chart_data.data|safe }},
+                    backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                    borderColor: 'rgba(0, 123, 255, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 200,
+                        title: {
+                            display: true,
+                            text: 'Tỷ lệ đạt (%)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'KPI'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

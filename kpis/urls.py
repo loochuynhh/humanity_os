@@ -1,9 +1,11 @@
 from django.urls import path
 from . import views
 
+app_name = 'kpis'
+
 urlpatterns = [
-    path("", views.kpi_list, name="kpi_list"),
-    path("<int:kpi_id>/", views.kpi_detail, name="kpi_detail"),
-    path("personal/", views.personal_kpis, name="personal_kpis"),
-    path("update/", views.update_kpi, name="update_kpi"),
+    path('performance-dashboard/', views.performance_dashboard, name='performance_dashboard'),
+    path('update/', views.update_kpi, name='update_kpi'),
+    path('kpi-detail/<int:kpi_id>/', views.kpi_detail, name='kpi_detail'),
+    path('generate-pdf/', views.generate_pdf, name='generate_pdf'),
 ]

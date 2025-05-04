@@ -1,0 +1,38 @@
+/* static/assets/css/kpis/personal_kpis.css */
+.kpi-container {
+    max-width: 100%;
+}
+
+.card {
+    border-radius: 8px;
+}
+
+.card-header {
+    border-bottom: none;
+}
+
+.table th, .table td {
+    vertical-align: middle;
+}
+
+.progress {
+    height: 20px;
+    background-color: #f1f1f1;
+}
+
+.actual-value-input {
+    display: inline-block;
+}
+
+.update-kpi-btn {
+    padding: 4px 12px;
+}
+
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+    .actual-value-input {
+        width: 80px !important;
+    }
+}

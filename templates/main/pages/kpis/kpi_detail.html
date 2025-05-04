@@ -1,0 +1,101 @@
+{% extends 'main/layouts/base.html' %}
+{% load static %}
+
+{% block title %}Chi tiết KPI: {{ kpi.kpi.name }} - Humanity OS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/css/kpis/kpi_detail.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        {% include 'main/includes/sidebar.html' %}
+        <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
+            <div class="mt-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0 fw-bold">{{ kpi.kpi.name }}</h1>
+                        <small class="text-white-50">
+                            {% if kpi.kpi.project %}
+                                Dự án: <a href="{% url 'projects:project_progress' %}?project_id={{ kpi.kpi.project.id }}" class="text-white">{{ kpi.kpi.project.name }}</a>
+                            {% else %}
+                                Không liên kết dự án
+                            {% endif %}
+                        </small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-12 col-md-6">
+                                <div class="card shadow-sm h-100 hover-card">
+                                    <div class="card-body">
+                                        <h5 class="section-title fw-bold">Thông tin KPI</h5>
+                                        <div class="row">
+                                            <div class="col-12 mb-3">
+                                                <label class="form-label fw-bold">Mô tả</label>
+                                                <p class="text-muted">{{ kpi.kpi.description }}</p>
+                                            </div>
+                                            <div class="col-12 mb-3">
+                                                <label class="form-label fw-bold">Loại KPI</label>
+                                                <p class="text-muted">{{ kpi.kpi.kpi_type }}</p>
+                                            </div>
+                                            <div class="col-12 mb-3">
+                                                <label class="form-label fw-bold">Đơn vị</label>
+                                                <p class="text-muted">{{ kpi.kpi.unit|default:"N/A" }}</p>
+                                            </div>
+                                            <div class="col-12 mb-3">
+                                                <label class="form-label fw-bold">Trọng số</label>
+                                                <p class="text-muted">{{ kpi.kpi.weight|floatformat:2 }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="card shadow-sm h-100 hover-card">
+                                    <div class="card-body">
+                                        <h5 class="section-title fw-bold">Hiệu suất</h5>
+                                        <div class="row">
+                                            <div class="col-12 mb-3">
+                                                <label class="form-label fw-bold">Mục tiêu</label>
+                                                <p class="text-muted">{{ kpi.target_value|floatformat:2 }} {{ kpi.kpi.unit|default:"" }}</p>
+                                            </div>
+                                            <div class="col-12 mb-3">
+                                                <label class="form-label fw-bold">Thực tế</label>
+                                                <p class="text-muted">{{ kpi.actual_value|floatformat:2|default:"N/A" }} {{ kpi.kpi.unit|default:"" }}</p>
+                                            </div>
+                                            <div class="col-12 mb-3">
+                                                <label class="form-label fw-bold">Tỷ lệ đạt</label>
+                                                <div class="progress" style="height: 20px">
+                                                    <div class="progress-bar {% if kpi.achieved_percentage >= 100 %}bg-success{% elif kpi.achieved_percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" style="width: {{ kpi.achieved_percentage|floatformat:2 }}%">
+                                                        {{ kpi.achieved_percentage|floatformat:2 }}%
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-12 mb-3">
+                                                <label class="form-label fw-bold">Đánh giá</label>
+                                                <p>
+                                                    <span class="badge {% if kpi.evaluation == 'Achieved' or kpi.evaluation == 'Exceeded' %}bg-success{% elif kpi.evaluation == 'Not Achieved' %}bg-danger{% else %}bg-warning{% endif %}">
+                                                        {{ kpi.evaluation|default:"N/A" }}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                            <div class="col-12 mb-3">
+                                                <label class="form-label fw-bold">Khoảng thời gian</label>
+                                                <p class="text-muted">{{ kpi.start_date|date:"d/m/Y" }} - {{ kpi.end_date|date:"d/m/Y" }} ({{ kpi.time_period }})</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <a href="{% url 'kpis:performance_dashboard' %}" class="btn btn-outline-primary">Quay lại</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}

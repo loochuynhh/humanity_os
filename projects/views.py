@@ -114,11 +114,14 @@ def my_tasks(request):
             'time_entries': time_entries,
             'progress_percentage': progress_percentage,
         })
+    # Lấy danh sách dự án duy nhất
+    projects = Projects.objects.filter(tasks__task_assignments__user=request.user).distinct()
     return render(request, 'main/pages/projects/my_tasks.html', {
         'tasks_with_details': tasks_with_details,
         'status_choices': Tasks.STATUS_CHOICES,
         'difficulty_choices': Tasks.DIFFICULTY_CHOICES,
-        'now': timezone.now().date()
+        'now': timezone.now().date(),
+        'projects': projects,  # Thêm projects vào context
     })
 
 
@@ -156,7 +159,7 @@ def update_status(request):
         task = Tasks.objects.get(id=task_id, task_assignments__user=request.user)
         assignment = task.task_assignments.get(user=request.user) # type: ignore
         assignment.status = status
-        if task.deadline < timezone.now().date() and status != "Completed":
+        if task.deadline.date() < timezone.now().date() and status != "Completed":
             assignment.status = "Late"
         assignment.save()
         task.update_status_from_assignments()  
