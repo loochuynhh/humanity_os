@@ -1,16 +1,26 @@
 <div class="container">
-    <h6 class="mb-3">Form: {{ response.form.name }}</h6>
-    <p><strong>Người đánh giá:</strong> {{ response.user.get_full_name }}</p>
-    <p><strong>Kỳ:</strong> {{ response.form.period }}</p>
-    <p><strong>Loại:</strong> {{ response.form.type|title }}</p>
+    <h6 class="mb-3 text-sm fw-bold">Form: {{ response.form.name }}</h6>
+    <p class="text-sm"><strong>Người đánh giá:</strong> 
+        {% if response.form.type == 'feedback' %}
+            Ẩn danh
+        {% else %}
+            {{ response.user.get_full_name }}
+        {% endif %}
+    </p>
+    <p class="text-sm"><strong>Kỳ:</strong> {{ response.form.period }}</p>
+    <p class="text-sm"><strong>Loại:</strong> {{ response.form.type|title }}</p>
     <hr>
-    <h6>Câu hỏi và câu trả lời:</h6>
+    <h6 class="text-sm fw-bold">Câu hỏi và câu trả lời:</h6>
     {% for question in questions %}
     <div class="mb-3">
-      <p><strong>{{ forloop.counter }}. {{ question.question_text }}</strong></p>
-      <p>{{ response.answer|default:"Không có câu trả lời" }}</p>
+        <p class="text-sm fw-bold">{{ forloop.counter }}. {{ question.question_text }}</p>
+        <p class="text-sm">
+            {% with answers=response.form.responses_received.filter(question=question, target_user=response.target_user) %}
+                {{ answers.first.answer|default:"Không có câu trả lời" }}
+            {% endwith %}
+        </p>
     </div>
     {% empty %}
-    <p class="text-muted">Không có câu hỏi nào trong form này.</p>
+    <p class="text-muted text-sm">Không có câu hỏi nào trong form này.</p>
     {% endfor %}
-  </div>
+</div>

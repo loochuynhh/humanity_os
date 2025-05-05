@@ -94,7 +94,7 @@
                 <a class="nav-link sub-link {% if request.resolver_match.url_name == 'performance_dashboard' %}active{% endif %}" href="{% url 'kpis:performance_dashboard' %}">Performance Dashboard</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link sub-link {% if request.resolver_match.url_name == 'manager_feedback' %}active{% endif %}" href="{% url 'evaluations:manager_feedback' %}">Đánh giá từ quản lý</a>
+                <a class="nav-link sub-link {% if request.resolver_match.url_name == 'evaluations' %}active{% endif %}" href="{% url 'evaluations:evaluations' %}">Quản lý Đánh giá</a>
             </li>
           </ul>
         </div>

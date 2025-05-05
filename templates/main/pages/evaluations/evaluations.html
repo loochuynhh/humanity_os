@@ -1,0 +1,381 @@
+{% extends 'main/layouts/base.html' %}
+{% load static %}
+
+{% block title %}Quản lý Đánh giá - Humanity OS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/css/evaluations/evaluations.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        {% include 'main/includes/sidebar.html' %}
+        <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom fade-in-down">
+                <h1 class="h2 fw-bold">
+                    <i class="bi bi-chat-quote me-2"></i>Quản lý Đánh giá
+                </h1>
+            </div>
+
+            <!-- Tabs -->
+            <ul class="nav nav-tabs mb-4 fade-in-up">
+                <li class="nav-item">
+                    <a class="nav-link active" id="manager-tab" data-bs-toggle="tab" href="#manager">Đánh giá từ Quản lý</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="history-tab" data-bs-toggle="tab" href="#history">Lịch sử Đánh giá</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="submit-tab" data-bs-toggle="tab" href="#submit">Gửi Đánh giá</a>
+                </li>
+            </ul>
+
+            <!-- Tab content -->
+            <div class="tab-content fade-in-up">
+                <!-- Đánh giá từ Quản lý -->
+                <div class="tab-pane fade show active" id="manager">
+                    <!-- Tóm tắt -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Số lượng đánh giá</h6>
+                                    <h4 class="text-success">{{ total_reviews }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Tỷ lệ tích cực</h6>
+                                    <h4 class="text-primary">{{ positive_rate }}%</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Điểm trung bình</h6>
+                                    <h4 class="text-info">{{ average_score|floatformat:1 }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Danh sách đánh giá -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Danh sách Đánh giá</h5>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table id="feedbackTable" class="table table-hover align-items-center mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Tên Form</th>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Người đánh giá</th>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Kỳ</th>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Loại</th>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Hành động</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for response in responses %}
+                                                <tr data-response-id="{{ response.id }}">
+                                                    <td>
+                                                        <h6 class="mb-0 text-sm">{{ response.form.name }}</h6>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-sm">{{ response.user.get_full_name }}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-sm">{{ response.form.period }}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge {% if response.form.type == 'peer' %}bg-info{% elif response.form.type == 'review' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                                            {{ response.form.type|title }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-outline-primary btn-sm view-feedback">Xem</button>
+                                                    </td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="5" class="text-center py-4">
+                                                        <i class="bi bi-chat-quote fa-2x text-muted mb-3"></i>
+                                                        <h6 class="text-muted">Chưa có đánh giá nào</h6>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lịch sử Đánh giá -->
+                <div class="tab-pane fade" id="history">
+                    <!-- Tabs con -->
+                    <ul class="nav nav-tabs mb-4">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="received-tab" data-bs-toggle="tab" href="#received">Nhận được</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="sent-tab" data-bs-toggle="tab" href="#sent">Đã gửi</a>
+                        </li>
+                    </ul>
+
+                    <!-- Tab content con -->
+                    <div class="tab-content">
+                        <!-- Nhận được -->
+                        <div class="tab-pane fade show active" id="received">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Đánh giá Nhận được</h5>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table id="receivedTable" class="table table-hover align-items-center mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Tên Form</th>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Người đánh giá</th>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Kỳ</th>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Loại</th>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Hành động</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for response in received_responses %}
+                                                <tr data-response-id="{{ response.id }}">
+                                                    <td>
+                                                        <h6 class="mb-0 text-sm">{{ response.form.name }}</h6>
+                                                    </td>
+                                                    <td>
+                                                        {% if response.form.type == 'peer' %}
+                                                            <span class="text-sm">{{ response.user.get_full_name }}</span>
+                                                        {% else %}
+                                                            <span class="text-sm">Ẩn danh</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-sm">{{ response.form.period }}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge {% if response.form.type == 'peer' %}bg-info{% elif response.form.type == 'review' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                                            {{ response.form.type|title }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-outline-primary btn-sm view-feedback">Xem</button>
+                                                    </td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="5" class="text-center py-4">
+                                                        <i class="bi bi-chat-quote fa-2x text-muted mb-3"></i>
+                                                        <h6 class="text-muted">Chưa có đánh giá nào</h6>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Đã gửi -->
+                        <div class="tab-pane fade" id="sent">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Đánh giá Đã gửi</h5>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table id="sentTable" class="table table-hover align-items-center mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Tên Form</th>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Người được đánh giá</th>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Kỳ</th>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Loại</th>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Hành động</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for response in sent_responses %}
+                                                <tr data-response-id="{{ response.id }}">
+                                                    <td>
+                                                        <h6 class="mb-0 text-sm">{{ response.form.name }}</h6>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-sm">{{ response.target_user.get_full_name }}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-sm">{{ response.form.period }}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge {% if response.form.type == 'peer' %}bg-info{% else %}bg-secondary{% endif %}">
+                                                            {{ response.form.type|title }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-outline-primary btn-sm view-feedback">Xem</button>
+                                                    </td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="5" class="text-center py-4">
+                                                        <i class="bi bi-chat-quote fa-2x text-muted mb-3"></i>
+                                                        <h6 class="text-muted">Chưa gửi đánh giá nào</h6>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gửi Đánh giá -->
+                <div class="tab-pane fade" id="submit">
+                    <!-- Tóm tắt -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Số form cần điền</h6>
+                                    <h4 class="text-primary">{{ total_forms }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Số form đã hoàn thành</h6>
+                                    <h4 class="text-success">{{ completed_forms_count }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Danh sách form -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Danh sách Form Đánh giá</h5>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table id="formTable" class="table table-hover align-items-center mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Tên Form</th>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Kỳ</th>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Hạn nộp</th>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Loại</th>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Trạng thái</th>
+                                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Hành động</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for form in forms %}
+                                                <tr data-form-id="{{ form.id }}">
+                                                    <td>
+                                                        <h6 class="mb-0 text-sm">{{ form.name }}</h6>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-sm">{{ form.period }}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-sm">{{ form.deadline|date:"d/m/Y" }}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge {% if form.type == 'peer' %}bg-info{% else %}bg-secondary{% endif %}">
+                                                            {{ form.type|title }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        {% if form.id in completed_forms %}
+                                                            <span class="badge bg-success">Đã điền</span>
+                                                        {% else %}
+                                                            <span class="badge bg-warning">Chưa điền</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if form.id not in completed_forms %}
+                                                            <button class="btn btn-outline-primary btn-sm submit-form">Điền</button>
+                                                        {% endif %}
+                                                        <button class="btn btn-primary btn-sm new-evaluation">Đánh giá Mới</button>
+                                                    </td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>    
+                                                    <td colspan="5" class="text-center py-4">
+                                                        <i class="bi bi-edit fa-2x text-muted mb-3"></i>
+                                                        <h6 class="text-muted">Chưa có form đánh giá nào</h6>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal chi tiết -->
+            <div class="modal fade" id="feedbackModal" tabindex="-1" aria-labelledby="feedbackModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="feedbackModalLabel">Chi tiết Đánh giá</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" id="feedbackDetails"></div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal nhập đánh giá -->
+            <div class="modal fade" id="submitFormModal" tabindex="-1" aria-labelledby="submitFormModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="submitFormModalLabel">Điền Form Đánh giá</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" id="formContent"></div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" id="submitForm">Gửi</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
+<script src="{% static 'assets/js/evaluations/evaluations.js' %}"></script>
+{% endblock %}
