@@ -103,7 +103,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-12 col-md-6">
             <div class="card shadow-sm hover-card">
                 <div class="card-body">
@@ -245,7 +245,10 @@
             <canvas id="checkin_canvas" style="display: none;"></canvas>
             <img id="checkin_preview" class="img-fluid rounded mt-2 d-none" style="max-height: 100px;" alt="Ảnh preview">
             <input type="hidden" name="checkin_image" id="checkin_image_data">
-            <button type="button" class="btn btn-secondary w-100 mt-2" id="checkin_snap">Chụp ảnh</button>
+            <div class="d-flex gap-2 mt-2">
+                <button type="button" class="btn btn-secondary w-100" id="checkin_snap">Chụp ảnh</button>
+                <button type="button" class="btn btn-warning w-100 d-none" id="checkin_retake">Chụp lại</button>
+            </div>
         </div>
         <div class="mb-3">
             <label class="form-label fw-semibold">Vị trí</label>
@@ -292,7 +295,10 @@
             <canvas id="checkout_canvas" style="display: none;"></canvas>
             <img id="checkout_preview" class="img-fluid rounded mt-2 d-none" style="max-height: 100px;" alt="Ảnh preview">
             <input type="hidden" name="checkout_image" id="checkout_image_data">
-            <button type="button" class="btn btn-secondary w-100 mt-2" id="checkout_snap">Chụp ảnh</button>
+            <div class="d-flex gap-2 mt-2">
+                <button type="button" class="btn btn-secondary w-100" id="checkout_snap">Chụp ảnh</button>
+                <button type="button" class="btn btn-warning w-100 d-none" id="checkout_retake">Chụp lại</button>
+            </div>
         </div>
         <div class="mb-3">
             <label class="form-label fw-semibold">Vị trí</label>
@@ -314,5 +320,7 @@
 </div>
 </div>
 
+{% block extra_js %}
 <script src="{% static 'assets/js/index.js' %}"></script>
+{% endblock %}
 {% endblock %}

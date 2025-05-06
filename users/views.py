@@ -1,4 +1,3 @@
-# users/views.py
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -12,7 +11,7 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.decorators.http import require_POST
-from .models import Goals, Users
+from .models import Goals, Users, UserFaceImage, CheckInCheckOut
 from .utils import (
     get_task_counts,
     get_time_tracking,
@@ -87,16 +86,16 @@ def forgot_password(request):
     return render(request, "main/pages/users/forgot_password.html")
 
 
-@login_required(login_url="users:login") 
+@login_required(login_url="users:login")
 def change_password(request):
     if request.method == "POST":
         current_password = request.POST.get("current_password")
         new_password = request.POST.get("new_password")
         confirm_password = request.POST.get("confirm_password")
         user = request.user
-        
+
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-        
+
         if not user.check_password(current_password):
             if is_ajax:
                 return JsonResponse({"success": False, "message": "Mật khẩu hiện tại không chính xác!"})
@@ -115,7 +114,7 @@ def change_password(request):
                 return JsonResponse({"success": True, "message": "Mật khẩu đã được thay đổi. Vui lòng đăng nhập lại!"})
             messages.success(request, "Mật khẩu đã được thay đổi. Vui lòng đăng nhập lại!")
             return redirect("users:login")
-        
+
     return render(request, "main/pages/users/change_password.html")
 
 
@@ -172,15 +171,42 @@ def check_in(request):
     """
     Xử lý check-in của người dùng, lưu thời gian, địa điểm và hình ảnh.
     """
-    location = request.POST.get('checkin_location')
-    image_data = request.POST.get('checkin_image')
+    try:
+        location = request.POST.get('checkin_location', '')
+        image_data = request.POST.get('checkin_image', '')
 
-    success, message = handle_check_in(request.user, location, image_data)
-    if success:
-        messages.success(request, message)
-    else:
-        messages.error(request, message)
-    return redirect('users:index')
+        if not location or not image_data:
+            messages.error(request, "Thiếu thông tin vị trí hoặc ảnh check-in.")
+            return JsonResponse({
+                "success": False,
+                "message": "Thiếu thông tin vị trí hoặc ảnh check-in.",
+                "redirect": False
+            })
+
+        success, message = handle_check_in(request.user, location, image_data)
+
+        if success:
+            messages.success(request, message)
+        else:
+            messages.error(request, message)
+
+        return JsonResponse({
+            "success": success,
+            "message": message,
+            "redirect": True,
+            "redirect_url": reverse('users:profile')
+        })
+    except Exception as e:
+        import traceback
+        print(f"Check-in error: {str(e)}")
+        print(traceback.format_exc())
+        messages.error(request, f"Lỗi hệ thống: {str(e)}")
+        return JsonResponse({
+            "success": False,
+            "message": f"Lỗi hệ thống: {str(e)}",
+            "redirect": True,
+            "redirect_url": reverse('users:profile')
+        })
 
 
 @login_required
@@ -189,15 +215,54 @@ def check_out(request):
     """
     Xử lý check-out của người dùng, lưu thời gian, địa điểm và hình ảnh.
     """
-    location = request.POST.get('checkout_location')
-    image_data = request.POST.get('checkout_image')
+    try:
+        location = request.POST.get('checkout_location', '')
+        image_data = request.POST.get('checkout_image', '')
 
-    success, message = handle_check_out(request.user, location, image_data)
-    if success:
-        messages.success(request, message)
-    else:
-        messages.error(request, message)
-    return redirect('users:index')
+        if not location:
+            return JsonResponse({
+                "success": False,
+                "message": "Vui lòng cung cấp vị trí của bạn.",
+                "redirect": False
+            })
+
+        if not image_data:
+            return JsonResponse({
+                "success": False,
+                "message": "Vui lòng chụp ảnh để check-out.",
+                "redirect": False
+            })
+
+        # Thêm log để debug
+        print(f"Check-out request received - Location: {location[:20]}..., Image data length: {len(image_data)}")
+
+        success, message = handle_check_out(request.user, location, image_data)
+
+        # Thêm log kết quả
+        print(f"Check-out result: Success={success}, Message={message}")
+
+        if success:
+            messages.success(request, message)
+        else:
+            messages.error(request, message)
+
+        return JsonResponse({
+            "success": success,
+            "message": message,
+            "redirect": True,
+            "redirect_url": reverse('users:profile')
+        })
+    except Exception as e:
+        import traceback
+        print(f"Check-out error: {str(e)}")
+        print(traceback.format_exc())
+        messages.error(request, f"Lỗi hệ thống: {str(e)}")
+        return JsonResponse({
+            "success": False,
+            "message": f"Lỗi hệ thống: {str(e)}",
+            "redirect": False
+        })
+
 
 @login_required
 def index(request):
@@ -205,7 +270,7 @@ def index(request):
     context = {
         "first_name": user.first_name,
         "last_name": user.last_name,
-        "avatar_url": user.avatar_url,  
+        "avatar_url": user.avatar_url,
         "task_counts": get_task_counts(user.id),
         "task_chart_data": get_task_counts(user.id, as_json=True),
         "today_time": get_time_tracking(user.id, period="today"),
@@ -281,14 +346,36 @@ def update_goal(request):
 
 @login_required
 def profile(request):
+    """
+    Hiển thị trang hồ sơ cá nhân của người dùng.
+    """
     user = request.user
+
+    # Lấy dữ liệu cho trang profile
+    recent_tasks = get_recent_tasks(user)
+    personal_goals = get_personal_goals(user)
+    face_images = UserFaceImage.objects.filter(user=user).order_by('-uploaded_at')
+
+    # Lấy lịch sử check-in/check-out (7 ngày gần nhất)
+    end_date = timezone.now().date()
+    start_date = end_date - timezone.timedelta(days=7)
+    checkin_history = CheckInCheckOut.objects.filter(
+        user=user,
+        date__range=[start_date, end_date]
+    ).order_by('-date')
+
+    # Lấy danh sách dự án tham gia
+    projects = get_project_data(user)
+
     context = {
-        "user": user,
-        "goals": get_goals_stats(user),
-        "projects": get_project_data(user),
-        "recent_tasks": get_recent_tasks(user.id),
-        "personal_goals": get_personal_goals(user.id),
+        'user': user,
+        'recent_tasks': recent_tasks,
+        'personal_goals': personal_goals,
+        'face_images': face_images,
+        'checkin_history': checkin_history,
+        'projects': projects,
     }
+
     return render(request, "main/pages/users/profile.html", context)
 
 
@@ -301,7 +388,7 @@ def update_profile(request):
             user.last_name = request.POST.get("last_name", user.last_name)
             user.phone = request.POST.get("phone", user.phone)
             user.department = request.POST.get("department", user.department)
-            user.bio = request.POST.get("bio", user.bio) 
+            user.bio = request.POST.get("bio", user.bio)
             date_of_joining = request.POST.get("date_of_joining")
             if date_of_joining:
                 user.date_of_joining = date_of_joining
@@ -312,3 +399,113 @@ def update_profile(request):
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e)})
     return JsonResponse({"success": False, "error": "Invalid request"})
+
+
+@login_required
+@require_POST
+def upload_face_image(request):
+    """
+    Xử lý tải lên ảnh khuôn mặt cho nhận diện.
+    """
+    if 'face_image' not in request.FILES:
+        return JsonResponse({"success": False, "error": "Không có ảnh được tải lên."})
+
+    try:
+        face_image = request.FILES['face_image']
+        UserFaceImage.objects.create(
+            user=request.user,
+            face_image=face_image
+        )
+        return JsonResponse({"success": True, "message": "Tải ảnh khuôn mặt thành công."})
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)})
+
+
+@login_required
+@require_POST
+def update_fixed_location(request):
+    """
+    Cập nhật vị trí cố định của người dùng.
+    """
+    try:
+        fixed_location = request.POST.get('fixed_location', '')
+
+        # Kiểm tra định dạng
+        if fixed_location:
+            try:
+                lat, lng = map(float, fixed_location.split(','))
+                if not (-90 <= lat <= 90 and -180 <= lng <= 180):
+                    return JsonResponse({
+                        "success": False,
+                        "message": "Vị trí không hợp lệ. Vui lòng kiểm tra lại."
+                    })
+            except:
+                return JsonResponse({
+                    "success": False,
+                    "message": "Định dạng vị trí không hợp lệ. Vui lòng sử dụng định dạng: latitude,longitude"
+                })
+
+        # Cập nhật vị trí
+        user = request.user
+        user.fixed_location = fixed_location
+        user.save()
+
+        messages.success(request, "Cập nhật vị trí làm việc thành công.")
+        return redirect('profile')
+    except Exception as e:
+        messages.error(request, f"Lỗi khi cập nhật vị trí: {str(e)}")
+        return redirect('profile')
+
+
+@login_required
+def attendance(request):
+    """
+    Hiển thị lịch sử điểm danh của người dùng trong 45 ngày gần nhất.
+    """
+    user = request.user
+
+    # Lấy lịch sử check-in/check-out (45 ngày gần nhất)
+    end_date = timezone.now().date()
+    start_date = end_date - timezone.timedelta(days=45)
+
+    # Lọc theo ngày nếu có
+    filter_date = request.GET.get('date')
+    if filter_date:
+        try:
+            filter_date = timezone.datetime.strptime(filter_date, '%Y-%m-%d').date()
+            attendance_records = CheckInCheckOut.objects.filter(
+                user=user,
+                date=filter_date
+            ).order_by('-date')
+        except ValueError:
+            messages.error(request, "Định dạng ngày không hợp lệ.")
+            attendance_records = CheckInCheckOut.objects.filter(
+                user=user,
+                date__range=[start_date, end_date]
+            ).order_by('-date')
+    else:
+        attendance_records = CheckInCheckOut.objects.filter(
+            user=user,
+            date__range=[start_date, end_date]
+        ).order_by('-date')
+
+    # Tính toán thống kê
+    total_days = (end_date - start_date).days + 1
+    present_days = attendance_records.filter(checkin_time__isnull=False).count()
+    absent_days = total_days - present_days
+    valid_checkins = attendance_records.filter(is_valid_checkin=True).count()
+    valid_checkouts = attendance_records.filter(is_valid_checkout=True).count()
+
+    context = {
+        'attendance_records': attendance_records,
+        'start_date': start_date,
+        'end_date': end_date,
+        'total_days': total_days,
+        'present_days': present_days,
+        'absent_days': absent_days,
+        'valid_checkins': valid_checkins,
+        'valid_checkouts': valid_checkouts,
+        'attendance_rate': round(present_days / total_days * 100, 2) if total_days > 0 else 0,
+    }
+
+    return render(request, "main/pages/users/attendance.html", context)

@@ -1,0 +1,190 @@
+{% extends 'main/layouts/user_base.html' %}
+{% load static %}
+
+{% block title %}Lịch sử điểm danh - Humanity OS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    {% include 'main/includes/sidebar.html' %}
+
+    <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
+      <!-- Header -->
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+        <h1 class="h2 fw-bold">
+          <i class="bi bi-calendar-check me-2"></i>Lịch sử điểm danh
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <a href="{% url 'users:profile' %}" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại hồ sơ
+          </a>
+          <button class="btn btn-outline-primary" id="print-attendance">
+            <i class="bi bi-printer me-1"></i> In báo cáo
+          </button>
+        </div>
+      </div>
+
+      <!-- Thống kê tổng quan -->
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="card shadow-sm h-100">
+            <div class="card-body text-center">
+              <h5 class="card-title">Tỷ lệ điểm danh</h5>
+              <div class="display-4 fw-bold text-primary">{{ attendance_rate }}%</div>
+              <p class="text-muted">{{ present_days }}/{{ total_days }} ngày</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card shadow-sm h-100">
+            <div class="card-body text-center">
+              <h5 class="card-title">Có mặt</h5>
+              <div class="display-4 fw-bold text-success">{{ present_days }}</div>
+              <p class="text-muted">ngày</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card shadow-sm h-100">
+            <div class="card-body text-center">
+              <h5 class="card-title">Vắng mặt</h5>
+              <div class="display-4 fw-bold text-danger">{{ absent_days }}</div>
+              <p class="text-muted">ngày</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card shadow-sm h-100">
+            <div class="card-body text-center">
+              <h5 class="card-title">Thời gian</h5>
+              <div class="display-4 fw-bold text-info">45</div>
+              <p class="text-muted">ngày gần nhất</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bộ lọc -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+              <label for="date" class="form-label">Lọc theo ngày</label>
+              <input type="date" class="form-control" id="date" name="date" value="{{ request.GET.date|default:'' }}">
+            </div>
+            <div class="col-md-4">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-filter me-1"></i> Lọc
+              </button>
+              <a href="{% url 'users:attendance' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Bảng lịch sử điểm danh -->
+      <div class="card shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">Lịch sử điểm danh ({{ start_date|date:"d/m/Y" }} - {{ end_date|date:"d/m/Y" }})</h5>
+        </div>
+        <div class="card-body">
+          {% if attendance_records %}
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Ngày</th>
+                    <th>Check-in</th>
+                    <th>Check-out</th>
+                    <th>Vị trí Check-in</th>
+                    <th>Vị trí Check-out</th>
+                    <th>Trạng thái</th>
+                    <th>Ảnh</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for record in attendance_records %}
+                  <tr>
+                    <td>{{ record.date|date:"d/m/Y" }}</td>
+                    <td>
+                      {% if record.checkin_time %}
+                        {{ record.checkin_time|time:"H:i" }}
+                        <span class="badge bg-{% if record.is_valid_checkin %}success{% else %}danger{% endif %} ms-1">
+                          {% if record.is_valid_checkin %}✓{% else %}✗{% endif %}
+                        </span>
+                      {% else %}
+                        <span class="text-muted">--:--</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if record.checkout_time %}
+                        {{ record.checkout_time|time:"H:i" }}
+                        <span class="badge bg-{% if record.is_valid_checkout %}success{% else %}danger{% endif %} ms-1">
+                          {% if record.is_valid_checkout %}✓{% else %}✗{% endif %}
+                        </span>
+                      {% else %}
+                        <span class="text-muted">--:--</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if record.checkin_location %}
+                        <small class="text-muted">{{ record.checkin_location }}</small>
+                      {% else %}
+                        <span class="text-muted">Không có</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if record.checkout_location %}
+                        <small class="text-muted">{{ record.checkout_location }}</small>
+                      {% else %}
+                        <span class="text-muted">Không có</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if record.checkin_time and record.checkout_time %}
+                        <span class="badge bg-success">Hoàn thành</span>
+                      {% elif record.checkin_time %}
+                        <span class="badge bg-warning">Chưa check-out</span>
+                      {% else %}
+                        <span class="badge bg-danger">Vắng mặt</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if record.checkin_image %}
+                        <a href="{{ record.checkin_image.url }}" target="_blank" class="btn btn-sm btn-outline-primary me-1">
+                          <i class="bi bi-camera"></i> In
+                        </a>
+                      {% endif %}
+                      {% if record.checkout_image %}
+                        <a href="{{ record.checkout_image.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                          <i class="bi bi-camera"></i> Out
+                        </a>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center py-5">
+              <i class="bi bi-calendar-x fs-1 text-muted"></i>
+              <p class="mt-3 text-muted">Không có dữ liệu điểm danh trong khoảng thời gian này</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('print-attendance').addEventListener('click', function() {
+    window.print();
+  });
+</script>
+{% endblock %}

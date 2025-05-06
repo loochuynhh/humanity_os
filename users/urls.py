@@ -6,14 +6,17 @@ from .views import (
     change_password,
     index,
     reset_password,
-    check_in,  
-    check_out, 
+    check_in,
+    check_out,
     set_goal,
     goals,
     add_goal,
     update_goal,
     profile,
-    update_profile
+    update_profile,
+    upload_face_image,
+    update_fixed_location,
+    attendance
 )
 
 urlpatterns = [
@@ -23,7 +26,7 @@ urlpatterns = [
     path("forgot-password/", forgot_password, name="forgot_password"),
     path("change-password/", change_password, name="change_password"),
     path("reset-password/<uidb64>/<token>/", reset_password, name="reset_password"),
-    path("check-in/", check_in, name="check_in"), 
+    path("check-in/", check_in, name="check_in"),
     path("check-out/", check_out, name="check_out"),
     path("set-goal/", set_goal, name="set_goal"),
     path("goals/", goals, name="goals"),
@@ -31,4 +34,7 @@ urlpatterns = [
     path("goals/update/", update_goal, name="update_goal"),
     path('profile/', profile, name='profile'),
     path('profile/update/', update_profile, name='update_profile'),
+    path('attendance/', attendance, name='attendance'),
+    path('profile/upload-face-image/', upload_face_image, name='upload_face_image'),
+    path('update-fixed-location/', update_fixed_location, name='update_fixed_location'),
 ]

@@ -2,6 +2,7 @@ from django.urls import path
 from custom_admin import views
 from django.contrib.auth import views as auth_views
 from django.views.generic import RedirectView
+from users import views as users_views
 
 urlpatterns = [
     path("", views.index, name="index"),
@@ -12,4 +13,6 @@ urlpatterns = [
     path("profile/", views.profile, name="profile"),
     # Authentication
     path("accounts/logout/", views.logout_view, name="logout"),
+    # URL cho update_fixed_location
+    path('update-fixed-location/', views.update_fixed_location, name='update_fixed_location'),
 ]

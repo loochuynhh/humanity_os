@@ -33,7 +33,7 @@
           <h3 class="mb-1">{{ user.get_full_name }}</h3>
           <p class="mb-0">{{ user.get_role_display }} • {{ user.department|default:"Không xác định" }}</p>
         </div>
-        
+
         <div class="card-body">
             <div class="row">
               <!-- Thông tin cá nhân -->
@@ -74,6 +74,17 @@
                           </span>
                         </td>
                       </tr>
+                      <tr>
+                        <th>Vị trí làm việc:</th>
+                        <td>
+                          {% if user.fixed_location %}
+                            <span class="badge bg-info">{{ user.fixed_location }}</span>
+                            <small class="d-block text-muted mt-1">Vị trí này được thiết lập bởi quản lý</small>
+                          {% else %}
+                            <span class="badge bg-secondary">Chưa thiết lập</span>
+                          {% endif %}
+                        </td>
+                      </tr>
                       {% if user.bio %}
                       <tr>
                         <th>Giới thiệu:</th>
@@ -83,7 +94,7 @@
                     </table>
                   </div>
                 </div>
-                
+
                 <!-- Mục tiêu cá nhân -->
                 <div class="card shadow-sm">
                   <div class="card-header bg-white">
@@ -101,7 +112,7 @@
                             </span>
                           </div>
                           <div class="progress progress-thin mt-2">
-                            <div class="progress-bar" 
+                            <div class="progress-bar"
                                  style="width: {{ goal.progress }}%"></div>
                           </div>
                           <small class="text-muted">Hoàn thành: {{ goal.progress }}% • Hạn: {{ goal.deadline|date:"d/m/Y" }}</small>
@@ -122,8 +133,75 @@
                     {% endif %}
                   </div>
                 </div>
+
+                <!-- Lịch sử Check-in/Check-out -->
+                <div class="card mb-4 mt-4 shadow-sm">
+                  <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Lịch sử Check-in/Check-out</h5>
+                  </div>
+                  <div class="card-body">
+                    {% if checkin_history %}
+                      <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                          <thead>
+                            <tr>
+                              <th>Ngày</th>
+                              <th>Check-in</th>
+                              <th>Check-out</th>
+                              <th>Trạng thái</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {% for record in checkin_history %}
+                            <tr>
+                              <td>{{ record.date|date:"d/m/Y" }}</td>
+                              <td>
+                                {% if record.checkin_time %}
+                                  {{ record.checkin_time|time:"H:i" }}
+                                  <span class="badge bg-{% if record.is_valid_checkin %}success{% else %}danger{% endif %} ms-1">
+                                    {% if record.is_valid_checkin %}✓{% else %}✗{% endif %}
+                                  </span>
+                                {% else %}
+                                  --:--
+                                {% endif %}
+                              </td>
+                              <td>
+                                {% if record.checkout_time %}
+                                  {{ record.checkout_time|time:"H:i" }}
+                                  <span class="badge bg-{% if record.is_valid_checkout %}success{% else %}danger{% endif %} ms-1">
+                                    {% if record.is_valid_checkout %}✓{% else %}✗{% endif %}
+                                  </span>
+                                {% else %}
+                                  --:--
+                                {% endif %}
+                              </td>
+                              <td>
+                                {% if record.checkin_time and record.checkout_time %}
+                                  <span class="badge bg-success">Hoàn thành</span>
+                                {% elif record.checkin_time %}
+                                  <span class="badge bg-warning">Chưa check-out</span>
+                                {% else %}
+                                  <span class="badge bg-danger">Vắng mặt</span>
+                                {% endif %}
+                              </td>
+                            </tr>
+                            {% endfor %}
+                          </tbody>
+                        </table>
+                      </div>
+                      <a href="{% url 'users:attendance' %}" class="btn btn-sm btn-outline-primary mt-2">
+                        Xem tất cả lịch sử
+                      </a>
+                    {% else %}
+                      <div class="text-center py-3 text-muted">
+                        <i class="bi bi-calendar-x fs-4"></i>
+                        <p class="mt-2">Chưa có lịch sử check-in/check-out</p>
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
               </div>
-  
+
               <!-- Thống kê công việc -->
               <div class="col-md-6">
                 <!-- Công việc gần đây -->
@@ -160,9 +238,9 @@
                     {% endif %}
                   </div>
                 </div>
-                
+
                 <!-- Dự án tham gia -->
-                <div class="card shadow-sm">
+                <div class="card mb-4 shadow-sm">
                   <div class="card-header bg-white">
                     <h5 class="mb-0"><i class="bi bi-folder me-2"></i>Dự án tham gia</h5>
                   </div>
@@ -192,6 +270,40 @@
                     {% endif %}
                   </div>
                 </div>
+
+                <!-- Ảnh khuôn mặt -->
+                <div class="card shadow-sm">
+                  <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-person-bounding-box me-2"></i>Ảnh khuôn mặt</h5>
+                  </div>
+                  <div class="card-body">
+                    <form id="faceImageForm" method="POST" enctype="multipart/form-data" action="{% url 'users:upload_face_image' %}">
+                      {% csrf_token %}
+                      <div class="mb-3">
+                        <label for="face_image" class="form-label">Tải lên ảnh khuôn mặt</label>
+                        <input type="file" class="form-control" id="face_image" name="face_image" accept="image/*" required>
+                        <small class="form-text text-muted">Vui lòng tải lên ảnh khuôn mặt rõ ràng để sử dụng cho nhận diện.</small>
+                      </div>
+                      <button type="submit" class="btn btn-primary">Tải lên</button>
+                    </form>
+                    <hr>
+                    <h6 class="mb-3">Ảnh khuôn mặt đã đăng ký</h6>
+                    {% if face_images %}
+                      <div class="row g-3">
+                        {% for face_image in face_images %}
+                          <div class="col-6 col-md-4">
+                            <div class="border rounded p-2 text-center">
+                              <img src="{{ face_image.face_image.url }}" alt="Face Image" class="img-fluid rounded" style="max-height: 100px;">
+                              <small class="d-block mt-2 text-muted">Tải lên: {{ face_image.uploaded_at|date:"d/m/Y H:i" }}</small>
+                            </div>
+                          </div>
+                        {% endfor %}
+                      </div>
+                    {% else %}
+                      <p class="text-muted">Chưa có ảnh khuôn mặt nào được đăng ký.</p>
+                    {% endif %}
+                  </div>
+                </div>
               </div>
             </div>
         </div>
@@ -209,12 +321,12 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form id="profileForm" method="POST" enctype="multipart/form-data" action="{% url 'users:update_profile' %}">
-        {% csrf_token %} 
+        {% csrf_token %}
         <div class="modal-body">
           <div class="row">
             <div class="col-md-4 text-center d-flex flex-column justify-content-center">
               <div class="avatar-upload mb-3">
-                <div class="avatar-preview rounded-circle overflow-hidden mx-auto d-flex justify-content-center align-items-center" 
+                <div class="avatar-preview rounded-circle overflow-hidden mx-auto d-flex justify-content-center align-items-center"
                      style="width: 120px; height: 120px; background-color: #f8f9fa;">
                   <img src="{{ user.avatar_url }}" alt="Avatar"
                        class="img-fluid object-fit-cover"
@@ -253,7 +365,7 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Ngày vào công ty</label>
-                  <input type="date" class="form-control" name="date_of_joining" 
+                  <input type="date" class="form-control" name="date_of_joining"
                          value="{{ user.date_of_joining|date:'Y-m-d'|default:'' }}">
                 </div>
                 <div class="col-12">
@@ -314,6 +426,7 @@
     </div>
 </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
