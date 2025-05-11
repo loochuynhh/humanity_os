@@ -321,7 +321,7 @@
                                                     </td>
                                                 </tr>
                                                 {% empty %}
-                                                <tr>    
+                                                <tr>
                                                     <td colspan="5" class="text-center py-4">
                                                         <i class="bi bi-edit fa-2x text-muted mb-3"></i>
                                                         <h6 class="text-muted">Chưa có form đánh giá nào</h6>
@@ -373,6 +373,11 @@
         </main>
     </div>
 </div>
+
+<script>
+    // Thêm biến JavaScript để kiểm tra vai trò người dùng
+    const userRole = "{{ request.user.role }}";
+</script>
 {% endblock %}
 
 {% block extra_js %}

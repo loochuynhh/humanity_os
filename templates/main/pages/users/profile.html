@@ -95,45 +95,6 @@
                   </div>
                 </div>
 
-                <!-- Mục tiêu cá nhân -->
-                <div class="card shadow-sm">
-                  <div class="card-header bg-white">
-                    <h5 class="mb-0"><i class="bi bi-star me-2"></i>Mục tiêu cá nhân</h5>
-                  </div>
-                  <div class="card-body">
-                    {% if personal_goals %}
-                      <div class="list-group">
-                        {% for goal in personal_goals|slice:":3" %}
-                        <div class="list-group-item border-0 px-0 py-2">
-                          <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="mb-1">{{ goal.name }}</h6>
-                            <span class="badge bg-{% if goal.status == 'Achieved' %}success{% else %}warning{% endif %}">
-                              {{ goal.status }}
-                            </span>
-                          </div>
-                          <div class="progress progress-thin mt-2">
-                            <div class="progress-bar"
-                                 style="width: {{ goal.progress }}%"></div>
-                          </div>
-                          <small class="text-muted">Hoàn thành: {{ goal.progress }}% • Hạn: {{ goal.deadline|date:"d/m/Y" }}</small>
-                        </div>
-                        {% endfor %}
-                      </div>
-                      <a href="{% url 'users:goals' %}" class="btn btn-sm btn-outline-primary mt-2">
-                        Xem tất cả mục tiêu
-                      </a>
-                    {% else %}
-                      <div class="text-center py-3 text-muted">
-                        <i class="bi bi-info-circle fs-4"></i>
-                        <p class="mt-2">Chưa có mục tiêu nào được thiết lập</p>
-                        <a href="{% url 'users:goals' %}" class="btn btn-sm btn-primary">
-                          Thêm mục tiêu mới
-                        </a>
-                      </div>
-                    {% endif %}
-                  </div>
-                </div>
-
                 <!-- Lịch sử Check-in/Check-out -->
                 <div class="card mb-4 mt-4 shadow-sm">
                   <div class="card-header bg-white">

@@ -37,20 +37,23 @@ $(document).ready(function() {
     // Xử lý xem chi tiết đánh giá
     $('.view-feedback').click(function() {
         const responseId = $(this).closest('tr').data('response-id');
-        if (!responseId || isNaN(responseId)) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Lỗi',
-                text: 'ID đánh giá không hợp lệ',
-                confirmButtonColor: '#007bff'
-            });
-            return;
-        }
+
+        // Hiển thị loading
+        Swal.fire({
+            title: 'Đang tải...',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
         $.ajax({
             url: "/evaluations/feedback-detail/",
             method: 'GET',
             data: { 'response_id': responseId },
             success: function(response) {
+                Swal.close();
                 if (response.success) {
                     $('#feedbackDetails').html(response.html);
                     $('#feedbackModal').modal('show');
@@ -58,16 +61,35 @@ $(document).ready(function() {
                     Swal.fire({
                         icon: 'error',
                         title: 'Lỗi',
-                        text: response.error,
+                        text: response.error || 'Có lỗi xảy ra khi lấy thông tin đánh giá',
                         confirmButtonColor: '#007bff'
                     });
                 }
             },
             error: function(xhr) {
+                Swal.close();
+                let errorMessage = 'Có lỗi xảy ra, vui lòng thử lại!';
+
+                if (xhr.status === 403) {
+                    errorMessage = 'Không có quyền xem đánh giá này';
+                } else if (xhr.status === 400) {
+                    errorMessage = 'Yêu cầu không hợp lệ';
+
+                    // Thử lấy thông báo lỗi chi tiết từ response
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.error) {
+                            errorMessage = response.error;
+                        }
+                    } catch (e) {
+                        // Ignore parsing errors
+                    }
+                }
+
                 Swal.fire({
                     icon: 'error',
                     title: 'Lỗi',
-                    text: xhr.status === 403 ? 'Không có quyền xem đánh giá này' : 'Có lỗi xảy ra, vui lòng thử lại!',
+                    text: errorMessage,
                     confirmButtonColor: '#007bff'
                 });
             }
@@ -77,6 +99,19 @@ $(document).ready(function() {
     // Xử lý mở modal gửi form
     $('.submit-form').click(function() {
         const formId = $(this).closest('tr').data('form-id');
+        const formType = $(this).closest('tr').find('.badge').text().trim().toLowerCase();
+
+        // Kiểm tra nếu là form review mà không phải quản lý
+        if (formType === 'review' && !['Manager', 'Admin'].includes(userRole)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Quyền hạn không đủ',
+                text: 'Chỉ quản lý mới có quyền thực hiện đánh giá review',
+                confirmButtonColor: '#007bff'
+            });
+            return false;
+        }
+
         $.ajax({
             url: "/evaluations/submit-form/",
             method: 'GET',
@@ -95,10 +130,16 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
+                let errorMessage = 'Có lỗi xảy ra, vui lòng thử lại!';
+
+                if (xhr.status === 403) {
+                    errorMessage = 'Không có quyền thực hiện đánh giá này';
+                }
+
                 Swal.fire({
                     icon: 'error',
                     title: 'Lỗi',
-                    text: xhr.status === 403 ? 'Không có quyền truy cập form này' : 'Có lỗi xảy ra, vui lòng thử lại!',
+                    text: errorMessage,
                     confirmButtonColor: '#007bff'
                 });
             }
@@ -160,6 +201,19 @@ $(document).ready(function() {
     // Xử lý gửi đánh giá mới
     $('.new-evaluation').click(function() {
         const formId = $(this).closest('tr').data('form-id');
+        const formType = $(this).closest('tr').find('.badge').text().trim().toLowerCase();
+
+        // Kiểm tra nếu là form review mà không phải quản lý
+        if (formType === 'review' && !['Manager', 'Admin'].includes(userRole)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Quyền hạn không đủ',
+                text: 'Chỉ quản lý mới có quyền thực hiện đánh giá review',
+                confirmButtonColor: '#007bff'
+            });
+            return false;
+        }
+
         $.ajax({
             url: "/evaluations/submit-form/",
             method: 'GET',
@@ -178,10 +232,16 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
+                let errorMessage = 'Có lỗi xảy ra, vui lòng thử lại!';
+
+                if (xhr.status === 403) {
+                    errorMessage = 'Không có quyền thực hiện đánh giá này';
+                }
+
                 Swal.fire({
                     icon: 'error',
                     title: 'Lỗi',
-                    text: xhr.status === 403 ? 'Không có quyền truy cập form này' : 'Có lỗi xảy ra, vui lòng thử lại!',
+                    text: errorMessage,
                     confirmButtonColor: '#007bff'
                 });
             }

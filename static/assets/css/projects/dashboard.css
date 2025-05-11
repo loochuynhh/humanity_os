@@ -1,0 +1,259 @@
+/* Dashboard Project Styles */
+:root {
+    --primary-color: #4e73df;
+    --success-color: #1cc88a;
+    --warning-color: #f6c23e;
+    --danger-color: #e74a3b;
+    --info-color: #36b9cc;
+    --dark-color: #5a5c69;
+    --light-color: #f8f9fc;
+    --border-radius: 0.35rem;
+    --card-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    --transition-speed: 0.3s;
+}
+
+/* Main Dashboard Container */
+.project-dashboard {
+    font-family: 'Roboto', sans-serif;
+}
+
+/* Stats Cards */
+.stats-card {
+    border-radius: var(--border-radius);
+    border-left: 0.25rem solid;
+    box-shadow: var(--card-shadow);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    background-color: white;
+    transition: transform var(--transition-speed);
+    position: relative;
+    overflow: hidden;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+
+.stats-card .stats-icon {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 2rem;
+    opacity: 0.3;
+}
+
+.stats-card .stats-title {
+    color: var(--dark-color);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+}
+
+.stats-card .stats-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0;
+}
+
+.stats-card .stats-progress {
+    margin-top: 0.5rem;
+    height: 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.stats-card.primary {
+    border-left-color: var(--primary-color);
+}
+
+.stats-card.primary .stats-title {
+    color: var(--primary-color);
+}
+
+.stats-card.success {
+    border-left-color: var(--success-color);
+}
+
+.stats-card.success .stats-title {
+    color: var(--success-color);
+}
+
+.stats-card.warning {
+    border-left-color: var(--warning-color);
+}
+
+.stats-card.warning .stats-title {
+    color: var(--warning-color);
+}
+
+.stats-card.danger {
+    border-left-color: var(--danger-color);
+}
+
+.stats-card.danger .stats-title {
+    color: var(--danger-color);
+}
+
+/* Project Cards */
+.project-card {
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    background-color: white;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.project-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+}
+
+.project-card .card-header {
+    background-color: var(--light-color);
+    color: var(--dark-color);
+    font-weight: 700;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.project-card .card-body {
+    padding: 1.25rem;
+}
+
+.project-card .project-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.project-card .project-status {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.project-card .project-status.on-track {
+    background-color: rgba(28, 200, 138, 0.1);
+    color: var(--success-color);
+}
+
+.project-card .project-status.warning {
+    background-color: rgba(246, 194, 62, 0.1);
+    color: var(--warning-color);
+}
+
+.project-card .project-status.overdue {
+    background-color: rgba(231, 74, 59, 0.1);
+    color: var(--danger-color);
+}
+
+.project-card .progress {
+    height: 0.5rem;
+    border-radius: 0.25rem;
+    background-color: rgba(78, 115, 223, 0.1);
+    margin-bottom: 0.5rem;
+}
+
+.project-card .progress-bar {
+    background-color: var(--primary-color);
+}
+
+.project-card .project-meta {
+    display: flex;
+    justify-content: space-between;
+    color: var(--dark-color);
+    font-size: 0.875rem;
+}
+
+/* Task Lists */
+.task-list {
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    background-color: white;
+    margin-bottom: 1.5rem;
+}
+
+.task-list .list-group-item {
+    padding: 0.75rem 1.25rem;
+    border-left: 0;
+    border-right: 0;
+    background-color: transparent;
+    transition: background-color var(--transition-speed);
+}
+
+.task-list .list-group-item:hover {
+    background-color: var(--light-color);
+}
+
+.task-list .list-group-item:first-child {
+    border-top: 0;
+}
+
+.task-list .task-title {
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.task-list .task-project {
+    font-size: 0.8rem;
+    color: var(--primary-color);
+}
+
+.task-list .task-deadline {
+    font-size: 0.8rem;
+    color: var(--dark-color);
+}
+
+/* Time Chart */
+.time-chart-container {
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    background-color: white;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.time-chart-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--dark-color);
+    margin-bottom: 1rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .stats-card {
+        margin-bottom: 1rem;
+    }
+
+    .stats-card .stats-value {
+        font-size: 1.25rem;
+    }
+
+    .project-card .project-title {
+        font-size: 1rem;
+    }
+}
+
+/* Animation Effects */
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.slide-in {
+    animation: slideIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}

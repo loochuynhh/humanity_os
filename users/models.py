@@ -61,6 +61,9 @@ class CheckInCheckOut(models.Model):
         verbose_name = "Check-in/Check-out"
         verbose_name_plural = "Check-in/Check-out"
         db_table = "checkin_checkout"
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'date'], name='unique_checkin_checkout_per_day'),
+        ]
         indexes = [
             models.Index(fields=['date']),
             models.Index(fields=['user', 'date']),
@@ -68,27 +71,3 @@ class CheckInCheckOut(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.date}"
-
-
-class Goals(models.Model):
-    user = models.ForeignKey("users.Users", on_delete=models.CASCADE, related_name="goals")
-    name = models.CharField(max_length=255)
-    description = models.TextField(null=True, blank=True)
-    deadline = models.DateField()
-    status = models.CharField(
-        max_length=10,
-        choices=[("Pending", "Pending"), ("Achieved", "Achieved"), ("Missed", "Missed")],
-        default="Pending"
-    )
-    priority = models.CharField(
-        max_length=10,
-        choices=[("Low", "Low"), ("Medium", "Medium"), ("High", "High")],
-        default="Medium"
-    )
-    achieved_percentage = models.FloatField(default=0.0)
-
-    class Meta:
-        db_table = "goals"
-
-    def __str__(self):
-        return f"{self.name} - {self.user.username}"

@@ -125,72 +125,6 @@ function initProjectTimeChart(data) {
 }
 
 /**
-* Initialize Goals Progress Chart (Horizontal Bar)
-* Expects data: { labels: [goal_name, ...], data: [percentage, ...] }
-*/
-function initGoalsProgressChart(data) {
-  const goalsProgressCtx = document.getElementById("goalsProgressChart").getContext("2d");
-  const chartData = data && data.labels && data.data ? {
-      labels: data.labels.length ? data.labels : ['Không có mục tiêu'],
-      data: data.data.length ? data.data : [0]
-  } : {
-      labels: ['Không có mục tiêu'],
-      data: [0]
-  };
-
-  // Giới hạn độ dài nhãn để kiểm soát chiều rộng
-  const maxLabelLength = 15;
-  const truncatedLabels = chartData.labels.map(label =>
-      label.length > maxLabelLength ? label.substring(0, maxLabelLength - 3) + '...' : label
-  );
-
-  new Chart(goalsProgressCtx, {
-      type: "bar",
-      data: {
-          labels: truncatedLabels,
-          datasets: [{
-              label: "Tiến độ (%)",
-              data: chartData.data,
-              backgroundColor: "rgba(25, 135, 84, 0.7)",
-              borderColor: "rgba(25, 135, 84, 1)",
-              borderWidth: 1
-          }]
-      },
-      options: {
-          indexAxis: 'y',
-          scales: {
-              x: {
-                  beginAtZero: true,
-                  max: 100,
-                  ticks: {
-                      callback: function(value) {
-                          return value + '%';
-                      }
-                  }
-              },
-              y: {
-                  ticks: {
-                      maxRotation: 0,
-                      minRotation: 0,
-                      autoSkip: false
-                  }
-              }
-          },
-          plugins: {
-              tooltip: {
-                  callbacks: {
-                      label: function(context) {
-                          const fullLabel = chartData.labels[context.dataIndex];
-                          return `${fullLabel}: ${context.parsed.x}%`;
-                      }
-                  }
-              }
-          }
-      }
-  });
-}
-
-/**
 * Show error message in modal
 */
 function showError(errorDivId, message) {
@@ -335,7 +269,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       let chartData;
-      if (elementId === 'projectTimeChart' || elementId === 'goalsProgressChart') {
+      if (elementId === 'projectTimeChart') {
           chartData = window.djangoChartData ? window.djangoChartData[elementId] : null;
       } else {
           chartData = element.dataset.chartData;
@@ -351,7 +285,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       try {
           let parsedData;
-          if (elementId === 'projectTimeChart' || elementId === 'goalsProgressChart') {
+          if (elementId === 'projectTimeChart') {
               parsedData = chartData;
           } else {
               parsedData = JSON.parse(chartData);
@@ -374,7 +308,6 @@ document.addEventListener('DOMContentLoaded', function () {
   initChart('taskChart', initTaskChart, 'array');
   initChart('timeChart', initTimeChart, 'array');
   initChart('projectTimeChart', initProjectTimeChart, 'object');
-  initChart('goalsProgressChart', initGoalsProgressChart, 'object');
 
   // Initialize webcam and geolocation
   if (document.getElementById('checkInModal')) {
@@ -405,22 +338,24 @@ document.addEventListener('DOMContentLoaded', function () {
       setupGeolocation('checkOutModal', 'checkout_location', 'checkout_location_loading');
   }
 
-  // Thêm xử lý form check-in và check-out
-  const checkInForm = document.getElementById('checkInForm');
-  if (checkInForm) {
-      checkInForm.addEventListener('submit', function(e) {
+  // Xử lý form check-out
+  const checkOutForm = document.getElementById('checkOutForm');
+  if (checkOutForm) {
+      checkOutForm.addEventListener('submit', function(e) {
           e.preventDefault();
 
-          const formData = new FormData(this);
-          const submitBtn = document.getElementById('checkin_submit');
-          const errorDiv = document.getElementById('checkin_error');
+          // Lấy dữ liệu form
+          var formData = new FormData(this);
+          const submitBtn = document.getElementById('checkout_submit');
+          const errorDiv = document.getElementById('checkout_error');
 
           // Disable button and show loading
           submitBtn.disabled = true;
           submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...';
           errorDiv.classList.add('d-none');
 
-          fetch(checkInForm.action, {
+          // Gửi request
+          fetch(checkOutForm.action, {
               method: 'POST',
               body: formData,
               credentials: 'same-origin'
@@ -428,13 +363,13 @@ document.addEventListener('DOMContentLoaded', function () {
           .then(response => response.json())
           .then(data => {
               submitBtn.disabled = false;
-              submitBtn.innerHTML = 'Check-in';
+              submitBtn.innerHTML = 'Check-out';
 
               if (data.success) {
                   // Hiển thị thông báo thành công
                   Swal.fire({
                       icon: 'success',
-                      title: 'Check-in thành công',
+                      title: 'Check-out thành công',
                       text: data.message,
                       confirmButtonText: 'OK',
                       timer: 5000,
@@ -443,9 +378,11 @@ document.addEventListener('DOMContentLoaded', function () {
                       allowOutsideClick: false
                   }).then((result) => {
                       // Chỉ reload khi người dùng nhấn OK hoặc hết thời gian
-                      const modal = bootstrap.Modal.getInstance(document.getElementById('checkInModal'));
+                      const modal = bootstrap.Modal.getInstance(document.getElementById('checkOutModal'));
                       if (modal) modal.hide();
-                      location.reload();
+                      if (data.redirect) {
+                          window.location.href = data.redirect_url;
+                      }
                   });
               } else {
                   // Hiển thị lỗi
@@ -455,172 +392,11 @@ document.addEventListener('DOMContentLoaded', function () {
           })
           .catch(error => {
               submitBtn.disabled = false;
-              submitBtn.innerHTML = 'Check-in';
+              submitBtn.innerHTML = 'Check-out';
               errorDiv.textContent = 'Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại.';
               errorDiv.classList.remove('d-none');
               console.error('Error:', error);
           });
       });
   }
-
-  // Xử lý form check-out
-  const checkOutForm = document.getElementById('checkOutForm');
-  if (checkOutForm) {
-      checkOutForm.addEventListener('submit', function(e) {
-          e.preventDefault();
-
-          // Hiển thị loading
-          Swal.fire({
-              title: 'Đang xử lý...',
-              text: 'Vui lòng đợi trong giây lát',
-              allowOutsideClick: false,
-              didOpen: () => {
-                  Swal.showLoading();
-              }
-          });
-
-          // Lấy dữ liệu form
-          var formData = new FormData(this);
-
-          // Gửi request
-          $.ajax({
-              url: $(this).attr('action'),
-              type: 'POST',
-              data: formData,
-              processData: false,
-              contentType: false,
-              success: function(response) {
-                  // Đóng loading
-                  Swal.close();
-
-                  // Hiển thị thông báo
-                  Swal.fire({
-                      title: response.success ? 'Thành công' : 'Lỗi',
-                      text: response.message,
-                      icon: response.success ? 'success' : 'error',
-                      confirmButtonText: 'Đã hiểu'
-                  }).then((result) => {
-                      // Chỉ chuyển hướng sau khi người dùng đã xem thông báo
-                      if (response.redirect) {
-                          window.location.href = response.redirect_url;
-                      }
-                  });
-              },
-              error: function(xhr, status, error) {
-                  // Đóng loading
-                  Swal.close();
-
-                  console.error("AJAX Error:", status, error);
-                  console.log("Response:", xhr.responseText);
-
-                  // Hiển thị lỗi
-                  Swal.fire({
-                      title: 'Lỗi',
-                      text: 'Đã xảy ra lỗi khi xử lý yêu cầu. Vui lòng thử lại sau.',
-                      icon: 'error',
-                      confirmButtonText: 'Đã hiểu'
-                  });
-              }
-          });
-      });
-  }
-
-  // Xử lý check-in
-  $('#checkinForm').on('submit', function(e) {
-      e.preventDefault();
-
-      // Lấy dữ liệu form
-      var formData = new FormData(this);
-
-      // Gửi request
-      $.ajax({
-          url: $(this).attr('action'),
-          type: 'POST',
-          data: formData,
-          processData: false,
-          contentType: false,
-          success: function(response) {
-              // Hiển thị thông báo
-              Swal.fire({
-                  title: response.success ? 'Thành công' : 'Lỗi',
-                  text: response.message,
-                  icon: response.success ? 'success' : 'error',
-                  confirmButtonText: 'Đã hiểu'
-              }).then((result) => {
-                  // Chỉ chuyển hướng sau khi người dùng đã xem thông báo
-                  if (response.redirect) {
-                      window.location.href = response.redirect_url;
-                  }
-              });
-          },
-          error: function(xhr, status, error) {
-              // Hiển thị lỗi
-              Swal.fire({
-                  title: 'Lỗi',
-                  text: 'Đã xảy ra lỗi khi xử lý yêu cầu.',
-                  icon: 'error',
-                  confirmButtonText: 'Đã hiểu'
-              });
-          }
-      });
-  });
-
-  // Tương tự cho check-out
-  $('#checkoutForm').on('submit', function(e) {
-      e.preventDefault();
-
-      // Hiển thị loading
-      Swal.fire({
-          title: 'Đang xử lý...',
-          text: 'Vui lòng đợi trong giây lát',
-          allowOutsideClick: false,
-          didOpen: () => {
-              Swal.showLoading();
-          }
-      });
-
-      // Lấy dữ liệu form
-      var formData = new FormData(this);
-
-      // Gửi request
-      $.ajax({
-          url: $(this).attr('action'),
-          type: 'POST',
-          data: formData,
-          processData: false,
-          contentType: false,
-          success: function(response) {
-              // Đóng loading
-              Swal.close();
-
-              // Hiển thị thông báo
-              Swal.fire({
-                  title: response.success ? 'Thành công' : 'Lỗi',
-                  text: response.message,
-                  icon: response.success ? 'success' : 'error',
-                  confirmButtonText: 'Đã hiểu'
-              }).then((result) => {
-                  // Chỉ chuyển hướng sau khi người dùng đã xem thông báo
-                  if (response.redirect) {
-                      window.location.href = response.redirect_url;
-                  }
-              });
-          },
-          error: function(xhr, status, error) {
-              // Đóng loading
-              Swal.close();
-
-              console.error("AJAX Error:", status, error);
-              console.log("Response:", xhr.responseText);
-
-              // Hiển thị lỗi
-              Swal.fire({
-                  title: 'Lỗi',
-                  text: 'Đã xảy ra lỗi khi xử lý yêu cầu. Vui lòng thử lại sau.',
-                  icon: 'error',
-                  confirmButtonText: 'Đã hiểu'
-              });
-          }
-      });
-  });
 });

@@ -2,9 +2,9 @@
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, JsonResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
-from django.db.models import Sum
+from django.db.models import Sum, Count, Q
 from django.views.decorators.http import require_POST, require_http_methods
 from .models import Tasks, Projects, TimeEntries, TeamProjectMembership, DeadlineExtensionRequest, TaskAssignments
 from .utils import (
@@ -18,7 +18,12 @@ from .utils import (
     update_task_tracking,
     check_deadline_warnings,
     calculate_time_by_day,
-    calculate_time_by_task
+    calculate_time_by_task,
+    get_project_dashboard_data,
+    get_project_detail_data,
+    get_task_board_data,
+    get_timeline_data,
+    get_analytics_data
 )
 
 
@@ -93,7 +98,7 @@ def all_tasks(request):
         'status_choices': Tasks.STATUS_CHOICES,
         'now': timezone.now().date()
     })
-    
+
 
 @login_required
 def my_tasks(request):
@@ -127,7 +132,7 @@ def my_tasks(request):
 
 @login_required
 def task_detail(request, task_id):
-    task = get_object_or_404(Tasks.objects.select_related('project').prefetch_related('task_assignments__user'), 
+    task = get_object_or_404(Tasks.objects.select_related('project').prefetch_related('task_assignments__user'),
                              id=task_id, task_assignments__user=request.user)
     task.update_total_time()  # Cập nhật total_time
     task.update_start_date()  # Cập nhật start_date
@@ -135,10 +140,10 @@ def task_detail(request, task_id):
     if task.estimated_time and task.estimated_time > 0:
         progress_percentage = (task.total_time / task.estimated_time) * 100
         progress_percentage = min(100, max(0, round(progress_percentage)))
-    
+
     # Lấy TimeEntries liên quan đến task
     time_entries = TimeEntries.objects.filter(task=task).select_related('user').order_by('-start_time')
-    
+
     context = {
         'task': task,
         'progress_percentage': progress_percentage,
@@ -162,7 +167,7 @@ def update_status(request):
         if task.deadline.date() < timezone.now().date() and status != "Completed":
             assignment.status = "Late"
         assignment.save()
-        task.update_status_from_assignments()  
+        task.update_status_from_assignments()
         return JsonResponse({
             'success': True,
             'new_status': assignment.status
@@ -190,14 +195,14 @@ def toggle_time(request: HttpRequest) -> JsonResponse: # type: ignore
                 }, status=400)
             TimeEntries.objects.create(user=request.user, task=task, start_time=timezone.now())
             task.is_tracking = True
-            task.update_start_date() 
+            task.update_start_date()
             task.save()
             return JsonResponse({'success': True, 'action': 'started'})
         elif action == 'stop':
             entry = TimeEntries.objects.get(user=request.user, task=task, end_time__isnull=True)
             entry.end_time = timezone.now()
             entry.save()
-            task.update_total_time()  
+            task.update_total_time()
             task.is_tracking = False
             task.save()
             return JsonResponse({
@@ -222,13 +227,13 @@ def update_task_details(request):
         task.difficulty = request.POST.get('difficulty', task.difficulty)
         task.github_link = request.POST.get('github_link', task.github_link)
         task.notes = request.POST.get('notes', task.notes)
-        
+
         assignment = task.task_assignments.get(user=request.user) # type: ignore
         assignment_estimated_time = request.POST.get(f'estimated_time_{assignment.user.id}')
         if assignment_estimated_time:
             assignment.estimated_time = float(assignment_estimated_time)
             assignment.save()
-        
+
         task.save()
         return JsonResponse({'success': True, 'message': 'Cập nhật task thành công!'})
     except ObjectDoesNotExist:
@@ -287,11 +292,11 @@ def extend_deadline(request, task_id):
 def time_tracking(request):
     time_entries = TimeEntries.objects.filter(user=request.user).select_related('task').order_by('-start_time')
     time_totals = calculate_time_totals(request.user)
-    
+
     # Dữ liệu cho biểu đồ
     time_by_day = calculate_time_by_day(request.user)
     time_by_task = calculate_time_by_task(request.user)
-    
+
     context = {
         'time_entries': time_entries,
         'total_time_today': time_totals['today'],
@@ -312,7 +317,7 @@ def update_time_entry(request):
         end_time = request.POST.get('end_time')
         if not entry_id or not start_time:
             return JsonResponse({'success': False, 'error': 'Thiếu tham số'}, status=400)
-        
+
         entry = TimeEntries.objects.get(id=entry_id, user=request.user)
         entry.start_time = timezone.datetime.fromisoformat(start_time.replace('T', ' '))
         if end_time:
@@ -321,13 +326,13 @@ def update_time_entry(request):
             entry.end_time = None
             entry.duration = None
         entry.save()
-        
+
         # Cập nhật task liên quan
         task = entry.task
         task.update_total_time()
         task.update_start_date()
         task.save()
-        
+
         return JsonResponse({
             'success': True,
             'message': 'Cập nhật time entry thành công!',
@@ -348,18 +353,18 @@ def update_assignment_status(request):
         status = request.POST.get('status')
         if not task_id or not status:
             return JsonResponse({'success': False, 'error': 'Thiếu tham số'}, status=400)
-        
+
         assignment = TaskAssignments.objects.get(task_id=task_id, user=request.user)
         if status not in dict(Tasks.STATUS_CHOICES):
             return JsonResponse({'success': False, 'error': 'Trạng thái không hợp lệ'}, status=400)
-        
+
         assignment.status = status
         assignment.save()
-        
+
         # Cập nhật trạng thái task nếu cần
         task = assignment.task
         task.update_status_from_assignments()
-        
+
         return JsonResponse({
             'success': True,
             'message': 'Cập nhật trạng thái thành công!'
@@ -368,3 +373,177 @@ def update_assignment_status(request):
         return JsonResponse({'success': False, 'error': 'Task assignment không tồn tại hoặc không có quyền'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+# View functions cho các chức năng mới
+
+@login_required
+def project_dashboard(request):
+    """
+    Hiển thị trang dashboard tổng quan về dự án
+    """
+    user = request.user
+    dashboard_data = get_project_dashboard_data(user)
+    context = {
+        'dashboard_data': dashboard_data,
+        'user': user,
+    }
+    return render(request, 'main/pages/projects/project_dashboard.html', context)
+
+@login_required
+def project_detail(request, project_id):
+    """
+    Hiển thị chi tiết một dự án cụ thể
+    """
+    project = get_object_or_404(Projects, id=project_id)
+    # Kiểm tra quyền truy cập
+    if request.user != project.manager and not project.team_members.filter(id=request.user.id).exists():
+        return redirect('projects:all_projects')
+
+    context = {
+        'project': project,
+        'project_id': project_id,
+    }
+    return render(request, 'main/pages/projects/project_detail.html', context)
+
+@login_required
+def project_task_board(request):
+    """
+    Hiển thị bảng Kanban cho các task của dự án
+    """
+    user = request.user
+    projects = get_user_projects(user)
+
+    context = {
+        'projects': projects,
+    }
+    return render(request, 'main/pages/projects/project_task_board.html', context)
+
+@login_required
+def project_timeline(request):
+    """
+    Hiển thị timeline của dự án
+    """
+    user = request.user
+    projects = get_user_projects(user)
+
+    context = {
+        'projects': projects,
+    }
+    return render(request, 'main/pages/projects/project_timeline.html', context)
+
+@login_required
+def project_analytics(request):
+    """
+    Hiển thị trang phân tích dự án
+    """
+    user = request.user
+    projects = get_user_projects(user)
+
+    context = {
+        'projects': projects,
+    }
+    return render(request, 'main/pages/projects/project_analytics.html', context)
+
+# API endpoints cho các chức năng mới
+
+@login_required
+def api_dashboard_data(request):
+    """
+    API trả về dữ liệu cho dashboard dự án
+    """
+    user = request.user
+    dashboard_data = get_project_dashboard_data(user)
+    return JsonResponse(dashboard_data)
+
+@login_required
+def api_project_summary(request, project_id):
+    """
+    API trả về thông tin tóm tắt của một dự án
+    """
+    project_data = get_project_detail_data(project_id)
+    if not project_data:
+        return JsonResponse({'error': 'Không tìm thấy dự án'}, status=404)
+    return JsonResponse(project_data)
+
+@login_required
+def api_project_tasks(request, project_id):
+    """
+    API trả về các task của một dự án theo định dạng Kanban
+    """
+    user = request.user
+    task_board_data = get_task_board_data(user, project_id)
+    return JsonResponse(task_board_data)
+
+@login_required
+@require_POST
+def api_update_task_status(request):
+    """
+    API cập nhật trạng thái của task trong bảng Kanban
+    """
+    task_id = request.POST.get('task_id')
+    new_status = request.POST.get('status')
+
+    if not task_id or not new_status:
+        return JsonResponse({'success': False, 'error': 'Thiếu thông tin'}, status=400)
+
+    try:
+        task = Tasks.objects.get(id=task_id)
+        if request.user != task.project.manager and not task.task_assignments.filter(user=request.user).exists():
+            return JsonResponse({'success': False, 'error': 'Không có quyền'}, status=403)
+
+        task.status = new_status
+        if new_status == 'Completed' and not task.completed_date:
+            task.completed_date = timezone.now()
+        task.save()
+
+        # Cập nhật TaskAssignment
+        for assignment in task.task_assignments.all(): # type: ignore
+            assignment.status = new_status
+            assignment.save()
+
+        return JsonResponse({
+            'success': True,
+            'task': {
+                'id': task.id,
+                'status': task.status,
+                'completed_date': task.completed_date.strftime('%d/%m/%Y') if task.completed_date else None
+            }
+        })
+    except Tasks.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Task không tồn tại'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+def api_timeline_data(request):
+    """
+    API trả về dữ liệu cho timeline
+    """
+    user = request.user
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    # Chuyển đổi chuỗi thành date nếu có
+    if start_date:
+        try:
+            start_date = timezone.datetime.strptime(start_date, '%Y-%m-%d').date()
+        except ValueError:
+            start_date = None
+
+    if end_date:
+        try:
+            end_date = timezone.datetime.strptime(end_date, '%Y-%m-%d').date()
+        except ValueError:
+            end_date = None
+
+    timeline_data = get_timeline_data(user, start_date, end_date)
+    return JsonResponse({'events': timeline_data})
+
+@login_required
+def api_analytics_data(request):
+    """
+    API trả về dữ liệu phân tích dự án
+    """
+    user = request.user
+    analytics_data = get_analytics_data(user)
+    return JsonResponse(analytics_data)

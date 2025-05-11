@@ -11,20 +11,16 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.decorators.http import require_POST
-from .models import Goals, Users, UserFaceImage, CheckInCheckOut
+from .models import Users, UserFaceImage, CheckInCheckOut
 from .utils import (
     get_task_counts,
     get_time_tracking,
     get_kpi_snapshot,
     get_project_progress,
     get_recent_tasks,
-    get_personal_goals,
     get_project_time_allocation,
-    get_goals_progress,
     handle_check_in,
     handle_check_out,
-    get_goals_summary,
-    get_goals_stats,
     get_project_data,
 )
 
@@ -280,68 +276,9 @@ def index(request):
         "kpi_percentage": round(float(get_kpi_snapshot(user.id, "percentage")), 2),
         "project_progress": get_project_progress(user.id),
         "recent_tasks": get_recent_tasks(user.id),
-        "personal_goals": get_personal_goals(user.id),
         "project_time_allocation": get_project_time_allocation(user.id, as_json=True),
-        "goals_progress": get_goals_progress(user.id, as_json=True),
     }
     return render(request, "main/pages/index.html", context)
-
-
-def set_goal(request):
-    if request.method == "POST":
-        return render(request, "users/action_success.html", {"message": "Đặt mục tiêu thành công!"})
-    return redirect("users:index")
-
-
-@login_required
-def goals(request):
-    goals = Goals.objects.filter(user=request.user)
-    context = {
-        "goals": goals,
-        **get_goals_summary(request.user),
-        "today": timezone.now().date(),
-    }
-    return render(request, "main/pages/users/goals.html", context)
-
-
-@require_POST
-@login_required
-def add_goal(request):
-    try:
-        Goals.objects.create(
-            user=request.user,
-            name=request.POST.get("goal_name"),
-            description=request.POST.get("goal_description"),
-            deadline=request.POST.get("goal_deadline"),
-            priority=request.POST.get("goal_priority"),
-            achieved_percentage=0,
-            status="Pending",
-        )
-        return JsonResponse({"success": True})
-    except Exception as e:
-        return JsonResponse({"success": False, "error": str(e)}, status=400)
-
-
-@require_POST
-@login_required
-def update_goal(request):
-    try:
-        goal_id = request.POST.get("goal_id")
-        goal = Goals.objects.get(id=goal_id, user=request.user)
-        goal.name = request.POST.get("goal_name")
-        goal.description = request.POST.get("goal_description")
-        goal.deadline = request.POST.get("goal_deadline")
-        goal.priority = request.POST.get("goal_priority")
-        goal.achieved_percentage = float(request.POST.get("goal_achieved_percentage"))
-        goal.status = request.POST.get("goal_status")
-        goal.save()
-        return JsonResponse({"success": True})
-    except Goals.DoesNotExist:
-        return JsonResponse(
-            {"success": False, "error": "Mục tiêu không tồn tại"}, status=404
-        )
-    except Exception as e:
-        return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 
 @login_required
@@ -353,7 +290,6 @@ def profile(request):
 
     # Lấy dữ liệu cho trang profile
     recent_tasks = get_recent_tasks(user)
-    personal_goals = get_personal_goals(user)
     face_images = UserFaceImage.objects.filter(user=user).order_by('-uploaded_at')
 
     # Lấy lịch sử check-in/check-out (7 ngày gần nhất)
@@ -370,7 +306,6 @@ def profile(request):
     context = {
         'user': user,
         'recent_tasks': recent_tasks,
-        'personal_goals': personal_goals,
         'face_images': face_images,
         'checkin_history': checkin_history,
         'projects': projects,

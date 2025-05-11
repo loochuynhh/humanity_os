@@ -71,8 +71,17 @@ class CheckInCheckOutAdmin(admin.ModelAdmin):
 
         try:
             # Phân tích vị trí
-            fixed_lat, fixed_lng = map(float, user.fixed_location.split(','))
-            current_lat, current_lng = map(float, obj.checkin_location.split(','))
+            fixed_location_parts = user.fixed_location.split(',')
+            checkin_location_parts = obj.checkin_location.split(',')
+
+            if len(fixed_location_parts) != 2 or len(checkin_location_parts) != 2:
+                return format_html('<span class="text-danger">Định dạng không hợp lệ</span>')
+
+            fixed_lat = float(fixed_location_parts[0].strip())
+            fixed_lng = float(fixed_location_parts[1].strip())
+
+            current_lat = float(checkin_location_parts[0].strip())
+            current_lng = float(checkin_location_parts[1].strip())
 
             # Tính khoảng cách
             from math import sin, cos, sqrt, atan2, radians
@@ -89,11 +98,13 @@ class CheckInCheckOutAdmin(admin.ModelAdmin):
             distance = R * c
 
             if distance <= 0.5:
-                return format_html('<span class="text-success">Hợp lệ ({:.2f} km)</span>', distance)
+                distance_str = "{:.2f}".format(distance)
+                return format_html('<span class="text-success">Hợp lệ ({} km)</span>', distance_str)
             else:
-                return format_html('<span class="text-danger">Không hợp lệ ({:.2f} km)</span>', distance)
-        except:
-            return format_html('<span class="text-danger">Lỗi định dạng</span>')
+                distance_str = "{:.2f}".format(distance)
+                return format_html('<span class="text-danger">Không hợp lệ ({} km)</span>', distance_str)
+        except Exception as e:
+            return format_html('<span class="text-danger">Lỗi định dạng: {}</span>', str(e))
 
     checkin_location_status.short_description = 'Vị trí check-in'
 
@@ -107,8 +118,17 @@ class CheckInCheckOutAdmin(admin.ModelAdmin):
 
         try:
             # Phân tích vị trí
-            fixed_lat, fixed_lng = map(float, user.fixed_location.split(','))
-            current_lat, current_lng = map(float, obj.checkout_location.split(','))
+            fixed_location_parts = user.fixed_location.split(',')
+            checkout_location_parts = obj.checkout_location.split(',')
+
+            if len(fixed_location_parts) != 2 or len(checkout_location_parts) != 2:
+                return format_html('<span class="text-danger">Định dạng không hợp lệ</span>')
+
+            fixed_lat = float(fixed_location_parts[0].strip())
+            fixed_lng = float(fixed_location_parts[1].strip())
+
+            current_lat = float(checkout_location_parts[0].strip())
+            current_lng = float(checkout_location_parts[1].strip())
 
             # Tính khoảng cách
             from math import sin, cos, sqrt, atan2, radians
@@ -125,11 +145,13 @@ class CheckInCheckOutAdmin(admin.ModelAdmin):
             distance = R * c
 
             if distance <= 0.5:
-                return format_html('<span class="text-success">Hợp lệ ({:.2f} km)</span>', distance)
+                distance_str = "{:.2f}".format(distance)
+                return format_html('<span class="text-success">Hợp lệ ({} km)</span>', distance_str)
             else:
-                return format_html('<span class="text-danger">Không hợp lệ ({:.2f} km)</span>', distance)
-        except:
-            return format_html('<span class="text-danger">Lỗi định dạng</span>')
+                distance_str = "{:.2f}".format(distance)
+                return format_html('<span class="text-danger">Không hợp lệ ({} km)</span>', distance_str)
+        except Exception as e:
+            return format_html('<span class="text-danger">Lỗi định dạng: {}</span>', str(e))
 
     checkout_location_status.short_description = 'Vị trí check-out'
 

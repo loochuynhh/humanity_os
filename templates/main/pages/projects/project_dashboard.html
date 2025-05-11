@@ -1,0 +1,235 @@
+{% extends 'main/layouts/user_base.html' %}
+{% load static %}
+{% block title %}Dashboard Dự án - Humanity OS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
+<link rel="stylesheet" href="{% static 'assets/css/projects/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    {% include 'main/includes/sidebar.html' %}
+
+    <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper project-dashboard">
+      <!-- Tiêu đề -->
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom fade-in-down">
+        <h1 class="h2 fw-bold">
+          <i class="bi bi-grid-1x2 me-2"></i>Dashboard Dự án
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <button id="refreshDashboard" class="btn btn-sm btn-outline-primary me-2">
+            <i class="bi bi-arrow-repeat me-1"></i>Làm mới
+          </button>
+          <a href="{% url 'projects:all_projects' %}" class="btn btn-sm btn-primary">
+            <i class="bi bi-folder me-1"></i>Xem tất cả dự án
+          </a>
+        </div>
+      </div>
+
+      <!-- Thông báo -->
+      <div id="dashboardAlerts"></div>
+
+      <!-- Loading indicator -->
+      <div id="dashboardLoading" class="text-center py-5" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Đang tải...</span>
+        </div>
+        <p class="mt-2">Đang tải dữ liệu...</p>
+      </div>
+
+      <div id="dashboardContent">
+        <!-- Thống kê tổng quan -->
+        <div class="row mb-4 fade-in-up">
+          <div class="col-12 col-md-6 col-lg-3">
+            <div class="stats-card primary">
+              <div class="stats-icon">
+                <i class="bi bi-folder"></i>
+              </div>
+              <div class="stats-title">Tổng số dự án</div>
+              <div class="stats-value" id="totalProjects">{{ dashboard_data.total_projects }}</div>
+              <div class="text-muted">Dự án đang hoạt động: <span id="activeProjects">{{ dashboard_data.active_projects }}</span></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6 col-lg-3">
+            <div class="stats-card success">
+              <div class="stats-icon">
+                <i class="bi bi-check2-square"></i>
+              </div>
+              <div class="stats-title">Nhiệm vụ đã hoàn thành</div>
+              <div class="stats-value" id="completedTasks">{{ dashboard_data.completed_tasks }}</div>
+              <div class="text-muted">Tổng số nhiệm vụ: <span id="totalTasks">{{ dashboard_data.total_tasks }}</span></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6 col-lg-3">
+            <div class="stats-card warning">
+              <div class="stats-icon">
+                <i class="bi bi-graph-up"></i>
+              </div>
+              <div class="stats-title">Tỷ lệ hoàn thành</div>
+              <div class="stats-value" id="completionRate">{{ dashboard_data.completion_rate }}%</div>
+              <div class="progress stats-progress">
+                <div
+                  class="progress-bar bg-warning"
+                  role="progressbar"
+                  id="completionProgress"
+                  style="width: {{ dashboard_data.completion_rate }}%"
+                  aria-valuenow="{{ dashboard_data.completion_rate }}"
+                  aria-valuemin="0"
+                  aria-valuemax="100">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6 col-lg-3">
+            <div class="stats-card danger">
+              <div class="stats-icon">
+                <i class="bi bi-clock"></i>
+              </div>
+              <div class="stats-title">Thời gian làm việc tháng này</div>
+              <div class="stats-value" id="monthTime">{{ dashboard_data.month_time }} giờ</div>
+              <div class="text-muted">Tính từ đầu tháng đến hiện tại</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nội dung chính -->
+        <div class="row">
+          <!-- Dự án gần đây -->
+          <div class="col-12 col-lg-8">
+            <div class="card shadow-sm mb-4">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-folder me-2"></i>Dự án gần đây</h5>
+                <a href="{% url 'projects:my_projects' %}" class="btn btn-sm btn-link">Xem tất cả</a>
+              </div>
+              <div class="card-body">
+                <div class="row" id="projectsList">
+                  {% if dashboard_data.recent_projects %}
+                    {% for project in dashboard_data.recent_projects %}
+                    <div class="col-md-6 col-lg-6 mb-4">
+                      <div class="project-card slide-in">
+                        <div class="card-body">
+                          <h5 class="project-title">
+                            <a href="{% url 'projects:project_detail' project.id %}">{{ project.name }}</a>
+                          </h5>
+                          <span class="project-status {{ project.status }}">
+                            {% if project.status == 'on_track' %}
+                              Tiến độ tốt
+                            {% elif project.status == 'warning' %}
+                              Sắp đến hạn
+                            {% elif project.status == 'overdue' %}
+                              Quá hạn
+                            {% endif %}
+                          </span>
+                          <div class="progress">
+                            <div class="progress-bar" role="progressbar" style="width: {{ project.progress }}%"
+                                 aria-valuenow="{{ project.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                          </div>
+                          <div class="project-meta">
+                            <span>Tiến độ: {{ project.progress }}%</span>
+                            <span>
+                              {% if project.days_left >= 0 %}
+                                Còn {{ project.days_left }} ngày
+                              {% else %}
+                                Quá hạn {{ project.days_left|abs }} ngày
+                              {% endif %}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  {% else %}
+                    <div class="col-12 text-center py-4 text-muted">
+                      <i class="bi bi-folder2-open fa-3x mb-3"></i>
+                      <p>Không có dự án nào</p>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Task sắp đến hạn -->
+          <div class="col-12 col-lg-4">
+            <div class="card shadow-sm mb-4">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-list-check me-2"></i>Nhiệm vụ sắp đến hạn</h5>
+                <a href="{% url 'projects:my_tasks' %}" class="btn btn-sm btn-link">Xem tất cả</a>
+              </div>
+              <div class="card-body p-0">
+                <ul class="list-group list-group-flush" id="upcomingTasksList">
+                  {% if dashboard_data.upcoming_tasks %}
+                    {% for task in dashboard_data.upcoming_tasks %}
+                    <li class="list-group-item fade-in">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                          <h6 class="task-title">
+                            <a href="{% url 'projects:task_detail' task.id %}">{{ task.title }}</a>
+                          </h6>
+                          <div class="task-project">{{ task.project }}</div>
+                        </div>
+                        <div class="text-end">
+                          <span class="badge
+                            {% if task.status == 'To-do' %}bg-primary
+                            {% elif task.status == 'In progress' %}bg-warning
+                            {% elif task.status == 'Completed' %}bg-success
+                            {% elif task.status == 'Late' %}bg-danger
+                            {% endif %}">
+                            {{ task.status }}
+                          </span>
+                          <div class="task-deadline">{{ task.deadline }}</div>
+                        </div>
+                      </div>
+                    </li>
+                    {% endfor %}
+                  {% else %}
+                    <li class="list-group-item text-center text-muted">Không có task sắp đến hạn</li>
+                  {% endif %}
+                </ul>
+              </div>
+            </div>
+
+            <!-- Liên kết nhanh -->
+            <div class="card shadow-sm mb-4">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Truy cập nhanh</h5>
+              </div>
+              <div class="card-body">
+                <div class="row g-2">
+                  <div class="col-6">
+                    <a href="{% url 'projects:project_task_board' %}" class="btn btn-outline-primary w-100">
+                      <i class="bi bi-kanban me-1"></i>Bảng Kanban
+                    </a>
+                  </div>
+                  <div class="col-6">
+                    <a href="{% url 'projects:project_timeline' %}" class="btn btn-outline-primary w-100">
+                      <i class="bi bi-calendar-range me-1"></i>Timeline
+                    </a>
+                  </div>
+                  <div class="col-6">
+                    <a href="{% url 'projects:team_members' %}" class="btn btn-outline-primary w-100">
+                      <i class="bi bi-people me-1"></i>Thành viên
+                    </a>
+                  </div>
+                  <div class="col-6">
+                    <a href="{% url 'projects:project_analytics' %}" class="btn btn-outline-primary w-100">
+                      <i class="bi bi-bar-chart me-1"></i>Phân tích
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'assets/js/plugin/chartjs/chart.min.js' %}"></script>
+<script src="{% static 'assets/js/projects/dashboard.js' %}"></script>
+{% endblock %}

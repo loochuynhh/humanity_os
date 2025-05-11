@@ -5,7 +5,7 @@ from datetime import timedelta
 import json
 from projects.models import Tasks, TaskAssignments, TimeEntries, Projects
 from kpis.models import EmployeeKPIs
-from users.models import Goals, Users, CheckInCheckOut, UserFaceImage
+from users.models import Users, CheckInCheckOut, UserFaceImage
 import base64
 import io
 from PIL import Image
@@ -112,16 +112,6 @@ def get_ai_suggestions(user_id):
 def get_recent_tasks(user_id):
     return Tasks.objects.filter(task_assignments__user_id=user_id).select_related('project').order_by('-deadline')[:5]
 
-def get_personal_goals(user_id):
-    goals = Goals.objects.filter(user_id=user_id).order_by('-deadline')
-    return [{
-        'description': goal.description,
-        'progress': goal.achieved_percentage,
-        'name': goal.name,
-        'deadline': goal.deadline,
-        'status': goal.status
-    } for goal in goals]
-
 def get_project_time_allocation(user_id, as_json=False):
     today = timezone.now().date()
     week_start = today - timedelta(days=today.weekday())
@@ -146,27 +136,6 @@ def get_project_time_allocation(user_id, as_json=False):
         return mark_safe(json_str)
     return project_times
 
-def get_goals_progress(user_id, as_json=False):
-    goals = Goals.objects.filter(user_id=user_id).order_by('-deadline')[:5]
-    data = {
-        'labels': [slugify(escape(goal.name.strip()), allow_unicode=True) for goal in goals] or ['Không có mục tiêu'],
-        'data': [float(goal.achieved_percentage) for goal in goals] or [0]
-    }
-    if as_json:
-        json_str = json.dumps(data, ensure_ascii=False)
-        return mark_safe(json_str)
-    return data
-
-def get_goals_summary(user):
-    goals = Goals.objects.filter(user=user)
-    total_goals = goals.count()
-    achieved_goals = goals.filter(status='Achieved').count()
-    average_progress = goals.aggregate(models.Avg('achieved_percentage'))['achieved_percentage__avg'] or 0
-    return {
-        'total_goals': total_goals,
-        'achieved_goals': achieved_goals,
-        'average_progress': round(average_progress, 1)
-    }
 
 def get_task_stats(user):
     tasks = Tasks.objects.filter(task_assignments__user=user).distinct()
@@ -178,15 +147,6 @@ def get_task_stats(user):
         'completion_rate': round(completed_tasks / total_tasks * 100, 2) if total_tasks else 0
     }
 
-def get_goals_stats(user):
-    goals = Goals.objects.filter(user=user)
-    total_goals = goals.count()
-    achieved_goals = goals.filter(status='Achieved').count()
-    return {
-        'total': total_goals,
-        'achieved': achieved_goals,
-        'completion_rate': round(achieved_goals / total_goals * 100, 2) if total_goals else 0
-    }
 
 def verify_face(check_image, user):
     """
@@ -237,46 +197,66 @@ def verify_face(check_image, user):
         print(f"Face recognition error: {str(e)}")
         return False
 
+# Sửa hàm handle_check_in trong users/utils.py
 def handle_check_in(user, location, image_data):
     """
     Xử lý logic check-in, lưu thông tin và kiểm tra nhận diện khuôn mặt.
     """
     today = timezone.now().date()
-    existing_checkin = CheckInCheckOut.objects.filter(user=user, date=today).first()
 
-    if existing_checkin:
-        return False, "Bạn đã check-in hôm nay rồi."
+    # Sử dụng transaction để tránh tạo nhiều bản ghi
+    from django.db import transaction
 
-    checkin = CheckInCheckOut(
-        user=user,
-        checkin_time=timezone.now(),
-        date=today,
-        checkin_location=location,
-    )
+    with transaction.atomic():
+        # Kiểm tra một lần nữa và xóa các bản ghi check-in trùng lặp (nếu có)
+        existing_checkins = CheckInCheckOut.objects.filter(user=user, date=today)
 
-    if image_data:
-        try:
-            if ',' in image_data:
-                image_data = image_data.split(',')[1]
-            img_bytes = base64.b64decode(image_data)
-            img = Image.open(io.BytesIO(img_bytes))
-            img = img.resize((320, 240), Image.Resampling.LANCZOS)
-            buffer = io.BytesIO()
-            img.save(buffer, format="JPEG", quality=70)
-            img_name = f"checkin_{user.username}_{today}.jpg"
-            checkin.checkin_image.save(img_name, ContentFile(buffer.getvalue()), save=False)
+        if existing_checkins.exists():
+            # Nếu đã có bản ghi, không tạo thêm bản ghi mới
+            return False, "Bạn đã check-in hôm nay rồi."
 
-            # Kiểm tra nhận diện khuôn mặt
-            checkin.is_valid_checkin = verify_face(checkin.checkin_image, user)
-        except Exception as e:
-            checkin.is_valid_checkin = False
-            return False, f"Lỗi xử lý ảnh: {str(e)}"
+        # Tạo bản ghi check-in mới
+        checkin = CheckInCheckOut(
+            user=user,
+            checkin_time=timezone.now(),
+            date=today,
+            checkin_location=location,
+        )
 
-    checkin.save()
-    if not checkin.is_valid_checkin:
-        return True, "Check-in thành công nhưng ảnh không hợp lệ. Vui lòng chụp lại nếu cần."
-    return True, "Check-in thành công."
+        if image_data:
+            try:
+                # Xử lý ảnh
+                if ',' in image_data:
+                    image_data = image_data.split(',')[1]
+                img_bytes = base64.b64decode(image_data)
+                img = Image.open(io.BytesIO(img_bytes))
+                img = img.resize((320, 240), Image.Resampling.LANCZOS)
+                buffer = io.BytesIO()
+                img.save(buffer, format="JPEG", quality=70)
 
+                # Tạo tên file với timestamp để tránh trùng lặp
+                timestamp = int(time.time())
+                img_name = f"checkin_{user.username}_{today}_{timestamp}.jpg"
+
+                # Lưu ảnh
+                checkin.checkin_image.save(img_name, ContentFile(buffer.getvalue()), save=False)
+
+                # Kiểm tra nhận diện khuôn mặt
+                checkin.is_valid_checkin = verify_face(checkin.checkin_image, user)
+            except Exception as e:
+                print(f"Error processing check-in image: {str(e)}")
+                checkin.is_valid_checkin = False
+                return False, f"Lỗi xử lý ảnh: {str(e)}"
+
+        # Lưu bản ghi check-in
+        checkin.save()
+
+        if not checkin.is_valid_checkin:
+            return True, "Check-in thành công nhưng ảnh không hợp lệ. Vui lòng chụp lại nếu cần."
+
+        return True, "Check-in thành công."
+
+# Sửa hàm handle_check_out trong users/utils.py
 def handle_check_out(user, location, image_data):
     """
     Xử lý logic check-out, cập nhật thông tin và kiểm tra nhận diện khuôn mặt.
@@ -286,38 +266,54 @@ def handle_check_out(user, location, image_data):
         now = timezone.now()
 
         # Xử lý hình ảnh
+        image_content = None
         try:
-            # Loại bỏ phần header của dữ liệu base64
+            # Xử lý hình ảnh
             if ',' in image_data:
                 image_data = image_data.split(',')[1]
 
             # Giải mã base64
             image_binary = base64.b64decode(image_data)
 
-            # Tạo tên file
-            image_name = f"checkout_{user.username}_{today.strftime('%Y-%m-%d')}_{int(time.time())}.jpg"
+            # Xử lý ảnh để giảm kích thước
+            img = Image.open(io.BytesIO(image_binary))
+            img = img.resize((320, 240), Image.Resampling.LANCZOS)
+            buffer = io.BytesIO()
+            img.save(buffer, format="JPEG", quality=70)
 
-            # Tạo ContentFile
-            image_content = ContentFile(image_binary, name=image_name)
+            # Tạo tên file với timestamp để tránh trùng lặp
+            timestamp = int(time.time())
+            image_name = f"checkout_{user.username}_{today.strftime('%Y-%m-%d')}_{timestamp}.jpg"
 
-            # Lưu file
-            from django.core.files.storage import default_storage
-            image_path = default_storage.save(f'checkout_images/{image_name}', image_content)
+            # Tạo ContentFile từ ảnh đã xử lý
+            image_content = ContentFile(buffer.getvalue(), name=image_name)
 
         except Exception as e:
-            print(f"Error processing image: {str(e)}")
+            print(f"Error processing check-out image: {str(e)}")
             return False, f"Lỗi xử lý hình ảnh: {str(e)}"
 
         # Kiểm tra vị trí cố định
         is_valid_location = True
+        is_valid_face = False
+
         if user.fixed_location:
             try:
-                # Phân tích vị trí cố định và vị trí hiện tại
-                fixed_lat, fixed_lng = map(float, user.fixed_location.split(','))
-                current_lat, current_lng = map(float, location.split(','))
+                # Phân tích vị trí
+                parts = user.fixed_location.split(',')
+                if len(parts) != 2:
+                    raise ValueError("Định dạng vị trí không hợp lệ")
+
+                fixed_lat = float(parts[0].strip())
+                fixed_lng = float(parts[1].strip())
+
+                parts = location.split(',')
+                if len(parts) != 2:
+                    raise ValueError("Định dạng vị trí không hợp lệ")
+
+                current_lat = float(parts[0].strip())
+                current_lng = float(parts[1].strip())
 
                 # Tính khoảng cách
-                from math import sin, cos, sqrt, atan2, radians
                 R = 6371  # Bán kính trái đất (km)
 
                 lat1, lng1 = radians(fixed_lat), radians(fixed_lng)
@@ -332,41 +328,63 @@ def handle_check_out(user, location, image_data):
 
                 # Kiểm tra khoảng cách (cho phép sai lệch 0.5km)
                 is_valid_location = distance <= 0.5
-            except:
+
+            except Exception as e:
+                print(f"Location validation error: {str(e)}")
                 is_valid_location = False
 
-        # Sử dụng raw SQL để cập nhật hoặc tạo mới bản ghi
-        from django.db import connection
-        with connection.cursor() as cursor:
-            # Kiểm tra xem đã có bản ghi cho ngày hôm nay chưa
-            cursor.execute(
-                "SELECT id FROM checkin_checkout WHERE user_id = %s AND date = %s",
-                [user.id, today]
-            )
-            result = cursor.fetchone()
+        # Sử dụng transaction để đảm bảo tính nhất quán
+        from django.db import transaction
 
-            if result:
-                # Cập nhật bản ghi hiện có
-                cursor.execute(
-                    """
-                    UPDATE checkin_checkout
-                    SET checkout_time = %s, checkout_location = %s,
-                        checkout_image = %s, is_valid_checkout = %s
-                    WHERE id = %s
-                    """,
-                    [now, location, image_path, is_valid_location, result[0]]
-                )
+        with transaction.atomic():
+            # Xử lý trường hợp có nhiều bản ghi check-in trong cùng một ngày
+            checkin_records = CheckInCheckOut.objects.filter(user=user, date=today).order_by('-checkin_time')
+
+            if checkin_records.exists():
+                # Giữ lại bản ghi đầu tiên, xóa các bản ghi còn lại
+                main_record = checkin_records.first()
+
+                if len(checkin_records) > 1:
+                    checkin_records.exclude(id=main_record.id).delete()
+
+                # Cập nhật thông tin check-out
+                main_record.checkout_time = now
+                main_record.checkout_location = location
+
+                if image_content:
+                    main_record.checkout_image.save(image_content.name, image_content, save=False)
+
+                    # Kiểm tra nhận diện khuôn mặt
+                    is_valid_face = verify_face(main_record.checkout_image, user)
+                    main_record.is_valid_checkout = is_valid_location and is_valid_face
+
+                main_record.save()
+
+                if not is_valid_location or not is_valid_face:
+                    return True, "Check-out thành công nhưng có thể có vấn đề về vị trí hoặc nhận diện. Quản lý sẽ kiểm tra sau."
+
                 return True, "Check-out thành công!"
             else:
-                # Tạo bản ghi mới
-                cursor.execute(
-                    """
-                    INSERT INTO checkin_checkout
-                    (user_id, date, checkout_time, checkout_location, checkout_image, is_valid_checkout)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                    """,
-                    [user.id, today, now, location, image_path, is_valid_location]
+                # Tạo bản ghi mới nếu không có check-in trước đó
+                checkout = CheckInCheckOut(
+                    user=user,
+                    date=today,
+                    checkout_time=now,
+                    checkout_location=location,
                 )
+
+                if image_content:
+                    checkout.checkout_image.save(image_content.name, image_content, save=False)
+
+                    # Kiểm tra nhận diện khuôn mặt
+                    is_valid_face = verify_face(checkout.checkout_image, user)
+
+                checkout.is_valid_checkout = is_valid_location and is_valid_face
+                checkout.save()
+
+                if not is_valid_location or not is_valid_face:
+                    return True, "Check-out thành công nhưng có thể có vấn đề về vị trí hoặc nhận diện. Quản lý sẽ kiểm tra sau."
+
                 return True, "Check-out thành công! (Không có check-in trước đó)"
 
     except Exception as e:
@@ -375,7 +393,7 @@ def handle_check_out(user, location, image_data):
         print(traceback.format_exc())
         return False, f"Lỗi khi xử lý check-out: {str(e)}"
 
-        
+
 def get_today_work_hours(user):
     """
     Tính số giờ làm việc hôm nay.

@@ -104,20 +104,32 @@
             </div>
         </div>
 
+        <!-- Project Progress Card -->
         <div class="col-12 col-md-6">
-            <div class="card shadow-sm hover-card">
-                <div class="card-body">
-                    <h5 class="card-title fw-bold"><i class="bi bi-target me-2"></i>Tiến độ mục tiêu cá nhân</h5>
-                    <canvas id="goalsProgressChart" height="200"></canvas>
-                    <a href="{% url 'users:goals' %}" class="btn btn-outline-primary w-100 mt-3">Xem chi tiết mục tiêu</a>
-                </div>
+          <div class="card shadow-sm hover-card">
+            <div class="card-body">
+              <h5 class="card-title fw-bold"><i class="bi bi-folder me-2"></i>Tiến độ dự án</h5>
+              <ul class="list-group list-group-flush">
+                {% for project in project_progress %}
+                  <li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-center">
+                    {{ project.name }}
+                    <div class="progress w-100 w-md-50 my-2 my-md-0" style="height: 10px">
+                      <div class="progress-bar bg-info" style="width: {{ project.progress }}%"></div>
+                    </div>
+                    <span class="badge bg-info">{{ project.progress }}%</span>
+                  </li>
+                {% empty %}
+                  <li class="list-group-item">Chưa có dự án</li>
+                {% endfor %}
+              </ul>
+              <a href="{% url 'projects:all_projects' %}" class="btn btn-outline-primary w-100 mt-3">Xem tất cả dự án</a>
             </div>
-        </div>
+          </div>
+      </div>
 
         <script>
             window.djangoChartData = {
                 projectTimeChart: {{ project_time_allocation|safe|default:'{"labels":["Không có dự án"],"data":[1]}' }},
-                goalsProgressChart: {{ goals_progress|safe|default:'{"labels":["Không có mục tiêu"],"data":[0]}' }}
             };
         </script>
 
@@ -173,48 +185,7 @@
           </div>
         </div>
 
-        <!-- Personal Goals Card -->
-        <div class="col-12 col-md-6">
-          <div class="card shadow-sm hover-card">
-            <div class="card-body">
-              <h5 class="card-title fw-bold"><i class="bi bi-star me-2"></i>Mục tiêu cá nhân</h5>
-              <ul class="list-group list-group-flush">
-                {% for goal in personal_goals %}
-                  <li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-center">
-                    {{ goal.description }}
-                    <span class="badge {% if goal.progress >= 80 %}bg-success{% else %}bg-warning{% endif %} mt-2 mt-md-0">{{ goal.progress }}%</span>
-                  </li>
-                {% empty %}
-                  <li class="list-group-item">Chưa có mục tiêu</li>
-                {% endfor %}
-              </ul>
-              <a href="{% url 'users:goals' %}" class="btn btn-outline-primary w-100 mt-3">Quản lý mục tiêu</a>
-            </div>
-          </div>
-        </div>
 
-        <!-- Project Progress Card -->
-        <div class="col-12 col-md-6">
-            <div class="card shadow-sm hover-card">
-              <div class="card-body">
-                <h5 class="card-title fw-bold"><i class="bi bi-folder me-2"></i>Tiến độ dự án</h5>
-                <ul class="list-group list-group-flush">
-                  {% for project in project_progress %}
-                    <li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-center">
-                      {{ project.name }}
-                      <div class="progress w-100 w-md-50 my-2 my-md-0" style="height: 10px">
-                        <div class="progress-bar bg-info" style="width: {{ project.progress }}%"></div>
-                      </div>
-                      <span class="badge bg-info">{{ project.progress }}%</span>
-                    </li>
-                  {% empty %}
-                    <li class="list-group-item">Chưa có dự án</li>
-                  {% endfor %}
-                </ul>
-                <a href="{% url 'projects:all_projects' %}" class="btn btn-outline-primary w-100 mt-3">Xem tất cả dự án</a>
-              </div>
-            </div>
-        </div>
       </div>
       <div class="mt-5"></div>
     </main>

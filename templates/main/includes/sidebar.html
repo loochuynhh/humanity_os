@@ -99,29 +99,48 @@
           </ul>
         </div>
       </li>
+
       <li class="nav-item">
-        <a class="nav-link {% if request.resolver_match.url_name == 'goals' %}active{% endif %}" href="{% url 'users:goals' %}">
-          <i class="bi bi-star me-2"></i>Goals
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#projectsSubmenu" aria-expanded="{% if request.resolver_match.url_name in 'all_projects,my_projects,team_members,project_progress' %}true{% else %}false{% endif %}">
-          <i class="bi bi-folder me-2"></i>Dự án
+        <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#projectsSubmenu" aria-expanded="{% if request.resolver_match.url_name in 'all_projects,my_projects,team_members,project_progress,project_dashboard,project_detail,project_task_board,project_timeline,project_analytics' %}true{% else %}false{% endif %}">
+          <i class="bi bi-briefcase me-2"></i>Dự án
           <i class="bi bi-chevron-down float-end mt-1 toggle-icon"></i>
         </a>
-        <div class="collapse {% if request.resolver_match.url_name in 'all_projects,my_projects,team_members,project_progress' %}show{% endif %}" id="projectsSubmenu">
+        <div class="collapse {% if request.resolver_match.url_name in 'all_projects,my_projects,team_members,project_progress,project_dashboard,project_detail,project_task_board,project_timeline,project_analytics' %}show{% endif %}" id="projectsSubmenu">
           <ul class="nav flex-column ms-3">
             <li class="nav-item">
-              <a class="nav-link sub-link {% if request.resolver_match.url_name == 'all_projects' %}active{% endif %}" href="{% url 'projects:all_projects' %}">Tất cả dự án</a>
+              <a class="nav-link sub-link {% if request.resolver_match.url_name == 'project_dashboard' %}active{% endif %}" href="{% url 'projects:project_dashboard' %}">
+                <i class="bi bi-grid-1x2 me-1"></i> Dashboard
+              </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link sub-link {% if request.resolver_match.url_name == 'my_projects' %}active{% endif %}" href="{% url 'projects:my_projects' %}">Dự án của tôi</a>
+              <a class="nav-link sub-link {% if request.resolver_match.url_name == 'my_projects' %}active{% endif %}" href="{% url 'projects:my_projects' %}">
+                <i class="bi bi-bookmark me-1"></i> Dự án của tôi
+              </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link sub-link {% if request.resolver_match.url_name == 'team_members' %}active{% endif %}" href="{% url 'projects:team_members' %}">Thành viên nhóm</a>
+              <a class="nav-link sub-link {% if request.resolver_match.url_name == 'all_projects' %}active{% endif %}" href="{% url 'projects:all_projects' %}">
+                <i class="bi bi-folder me-1"></i> Tất cả dự án
+              </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link sub-link {% if request.resolver_match.url_name == 'project_progress' %}active{% endif %}" href="{% url 'projects:project_progress' %}">Thống kê tiến độ</a>
+              <a class="nav-link sub-link {% if request.resolver_match.url_name == 'project_task_board' %}active{% endif %}" href="{% url 'projects:project_task_board' %}">
+                <i class="bi bi-kanban me-1"></i> Bảng nhiệm vụ
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link sub-link {% if request.resolver_match.url_name == 'project_timeline' %}active{% endif %}" href="{% url 'projects:project_timeline' %}">
+                <i class="bi bi-calendar-range me-1"></i> Timeline
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link sub-link {% if request.resolver_match.url_name == 'team_members' %}active{% endif %}" href="{% url 'projects:team_members' %}">
+                <i class="bi bi-people me-1"></i> Thành viên
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link sub-link {% if request.resolver_match.url_name == 'project_analytics' %}active{% endif %}" href="{% url 'projects:project_analytics' %}">
+                <i class="bi bi-bar-chart me-1"></i> Phân tích
+              </a>
             </li>
           </ul>
         </div>

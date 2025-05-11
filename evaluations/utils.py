@@ -2,12 +2,14 @@ from django.db.models import Q
 from .models import FormResponses
 
 def calculate_feedback_metrics(responses):
-    total_reviews = responses.count()
+    # Sửa lỗi khi responses là list thay vì queryset
+    total_reviews = len(responses)
     positive_rate = 0
     average_score = 0
     valid_responses = 0
 
-    for response in responses.filter(answer_type="numeric"):
+    # Chỉ tính các response có numeric answer
+    for response in [r for r in responses if r.answer_type == "numeric"]:
         try:
             score = float(response.answer)
             average_score += score
@@ -27,15 +29,28 @@ def calculate_feedback_metrics(responses):
     }
 
 def get_staff_feedback_queryset(user, is_received=True):
+    """Lấy danh sách đánh giá theo loại, loại bỏ các bản ghi trùng lặp"""
     if is_received:
-        return FormResponses.objects.filter(
+        # Chỉ lấy review từ quản lý dành cho user
+        base_query = FormResponses.objects.filter(
             target_user=user,
-            form__type='review'  # Chỉ lấy review cho Đánh giá từ Quản lý
+            form__type='review'
         ).select_related('form', 'user', 'question')
-    return FormResponses.objects.filter(
-        user=user,
-        form__type__in=['peer', 'feedback']  # Chỉ lấy peer và feedback cho Đã gửi
-    ).select_related('form', 'target_user', 'question')
+    else:
+        # Chỉ lấy peer và feedback mà user đã gửi
+        base_query = FormResponses.objects.filter(
+            user=user,
+            form__type__in=['peer', 'feedback']
+        ).select_related('form', 'target_user', 'question')
+
+    # Loại bỏ trùng lặp bằng cách chỉ lấy một bản ghi cho mỗi (form, user, target_user)
+    distinct_responses = {}
+    for response in base_query:
+        key = (response.form_id, response.user_id, response.target_user_id)
+        if key not in distinct_responses:
+            distinct_responses[key] = response
+
+    return list(distinct_responses.values())
 
 def is_anonymous_response(response):
     """Kiểm tra xem đánh giá có cần ẩn danh không"""

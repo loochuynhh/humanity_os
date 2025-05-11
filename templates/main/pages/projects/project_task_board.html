@@ -1,0 +1,179 @@
+{% extends 'main/layouts/user_base.html' %}
+{% load static %}
+{% block title %}Bảng Nhiệm vụ - Humanity OS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
+<link rel="stylesheet" href="{% static 'assets/css/projects/task_board.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    {% include 'main/includes/sidebar.html' %}
+
+    <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
+      <!-- Tiêu đề -->
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom fade-in-down">
+        <h1 class="h2 fw-bold">
+          <i class="bi bi-kanban me-2"></i>Bảng Nhiệm vụ
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <button id="refreshKanban" class="btn btn-sm btn-outline-primary me-2">
+            <i class="bi bi-arrow-repeat me-1"></i>Làm mới
+          </button>
+          <a href="{% url 'projects:my_tasks' %}" class="btn btn-sm btn-primary">
+            <i class="bi bi-list-check me-1"></i>Task của tôi
+          </a>
+        </div>
+      </div>
+
+      <!-- Filter & Stats -->
+      <div class="card shadow-sm mb-4 fade-in-up">
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-12 col-md-4">
+              <label for="projectFilter" class="form-label">Lọc theo dự án</label>
+              <select id="projectFilter" class="form-select">
+                <option value="">Tất cả dự án</option>
+                {% for project in projects %}
+                <option value="{{ project.id }}">{{ project.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12 col-md-8">
+              <label class="form-label">Tổng quan task</label>
+              <div class="d-flex flex-wrap gap-3">
+                <div class="bg-light rounded-3 px-3 py-2 d-flex align-items-center">
+                  <i class="bi bi-check2-square me-2 text-primary"></i>
+                  <div>
+                    <small class="d-block text-muted">Tổng số</small>
+                    <span class="fw-bold" id="totalCount">0</span>
+                  </div>
+                </div>
+                <div class="bg-light rounded-3 px-3 py-2 d-flex align-items-center">
+                  <i class="bi bi-list-task me-2 text-primary"></i>
+                  <div>
+                    <small class="d-block text-muted">To-do</small>
+                    <span class="fw-bold" id="todoCount">0</span>
+                  </div>
+                </div>
+                <div class="bg-light rounded-3 px-3 py-2 d-flex align-items-center">
+                  <i class="bi bi-hourglass-split me-2 text-warning"></i>
+                  <div>
+                    <small class="d-block text-muted">In Progress</small>
+                    <span class="fw-bold" id="inProgressCount">0</span>
+                  </div>
+                </div>
+                <div class="bg-light rounded-3 px-3 py-2 d-flex align-items-center">
+                  <i class="bi bi-check-circle me-2 text-success"></i>
+                  <div>
+                    <small class="d-block text-muted">Completed</small>
+                    <span class="fw-bold" id="completedCount">0</span>
+                  </div>
+                </div>
+                <div class="bg-light rounded-3 px-3 py-2 d-flex align-items-center">
+                  <i class="bi bi-exclamation-triangle me-2 text-danger"></i>
+                  <div>
+                    <small class="d-block text-muted">Late</small>
+                    <span class="fw-bold" id="lateCount">0</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thông báo -->
+      <div id="kanbanAlerts"></div>
+
+      <!-- Loading indicator -->
+      <div id="kanbanLoading" class="text-center py-5" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Đang tải...</span>
+        </div>
+        <p class="mt-2">Đang tải dữ liệu bảng Kanban...</p>
+      </div>
+
+      <!-- Kanban Board -->
+      <div id="kanbanContent">
+        <div class="kanban-container fade-in-up">
+          <p class="text-muted mb-2">
+            <i class="bi bi-info-circle me-1"></i>
+            <small>Kéo thả các task để thay đổi trạng thái</small>
+          </p>
+          <div class="kanban-board">
+            <!-- To-do Column -->
+            <div class="kanban-wrapper kanban-column-todo">
+              <div class="kanban-column-header">
+                <span><i class="bi bi-list-task me-2"></i>To-do</span>
+                <span class="badge bg-light text-dark">
+                  <span id="todoCount">0</span>
+                </span>
+              </div>
+              <div id="todoColumn" class="kanban-column" data-status="todo"></div>
+            </div>
+
+            <!-- In Progress Column -->
+            <div class="kanban-wrapper kanban-column-in-progress">
+              <div class="kanban-column-header">
+                <span><i class="bi bi-hourglass-split me-2"></i>In Progress</span>
+                <span class="badge bg-light text-dark">
+                  <span id="inProgressCount">0</span>
+                </span>
+              </div>
+              <div id="in_progressColumn" class="kanban-column" data-status="in_progress"></div>
+            </div>
+
+            <!-- Completed Column -->
+            <div class="kanban-wrapper kanban-column-completed">
+              <div class="kanban-column-header">
+                <span><i class="bi bi-check-circle me-2"></i>Completed</span>
+                <span class="badge bg-light text-dark">
+                  <span id="completedCount">0</span>
+                </span>
+              </div>
+              <div id="completedColumn" class="kanban-column" data-status="completed"></div>
+            </div>
+
+            <!-- Late Column -->
+            <div class="kanban-wrapper kanban-column-late">
+              <div class="kanban-column-header">
+                <span><i class="bi bi-exclamation-triangle me-2"></i>Late</span>
+                <span class="badge bg-light text-dark">
+                  <span id="lateCount">0</span>
+                </span>
+              </div>
+              <div id="lateColumn" class="kanban-column" data-status="late"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Task Detail Modal -->
+      <div class="modal fade" id="taskDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Chi tiết nhiệm vụ</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="taskModalContent">
+              <!-- Nội dung sẽ được load động -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+{% csrf_token %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'assets/js/plugin/sortable/Sortable.min.js' %}"></script>
+<script src="{% static 'assets/js/projects/task_board.js' %}"></script>
+{% endblock %}
