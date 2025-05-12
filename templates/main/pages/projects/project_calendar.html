@@ -1,0 +1,215 @@
+{% extends 'main/layouts/base.html' %}
+{% load static %}
+{% block title %}Lịch dự án - Humanity OS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
+<link rel="stylesheet" href="{% static 'assets/css/projects/tasks.css' %}">
+<link rel="stylesheet" href="{% static 'assets/css/projects/project_calendar.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
+{% endblock %}
+
+{% block content %}
+<!-- Ẩn dữ liệu từ Django để JS có thể lấy -->
+<div id="calendarData"
+    data-current-month="{{ current_month }}"
+    data-current-year="{{ current_year }}"
+    data-project-id=""
+    style="display: none;">
+</div>
+
+<div class="container-fluid">
+  <div class="row">
+    {% include 'main/includes/sidebar.html' %}
+
+    <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+        <h1 class="h2 fw-bold">
+          <i class="fas fa-calendar me-2"></i>Lịch dự án
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <select id="projectFilter" class="form-select me-2">
+            <option value="">Tất cả dự án</option>
+            {% for project in projects %}
+            <option value="{{ project.id }}">{{ project.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <div id="calendar"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal chi tiết sự kiện -->
+      <div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="eventModalLabel">Chi tiết sự kiện</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <h6 class="text-sm text-muted mb-1">Tiêu đề</h6>
+                <p id="eventTitle" class="fw-bold"></p>
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <h6 class="text-sm text-muted mb-1">Ngày bắt đầu</h6>
+                  <p id="eventStart"></p>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <h6 class="text-sm text-muted mb-1">Ngày kết thúc</h6>
+                  <p id="eventEnd"></p>
+                </div>
+              </div>
+              <div class="mb-3">
+                <h6 class="text-sm text-muted mb-1">Dự án</h6>
+                <p id="eventProject"></p>
+              </div>
+              <div class="mb-3">
+                <h6 class="text-sm text-muted mb-1">Mô tả</h6>
+                <p id="eventDescription"></p>
+              </div>
+              <div id="taskDetails" class="d-none">
+                <hr>
+                <div class="mb-3">
+                  <h6 class="text-sm text-muted mb-1">Trạng thái</h6>
+                  <p id="eventStatus"></p>
+                </div>
+                <div class="mb-3">
+                  <h6 class="text-sm text-muted mb-1">Người phụ trách</h6>
+                  <p id="eventAssignees"></p>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+              <a id="eventLink" href="#" class="btn btn-primary d-none">Xem chi tiết</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales-all.min.js"></script>
+<script src="{% static 'assets/js/projects/project_calendar.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Khởi tạo lịch
+  const calendarEl = document.getElementById('calendar');
+  const calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    locale: 'vi',
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
+    },
+    buttonText: {
+      today: 'Hôm nay',
+      month: 'Tháng',
+      week: 'Tuần',
+      day: 'Ngày',
+      list: 'Danh sách'
+    },
+    eventClick: function(info) {
+      // Hiển thị thông tin chi tiết sự kiện
+      showEventDetails(info.event);
+    },
+    events: function(info, successCallback, failureCallback) {
+      // Lấy sự kiện từ API
+      const projectId = document.getElementById('projectFilter').value;
+      const url = "{% url 'projects:project_calendar_events' %}";
+
+      fetch(`${url}?project_id=${projectId}&start=${info.startStr}&end=${info.endStr}`)
+        .then(response => response.json())
+        .then(data => {
+          successCallback(data.events);
+        })
+        .catch(error => {
+          console.error('Error loading events:', error);
+          failureCallback(error);
+        });
+    }
+  });
+
+  calendar.render();
+
+  // Cập nhật lịch khi thay đổi dự án
+  document.getElementById('projectFilter').addEventListener('change', function() {
+    // Lưu project ID vào data attribute
+    document.getElementById('calendarData').dataset.projectId = this.value;
+    // Refetch events
+    calendar.refetchEvents();
+  });
+
+  // Hiển thị thông tin chi tiết sự kiện trong modal
+  function showEventDetails(event) {
+    const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+
+    // Cập nhật thông tin cơ bản
+    document.getElementById('eventTitle').textContent = event.title;
+    document.getElementById('eventStart').textContent = formatDate(event.start);
+    document.getElementById('eventEnd').textContent = event.end ? formatDate(event.end) : formatDate(event.start);
+    document.getElementById('eventProject').textContent = event.extendedProps.project || 'Không có';
+    document.getElementById('eventDescription').textContent = event.extendedProps.description || 'Không có mô tả';
+
+    // Kiểm tra có phải task không
+    if (event.extendedProps.isTask) {
+      document.getElementById('taskDetails').classList.remove('d-none');
+      document.getElementById('eventStatus').textContent = event.extendedProps.status || 'Không có';
+      document.getElementById('eventStatus').className = getStatusClass(event.extendedProps.status);
+      document.getElementById('eventAssignees').textContent = event.extendedProps.assignees || 'Không có';
+
+      // Hiển thị nút xem chi tiết nếu có link
+      if (event.extendedProps.url) {
+        document.getElementById('eventLink').href = event.extendedProps.url;
+        document.getElementById('eventLink').classList.remove('d-none');
+      } else {
+        document.getElementById('eventLink').classList.add('d-none');
+      }
+    } else {
+      document.getElementById('taskDetails').classList.add('d-none');
+      document.getElementById('eventLink').classList.add('d-none');
+    }
+
+    modal.show();
+  }
+
+  // Định dạng ngày tháng
+  function formatDate(date) {
+    if (!date) return '';
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    return new Date(date).toLocaleDateString('vi-VN', options);
+  }
+
+  // Lấy class tương ứng với trạng thái
+  function getStatusClass(status) {
+    if (!status) return '';
+
+    status = status.toLowerCase();
+    if (status.includes('completed') || status.includes('hoàn thành'))
+      return 'badge bg-success';
+    else if (status.includes('progress') || status.includes('đang'))
+      return 'badge bg-warning';
+    else if (status.includes('late') || status.includes('trễ'))
+      return 'badge bg-danger';
+    else
+      return 'badge bg-primary';
+  }
+});
+</script>
+{% endblock %}

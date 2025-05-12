@@ -11,23 +11,20 @@ urlpatterns = [
     path('tasks/extend-deadline/<int:task_id>/', views.extend_deadline, name='extend_deadline'),
     path("time-tracking/", views.time_tracking, name="time_tracking"),
     path('tasks/<int:task_id>/', views.task_detail, name='task_detail'),
+
+    # Projects URLs
     path('all/', views.all_projects, name='all_projects'),
     path('my-projects/', views.my_projects, name='my_projects'),
     path('team-members/', views.team_members, name='team_members'),
     path('team-members/data/', views.team_members_data, name='team_members_data'),
     path('progress/', views.project_progress, name='project_progress'),
     path('progress/data/', views.project_progress_data, name='project_progress_data'),
+    path('calendar/', views.project_calendar, name='project_calendar'),
+    path('calendar/events/', views.project_calendar_events, name='project_calendar_events'),
+    path('statistics/', views.project_statistics, name='project_statistics'),
+    path('statistics/data/', views.project_statistics_data, name='project_statistics_data'),
+
+    # Time entries
     path('time-entries/update/', views.update_time_entry, name='update_time_entry'),
     path('tasks/update-assignment-status/', views.update_assignment_status, name='update_assignment_status'),
-    path('dashboard/', views.project_dashboard, name='project_dashboard'),
-    path('detail/<int:project_id>/', views.project_detail, name='project_detail'),
-    path('task-board/', views.project_task_board, name='project_task_board'),
-    path('timeline/', views.project_timeline, name='project_timeline'),
-    path('analytics/', views.project_analytics, name='project_analytics'),
-    path('api/dashboard-data/', views.api_dashboard_data, name='api_dashboard_data'),
-    path('api/project-summary/<int:project_id>/', views.api_project_summary, name='api_project_summary'),
-    path('api/project-tasks/<int:project_id>/', views.api_project_tasks, name='api_project_tasks'),
-    path('api/update-task-status/', views.api_update_task_status, name='api_update_task_status'),
-    path('api/timeline-data/', views.api_timeline_data, name='api_timeline_data'),
-    path('api/analytics-data/', views.api_analytics_data, name='api_analytics_data'),
 ]

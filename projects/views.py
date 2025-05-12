@@ -2,9 +2,9 @@
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, JsonResponse
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum
 from django.views.decorators.http import require_POST, require_http_methods
 from .models import Tasks, Projects, TimeEntries, TeamProjectMembership, DeadlineExtensionRequest, TaskAssignments
 from .utils import (
@@ -18,12 +18,7 @@ from .utils import (
     update_task_tracking,
     check_deadline_warnings,
     calculate_time_by_day,
-    calculate_time_by_task,
-    get_project_dashboard_data,
-    get_project_detail_data,
-    get_task_board_data,
-    get_timeline_data,
-    get_analytics_data
+    calculate_time_by_task
 )
 
 
@@ -374,176 +369,181 @@ def update_assignment_status(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
-# View functions cho các chức năng mới
-
 @login_required
-def project_dashboard(request):
+def project_calendar(request):
     """
-    Hiển thị trang dashboard tổng quan về dự án
+    Hiển thị lịch dự án với các sự kiện từ các dự án và task
     """
-    user = request.user
-    dashboard_data = get_project_dashboard_data(user)
-    context = {
-        'dashboard_data': dashboard_data,
-        'user': user,
-    }
-    return render(request, 'main/pages/projects/project_dashboard.html', context)
-
-@login_required
-def project_detail(request, project_id):
-    """
-    Hiển thị chi tiết một dự án cụ thể
-    """
-    project = get_object_or_404(Projects, id=project_id)
-    # Kiểm tra quyền truy cập
-    if request.user != project.manager and not project.team_members.filter(id=request.user.id).exists():
-        return redirect('projects:all_projects')
+    # Lấy danh sách dự án của người dùng để hiển thị bộ lọc
+    user_projects = get_user_projects(request.user)
 
     context = {
-        'project': project,
-        'project_id': project_id,
+        'projects': user_projects,
+        'current_month': timezone.now().month,
+        'current_year': timezone.now().year
     }
-    return render(request, 'main/pages/projects/project_detail.html', context)
+
+    return render(request, 'main/pages/projects/project_calendar.html', context)
+
 
 @login_required
-def project_task_board(request):
+def project_calendar_events(request):
     """
-    Hiển thị bảng Kanban cho các task của dự án
+    API trả về dữ liệu sự kiện lịch dự án dưới dạng JSON
     """
-    user = request.user
-    projects = get_user_projects(user)
+    start_date = request.GET.get('start')
+    end_date = request.GET.get('end')
+    project_id = request.GET.get('project_id')
+
+    # Chuyển đổi string date thành datetime
+    if start_date and end_date:
+        try:
+            start_date = timezone.datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            end_date = timezone.datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+        except ValueError:
+            return JsonResponse({'success': False, 'error': 'Định dạng ngày không hợp lệ'}, status=400)
+
+    # Lọc dự án nếu có project_id
+    projects = get_user_projects(request.user)
+    if project_id:
+        projects = projects.filter(id=project_id)
+
+    # Lấy các task trong khoảng thời gian
+    tasks = Tasks.objects.filter(project__in=projects)
+    if start_date and end_date:
+        tasks = tasks.filter(deadline__range=(start_date, end_date))
+
+    # Định dạng dữ liệu sự kiện
+    events = []
+    for task in tasks:
+        # Thêm deadline task
+        events.append({
+            'id': f'task_{task.id}',
+            'title': f'Deadline: {task.title}',
+            'start': task.deadline.isoformat(),
+            'end': task.deadline.isoformat(),
+            'backgroundColor': '#dc3545',  # Màu đỏ cho deadline
+            'borderColor': '#dc3545',
+            'textColor': '#ffffff',
+            'url': f'/projects/tasks/{task.id}/',
+            'extendedProps': {
+                'type': 'task',
+                'project': task.project.name
+            }
+        })
+
+    # Thêm ngày bắt đầu và kết thúc dự án
+    for project in projects:
+        if project.start_date:
+            events.append({
+                'id': f'project_start_{project.id}',
+                'title': f'Bắt đầu: {project.name}',
+                'start': project.start_date.isoformat(),
+                'backgroundColor': '#28a745',  # Màu xanh cho ngày bắt đầu
+                'borderColor': '#28a745',
+                'textColor': '#ffffff',
+                'extendedProps': {
+                    'type': 'project',
+                    'project': project.name
+                }
+            })
+
+        if project.end_date:
+            events.append({
+                'id': f'project_end_{project.id}',
+                'title': f'Kết thúc: {project.name}',
+                'start': project.end_date.isoformat(),
+                'backgroundColor': '#ffc107',  # Màu vàng cho ngày kết thúc
+                'borderColor': '#ffc107',
+                'textColor': '#000000',
+                'extendedProps': {
+                    'type': 'project',
+                    'project': project.name
+                }
+            })
+
+    return JsonResponse(events, safe=False)
+
+
+@login_required
+def project_statistics(request):
+    """
+    Hiển thị trang thống kê chi tiết về dự án
+    """
+    # Lấy danh sách dự án của người dùng để hiển thị bộ lọc
+    user_projects = get_user_projects(request.user)
 
     context = {
-        'projects': projects,
+        'projects': user_projects
     }
-    return render(request, 'main/pages/projects/project_task_board.html', context)
+
+    return render(request, 'main/pages/projects/project_statistics.html', context)
+
 
 @login_required
-def project_timeline(request):
+def project_statistics_data(request):
     """
-    Hiển thị timeline của dự án
+    API trả về dữ liệu thống kê dự án dưới dạng JSON
     """
-    user = request.user
-    projects = get_user_projects(user)
-
-    context = {
-        'projects': projects,
-    }
-    return render(request, 'main/pages/projects/project_timeline.html', context)
-
-@login_required
-def project_analytics(request):
-    """
-    Hiển thị trang phân tích dự án
-    """
-    user = request.user
-    projects = get_user_projects(user)
-
-    context = {
-        'projects': projects,
-    }
-    return render(request, 'main/pages/projects/project_analytics.html', context)
-
-# API endpoints cho các chức năng mới
-
-@login_required
-def api_dashboard_data(request):
-    """
-    API trả về dữ liệu cho dashboard dự án
-    """
-    user = request.user
-    dashboard_data = get_project_dashboard_data(user)
-    return JsonResponse(dashboard_data)
-
-@login_required
-def api_project_summary(request, project_id):
-    """
-    API trả về thông tin tóm tắt của một dự án
-    """
-    project_data = get_project_detail_data(project_id)
-    if not project_data:
-        return JsonResponse({'error': 'Không tìm thấy dự án'}, status=404)
-    return JsonResponse(project_data)
-
-@login_required
-def api_project_tasks(request, project_id):
-    """
-    API trả về các task của một dự án theo định dạng Kanban
-    """
-    user = request.user
-    task_board_data = get_task_board_data(user, project_id)
-    return JsonResponse(task_board_data)
-
-@login_required
-@require_POST
-def api_update_task_status(request):
-    """
-    API cập nhật trạng thái của task trong bảng Kanban
-    """
-    task_id = request.POST.get('task_id')
-    new_status = request.POST.get('status')
-
-    if not task_id or not new_status:
-        return JsonResponse({'success': False, 'error': 'Thiếu thông tin'}, status=400)
+    project_id = request.GET.get('project_id')
+    if not project_id:
+        return JsonResponse({'success': False, 'error': 'Thiếu project_id'}, status=400)
 
     try:
-        task = Tasks.objects.get(id=task_id)
-        if request.user != task.project.manager and not task.task_assignments.filter(user=request.user).exists():
-            return JsonResponse({'success': False, 'error': 'Không có quyền'}, status=403)
+        project = Projects.objects.get(id=project_id)
 
-        task.status = new_status
-        if new_status == 'Completed' and not task.completed_date:
-            task.completed_date = timezone.now()
-        task.save()
+        # Lấy thống kê về task
+        tasks = Tasks.objects.filter(project=project)
+        total_tasks = tasks.count()
+        completed_tasks = tasks.filter(status='Completed').count()
+        in_progress_tasks = tasks.filter(status='In progress').count()
+        late_tasks = tasks.filter(status='Late').count()
 
-        # Cập nhật TaskAssignment
-        for assignment in task.task_assignments.all(): # type: ignore
-            assignment.status = new_status
-            assignment.save()
+        # Tính tổng thời gian làm việc
+        time_entries = TimeEntries.objects.filter(task__project=project)
+        total_time = time_entries.aggregate(total=Sum('duration'))['total'] or 0
+
+        # Thống kê theo người dùng
+        user_statistics = []
+        memberships = TeamProjectMembership.objects.filter(project=project).select_related('user')
+        for membership in memberships:
+            user_tasks = tasks.filter(task_assignments__user=membership.user)
+            user_time = time_entries.filter(user=membership.user).aggregate(total=Sum('duration'))['total'] or 0
+            user_completed = user_tasks.filter(task_assignments__status='Completed').count()
+
+            user_statistics.append({
+                'user_id': membership.user.id,
+                'user_name': f"{membership.user.first_name} {membership.user.last_name}",
+                'role': membership.role,
+                'tasks_count': user_tasks.count(),
+                'completed_tasks': user_completed,
+                'total_time': user_time
+            })
+
+        # Biểu đồ phân phối task theo trạng thái
+        task_status_distribution = {
+            'Completed': completed_tasks,
+            'In progress': in_progress_tasks,
+            'Late': late_tasks,
+            'Not started': total_tasks - completed_tasks - in_progress_tasks - late_tasks
+        }
 
         return JsonResponse({
             'success': True,
-            'task': {
-                'id': task.id,
-                'status': task.status,
-                'completed_date': task.completed_date.strftime('%d/%m/%Y') if task.completed_date else None
-            }
+            'project_name': project.name,
+            'project_description': project.description,
+            'start_date': project.start_date.isoformat() if project.start_date else None,
+            'end_date': project.end_date.isoformat() if project.end_date else None,
+            'status': project.status,
+            'total_tasks': total_tasks,
+            'completed_tasks': completed_tasks,
+            'in_progress_tasks': in_progress_tasks,
+            'late_tasks': late_tasks,
+            'total_time': total_time,
+            'task_status_distribution': task_status_distribution,
+            'user_statistics': user_statistics
         })
-    except Tasks.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Task không tồn tại'}, status=404)
+    except Projects.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Dự án không tồn tại'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
-@login_required
-def api_timeline_data(request):
-    """
-    API trả về dữ liệu cho timeline
-    """
-    user = request.user
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
-
-    # Chuyển đổi chuỗi thành date nếu có
-    if start_date:
-        try:
-            start_date = timezone.datetime.strptime(start_date, '%Y-%m-%d').date()
-        except ValueError:
-            start_date = None
-
-    if end_date:
-        try:
-            end_date = timezone.datetime.strptime(end_date, '%Y-%m-%d').date()
-        except ValueError:
-            end_date = None
-
-    timeline_data = get_timeline_data(user, start_date, end_date)
-    return JsonResponse({'events': timeline_data})
-
-@login_required
-def api_analytics_data(request):
-    """
-    API trả về dữ liệu phân tích dự án
-    """
-    user = request.user
-    analytics_data = get_analytics_data(user)
-    return JsonResponse(analytics_data)

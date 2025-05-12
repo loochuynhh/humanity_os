@@ -263,21 +263,33 @@ def check_out(request):
 @login_required
 def index(request):
     user = request.user
+
+    # Lấy thông tin cơ bản về người dùng
     context = {
         "first_name": user.first_name,
         "last_name": user.last_name,
         "avatar_url": user.avatar_url,
-        "task_counts": get_task_counts(user.id),
-        "task_chart_data": get_task_counts(user.id, as_json=True),
-        "today_time": get_time_tracking(user.id, period="today"),
-        "week_time": get_time_tracking(user.id, period="week"),
-        "week_chart_data": get_time_tracking(user.id, period="week", as_json=True),
-        "kpi_completion": get_kpi_snapshot(user.id, "completion"),
-        "kpi_percentage": round(float(get_kpi_snapshot(user.id, "percentage")), 2),
-        "project_progress": get_project_progress(user.id),
-        "recent_tasks": get_recent_tasks(user.id),
-        "project_time_allocation": get_project_time_allocation(user.id, as_json=True),
     }
+
+    try:
+        # Thử lấy các thông tin thống kê từ các hàm tiện ích
+        context.update({
+            "task_counts": get_task_counts(user.id),
+            "task_chart_data": get_task_counts(user.id, as_json=True),
+            "today_time": get_time_tracking(user.id, period="today"),
+            "week_time": get_time_tracking(user.id, period="week"),
+            "week_chart_data": get_time_tracking(user.id, period="week", as_json=True),
+            "kpi_completion": get_kpi_snapshot(user.id, "completion"),
+            "kpi_percentage": round(float(get_kpi_snapshot(user.id, "percentage")), 2),
+            "project_progress": get_project_progress(user.id),
+            "recent_tasks": get_recent_tasks(user.id),
+            "project_time_allocation": get_project_time_allocation(user.id, as_json=True),
+        })
+    except Exception as e:
+        # Nếu có lỗi, chỉ hiển thị thông tin cơ bản
+        print(f"Error loading dashboard data: {str(e)}")
+        messages.warning(request, "Có lỗi khi tải dữ liệu dashboard. Một số thông tin có thể không hiển thị đầy đủ.")
+
     return render(request, "main/pages/index.html", context)
 
 
