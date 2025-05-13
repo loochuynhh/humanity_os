@@ -1,10 +1,13 @@
 {% extends 'main/layouts/base.html' %}
 {% load static %}
-{% block title %}Tất cả dự án - Humanity OS{% endblock %}
+{% block title %}Quản lý dự án - Humanity OS{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
+<link rel="stylesheet" href="{% static 'assets/css/projects/project_common.css' %}">
 <link rel="stylesheet" href="{% static 'assets/css/projects/tasks.css' %}">
+<link rel="stylesheet" href="{% static 'assets/css/projects/my_tasks.css' %}">
+<link rel="stylesheet" href="{% static 'assets/css/projects/all_projects.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -12,105 +15,316 @@
   <div class="row">
     {% include 'main/includes/sidebar.html' %}
 
-    <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
-      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom fade-in-down">
         <h1 class="h2 fw-bold">
-          <i class="fas fa-folder me-2"></i>Tất cả dự án
+          <i class="bi bi-folder2-open me-2"></i>Quản lý dự án
         </h1>
         <div class="btn-toolbar mb-2 mb-md-0">
-          <a href="{% url 'projects:my_projects' %}" class="btn btn-outline-primary me-2">
-            <i class="fas fa-user me-1"></i>Dự án của tôi
-          </a>
+          <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-primary" id="btnCreateProject" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+              <i class="bi bi-plus-circle me-1"></i>Thêm dự án
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnExportData">
+              <i class="bi bi-file-earmark-excel me-1"></i>Xuất dữ liệu
+            </button>
+          </div>
         </div>
       </div>
 
-      <div class="row mb-4">
+      <!-- Bộ lọc -->
+      <div class="project-filters mb-4 fade-in-up">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="filter-label">Trạng thái</label>
+            <select id="statusFilter" class="form-select filter-control">
+              <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Tất cả trạng thái</option>
+              <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Đang thực hiện</option>
+              <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Hoàn thành</option>
+              <option value="delayed" {% if status_filter == 'delayed' %}selected{% endif %}>Trễ hạn</option>
+              <option value="paused" {% if status_filter == 'paused' %}selected{% endif %}>Tạm dừng</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="filter-label">Phân loại</label>
+            <select id="viewFilter" class="form-select filter-control">
+              <option value="all" {% if filter_type == 'all' %}selected{% endif %}>Tất cả dự án</option>
+              <option value="my" {% if filter_type == 'my' %}selected{% endif %}>Dự án của tôi</option>
+              <option value="managed" {% if filter_type == 'managed' %}selected{% endif %}>Dự án quản lý</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="filter-label">Sắp xếp theo</label>
+            <select id="sortFilter" class="form-select filter-control">
+              <option value="date-desc" {% if sort_by == 'date-desc' %}selected{% endif %}>Mới nhất</option>
+              <option value="date-asc" {% if sort_by == 'date-asc' %}selected{% endif %}>Cũ nhất</option>
+              <option value="alpha-asc" {% if sort_by == 'alpha-asc' %}selected{% endif %}>Tên (A-Z)</option>
+              <option value="alpha-desc" {% if sort_by == 'alpha-desc' %}selected{% endif %}>Tên (Z-A)</option>
+              <option value="progress-asc" {% if sort_by == 'progress-asc' %}selected{% endif %}>Tiến độ (Thấp-Cao)</option>
+              <option value="progress-desc" {% if sort_by == 'progress-desc' %}selected{% endif %}>Tiến độ (Cao-Thấp)</option>
+              <option value="deadline-asc" {% if sort_by == 'deadline-asc' %}selected{% endif %}>Hạn (Gần-Xa)</option>
+              <option value="deadline-desc" {% if sort_by == 'deadline-desc' %}selected{% endif %}>Hạn (Xa-Gần)</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="filter-label">Tìm kiếm</label>
+            <div class="input-group">
+              <input type="text" id="searchInput" class="form-control" placeholder="Tìm dự án..." value="{{ search_term }}">
+              <button class="btn btn-outline-primary" type="button" id="searchButton">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nút tìm kiếm nâng cao -->
+        <div class="row mt-3">
         <div class="col-12">
-          <div class="card shadow-sm">
-            <div class="card-body p-3">
+            <button class="btn btn-sm btn-link text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#advancedFilters" aria-expanded="false" aria-controls="advancedFilters">
+              <i class="bi bi-sliders me-1"></i>Tìm kiếm nâng cao
+            </button>
+          </div>
+        </div>
+
+        <!-- Bộ lọc nâng cao -->
+        <div class="collapse mt-3" id="advancedFilters">
+          <div class="card card-body">
               <div class="row g-3">
                 <div class="col-md-4">
-                  <label class="form-label">Lọc theo thời gian</label>
-                  <select id="timeFilter" class="form-select">
-                    <option value="">Tất cả dự án</option>
-                    <option value="active">Đang hoạt động</option>
-                    <option value="completed">Đã hoàn thành</option>
-                    <option value="overdue">Quá hạn</option>
+                <label class="filter-label">Thời gian</label>
+                <select class="form-select filter-control" id="timeFilter">
+                  <option value="all">Tất cả thời gian</option>
+                  <option value="this-week">Tuần này</option>
+                  <option value="this-month">Tháng này</option>
+                  <option value="this-quarter">Quý này</option>
+                  <option value="this-year">Năm nay</option>
+                  <option value="custom">Tùy chỉnh...</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="filter-label">Phòng ban/Nhóm</label>
+                <select class="form-select filter-control" id="departmentFilter">
+                  <option value="all">Tất cả phòng ban</option>
+                  <option value="sales">Kinh doanh</option>
+                  <option value="marketing">Marketing</option>
+                  <option value="it">CNTT</option>
+                  <option value="hr">Nhân sự</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="filter-label">Tiến độ</label>
+                <select class="form-select filter-control" id="progressFilter">
+                  <option value="all">Tất cả tiến độ</option>
+                  <option value="not-started">Chưa bắt đầu (0%)</option>
+                  <option value="early">Mới bắt đầu (1-25%)</option>
+                  <option value="mid">Đang tiến hành (26-75%)</option>
+                  <option value="late">Gần hoàn thành (76-99%)</option>
+                  <option value="completed">Hoàn thành (100%)</option>
                   </select>
                 </div>
-                <div class="col-md-4 d-flex align-items-end">
-                  <button id="resetFilter" class="btn btn-outline-secondary">
-                    <i class="fas fa-undo me-1"></i> Đặt lại
+
+              <div class="col-12 mt-3">
+                <button type="button" class="btn btn-primary" id="applyAdvancedFilters">
+                  <i class="bi bi-funnel me-1"></i>Áp dụng bộ lọc
+                </button>
+                <button type="button" class="btn btn-outline-secondary ms-2" id="resetFilters">
+                  <i class="bi bi-arrow-counterclockwise me-1"></i>Đặt lại
                   </button>
-                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="row">
-        <div class="col-12">
-          <div class="card shadow-sm hover-card">
-            <div class="card-body px-0 pb-2">
+      <!-- Chế độ xem -->
+      <div class="view-toggle mb-4 fade-in-up">
+        <button class="btn btn-sm btn-outline-primary active" id="gridViewBtn">
+          <i class="bi bi-grid-3x3-gap me-1"></i>Hiển thị lưới
+        </button>
+        <button class="btn btn-sm btn-outline-primary" id="listViewBtn">
+          <i class="bi bi-list-ul me-1"></i>Hiển thị danh sách
+        </button>
+      </div>
+
+      <!-- Hiển thị số lượng kết quả -->
+      <div class="results-info mb-3 fade-in-up">
+        <p class="text-muted"><i class="bi bi-info-circle me-1"></i>Đang hiển thị <span id="visibleProjects">{{ projects|length }}</span> dự án</p>
+      </div>
+
+      <!-- Hiển thị lưới -->
+      <div id="gridView" class="fade-in-up">
+        <div class="project-grid">
+          {% for project in projects %}
+          <div class="project-card card" data-id="{{ project.id }}" data-status="{{ project.status }}" data-view="{% if project.is_member %}my{% else %}all{% endif %}" data-manager="{% if project.is_manager %}managed{% else %}all{% endif %}">
+            <div class="card-header d-flex justify-content-between">
+              <h5 class="mb-0 text-truncate">{{ project.name }}</h5>
+              <div class="dropdown">
+                <button class="btn btn-sm btn-link text-white p-0" type="button" data-bs-toggle="dropdown">
+                  <i class="bi bi-three-dots-vertical"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#projectDetailModal" data-id="{{ project.id }}"><i class="bi bi-eye me-2"></i>Xem chi tiết</a></li>
+                  <li><a class="dropdown-item" href="{% url 'projects:project_statistics' %}?project_id={{ project.id }}"><i class="bi bi-graph-up me-2"></i>Xem tiến độ</a></li>
+                  <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editProjectModal" data-id="{{ project.id }}"><i class="bi bi-pencil me-2"></i>Chỉnh sửa</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteProjectModal" data-id="{{ project.id }}"><i class="bi bi-trash me-2"></i>Xóa dự án</a></li>
+                </ul>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="badge {% if project.status == 'completed' %}bg-success{% elif project.status == 'delayed' %}bg-danger{% elif project.status == 'paused' %}bg-warning{% else %}bg-primary{% endif %}">
+                  {{ project.status_display }}
+                </span>
+                <small class="text-muted">
+                  <i class="bi bi-calendar me-1"></i>{{ project.end_date|date:"d/m/Y" }}
+                </small>
+              </div>
+              <p class="card-text small mb-3 text-truncate-2">{{ project.description }}</p>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="task-stats small">
+                  <span class="text-success me-2" title="Hoàn thành"><i class="bi bi-check-circle-fill me-1"></i>{{ project.completed_tasks }}</span>
+                  <span class="text-primary me-2" title="Đang thực hiện"><i class="bi bi-play-circle-fill me-1"></i>{{ project.in_progress_tasks }}</span>
+                  <span class="text-danger" title="Trễ hạn"><i class="bi bi-exclamation-circle-fill me-1"></i>{{ project.late_tasks }}</span>
+                </div>
+                <span class="fw-bold small">{{ project.progress }}%</span>
+              </div>
+              <div class="progress mb-3" style="height: 8px;">
+                <div class="progress-bar {% if project.status == 'completed' %}bg-success{% elif project.status == 'delayed' %}bg-danger{% elif project.status == 'paused' %}bg-warning{% else %}bg-primary{% endif %}" role="progressbar" style="width: {{ project.progress }}%" aria-valuenow="{{ project.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="avatar-group">
+                  {% for member in project.team_members|slice:":4" %}
+                  <div class="avatar" title="{{ member.get_full_name }}">
+                    {{ member.get_initials }}
+                  </div>
+                  {% endfor %}
+                  {% if project.team_members.count > 4 %}
+                  <div class="avatar" title="Xem thêm">
+                    +{{ project.team_members.count|add:"-4" }}
+                  </div>
+                  {% endif %}
+                </div>
+                <button class="btn btn-sm btn-primary view-details" data-bs-toggle="modal" data-bs-target="#projectDetailModal" data-id="{{ project.id }}">
+                  Chi tiết
+                </button>
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="col-12 text-center py-5">
+            <i class="bi bi-folder2-open display-1 text-muted mb-3"></i>
+            <h4 class="text-muted">Chưa có dự án nào</h4>
+            <p class="text-muted">Nhấn "Thêm dự án" để tạo dự án mới</p>
+            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+              <i class="bi bi-plus-circle me-2"></i>Thêm dự án mới
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Hiển thị danh sách -->
+      <div id="listView" class="fade-in-up" style="display: none;">
+        <div class="card shadow-sm">
+          <div class="card-body p-0">
               <div class="table-responsive">
-                <table id="projectsTable" class="table align-items-center mb-0">
+              <table class="table align-middle mb-0" id="projectsTable">
                   <thead>
                     <tr>
-                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tên dự án</th>
-                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Mô tả</th>
-                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Ngày bắt đầu</th>
-                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Ngày kết thúc</th>
-                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Quản lý</th>
-                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Số thành viên</th>
+                    <th>Dự án</th>
+                    <th>Trạng thái</th>
+                    <th>Tiến độ</th>
+                    <th>Công việc</th>
+                    <th>Thành viên</th>
+                    <th>Thời gian</th>
+                    <th>Hành động</th>
                     </tr>
                   </thead>
                   <tbody>
                     {% for project in projects %}
-                    <tr>
-                      <td>
-                        <div class="d-flex px-2 py-1">
-                          <div class="d-flex flex-column justify-content-center">
-                            <h6 class="mb-0 text-sm">{{ project.name }}</h6>
+                  <tr data-id="{{ project.id }}" data-status="{{ project.status }}" data-view="{% if project.is_member %}my{% else %}all{% endif %}" data-manager="{% if project.is_manager %}managed{% else %}all{% endif %}">
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="project-icon {% if project.status == 'completed' %}bg-success{% elif project.status == 'delayed' %}bg-danger{% elif project.status == 'paused' %}bg-warning{% else %}bg-primary{% endif %} text-white rounded me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                          <i class="bi bi-folder2"></i>
+                        </div>
+                        <div>
+                          <h6 class="mb-0">{{ project.name }}</h6>
+                          <small class="text-muted text-truncate d-inline-block" style="max-width: 250px;">{{ project.description }}</small>
                           </div>
                         </div>
                       </td>
                       <td>
-                        <p class="text-xs text-secondary mb-0">{{ project.description|truncatewords:5 }}</p>
+                      <span class="badge {% if project.status == 'completed' %}bg-success{% elif project.status == 'delayed' %}bg-danger{% elif project.status == 'paused' %}bg-warning{% else %}bg-primary{% endif %}">
+                        {{ project.status_display }}
+                      </span>
                       </td>
                       <td>
-                        <span class="text-xs font-weight-bold">{{ project.start_date|date:"d/m/Y" }}</span>
+                      <div class="d-flex align-items-center">
+                        <div class="progress me-2" style="width: 100px; height: 6px;">
+                          <div class="progress-bar {% if project.status == 'completed' %}bg-success{% elif project.status == 'delayed' %}bg-danger{% elif project.status == 'paused' %}bg-warning{% else %}bg-primary{% endif %}" role="progressbar" style="width: {{ project.progress }}%" aria-valuenow="{{ project.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <span class="small fw-bold">{{ project.progress }}%</span>
+                      </div>
                       </td>
                       <td>
-                        <span class="text-xs font-weight-bold {% if project.end_date < today %}text-danger{% endif %}">{{ project.end_date|date:"d/m/Y" }}</span>
+                      <div class="task-stats small">
+                        <span class="text-success me-2" title="Hoàn thành"><i class="bi bi-check-circle-fill me-1"></i>{{ project.completed_tasks }}</span>
+                        <span class="text-primary me-2" title="Đang thực hiện"><i class="bi bi-play-circle-fill me-1"></i>{{ project.in_progress_tasks }}</span>
+                        <span class="text-danger" title="Trễ hạn"><i class="bi bi-exclamation-circle-fill me-1"></i>{{ project.late_tasks }}</span>
+                      </div>
                       </td>
                       <td>
-                        <span class="text-xs">{{ project.manager.get_full_name|default:"Chưa có" }}</span>
-                      </td>
-                      <td>
-                        <div class="avatar-group d-flex">
-                          {% for member in project.team_members.all|slice:":3" %}
-                          <span class="avatar avatar-xs rounded-circle bg-gradient-primary me-1" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ member.get_full_name }}">
-                            {{ member.first_name|first }}{{ member.last_name|first }}
-                          </span>
+                      <div class="avatar-group">
+                        {% for member in project.team_members|slice:":3" %}
+                        <div class="avatar" title="{{ member.get_full_name }}">
+                          {{ member.get_initials }}
+                        </div>
                           {% endfor %}
                           {% if project.team_members.count > 3 %}
-                          <span class="text-xs ms-1">+{{ project.team_members.count|add:"-3" }}</span>
+                        <div class="avatar" title="Xem thêm">
+                          +{{ project.team_members.count|add:"-3" }}
+                        </div>
                           {% endif %}
+                        </div>
+                      </td>
+                    <td>
+                      <div class="small">
+                        <div><i class="bi bi-calendar-check me-1"></i>{{ project.start_date|date:"d/m/Y" }}</div>
+                        <div class="{% if project.status == 'delayed' %}text-danger{% endif %}">
+                          <i class="bi bi-calendar-x me-1"></i>{{ project.end_date|date:"d/m/Y" }}
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-primary view-details" data-bs-toggle="modal" data-bs-target="#projectDetailModal" data-id="{{ project.id }}">
+                          <i class="bi bi-eye"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProjectModal" data-id="{{ project.id }}">
+                          <i class="bi bi-pencil"></i>
+                        </button>
+                        <a href="{% url 'projects:project_statistics' %}?project_id={{ project.id }}" class="btn btn-sm btn-outline-primary">
+                          <i class="bi bi-graph-up"></i>
+                        </a>
                         </div>
                       </td>
                     </tr>
                     {% empty %}
                     <tr>
-                      <td colspan="6" class="text-center py-4">
-                        <i class="fas fa-folder fa-2x text-muted mb-3"></i>
-                        <h6 class="text-muted">Chưa có dự án nào</h6>
+                    <td colspan="7" class="text-center py-5">
+                      <i class="bi bi-folder2-open display-4 text-muted mb-3"></i>
+                      <h5 class="text-muted">Chưa có dự án nào</h5>
+                      <p class="text-muted">Nhấn "Thêm dự án" để tạo dự án mới</p>
+                      <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+                        <i class="bi bi-plus-circle me-2"></i>Thêm dự án mới
+                      </button>
                       </td>
                     </tr>
                     {% endfor %}
                   </tbody>
                 </table>
-              </div>
             </div>
           </div>
         </div>
@@ -118,58 +332,368 @@
     </main>
   </div>
 </div>
+
+<!-- Chi tiết dự án Modal -->
+<div class="modal fade project-modal" id="projectDetailModal" tabindex="-1" aria-labelledby="projectDetailModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="projectDetailModalLabel">Chi tiết dự án</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="nav nav-tabs" id="projectDetailTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">Tổng quan</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="members-tab" data-bs-toggle="tab" data-bs-target="#members" type="button" role="tab" aria-controls="members" aria-selected="false">Thành viên</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tasks-tab" data-bs-toggle="tab" data-bs-target="#tasks" type="button" role="tab" aria-controls="tasks" aria-selected="false">Công việc</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="status-tab" data-bs-toggle="tab" data-bs-target="#status" type="button" role="tab" aria-controls="status" aria-selected="false">Trạng thái</button>
+          </li>
+        </ul>
+        <div class="tab-content" id="projectDetailTabContent">
+          <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+            <!-- Nội dung tổng quan -->
+            <div id="projectOverview">
+              <!-- Dữ liệu dự án sẽ được cập nhật bằng JavaScript -->
+            </div>
+          </div>
+          <div class="tab-pane fade" id="members" role="tabpanel" aria-labelledby="members-tab">
+            <!-- Nội dung thành viên -->
+            <div id="projectMembers" class="project-members">
+              <!-- Dữ liệu thành viên sẽ được cập nhật bằng JavaScript -->
+            </div>
+          </div>
+          <div class="tab-pane fade" id="tasks" role="tabpanel" aria-labelledby="tasks-tab">
+            <!-- Nội dung công việc -->
+            <div id="projectTasks">
+              <!-- Dữ liệu công việc sẽ được cập nhật bằng JavaScript -->
+            </div>
+          </div>
+          <div class="tab-pane fade" id="status" role="tabpanel" aria-labelledby="status-tab">
+            <!-- Nội dung trạng thái -->
+            <div id="projectStatus">
+              <!-- Dữ liệu trạng thái sẽ được cập nhật bằng JavaScript -->
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <a href="#" id="viewProjectStatistics" class="btn btn-primary">Xem tiến độ</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Thêm dự án Modal -->
+<div class="modal fade" id="createProjectModal" tabindex="-1" aria-labelledby="createProjectModalLabel" aria-hidden="true">
+  <!-- Form thêm dự án giữ nguyên -->
+</div>
+
+<!-- Chỉnh sửa dự án Modal -->
+<div class="modal fade" id="editProjectModal" tabindex="-1" aria-labelledby="editProjectModalLabel" aria-hidden="true">
+  <!-- Form chỉnh sửa dự án giữ nguyên -->
+</div>
+
+<!-- Xóa dự án Modal -->
+<div class="modal fade" id="deleteProjectModal" tabindex="-1" aria-labelledby="deleteProjectModalLabel" aria-hidden="true">
+  <!-- Form xóa dự án giữ nguyên -->
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
 <script>
 $(document).ready(function() {
-  var table = $('#projectsTable').DataTable({
-    "language": {
-      "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Vietnamese.json"
-    },
-    "order": [[2, "asc"]] // Sắp xếp theo ngày bắt đầu
-  });
+    // Khởi tạo DataTables cho hiển thị danh sách
+    var projectTable = $('#projectsTable').DataTable({
+      language: {
+        url: "//cdn.datatables.net/plug-ins/1.10.25/i18n/Vietnamese.json"
+      },
+      columnDefs: [
+        { orderable: false, targets: [3, 5] }
+      ],
+      order: [[2, 'desc']],
+      dom: '<"top"fl>rt<"bottom"ip>',
+      pageLength: 10,
+      lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "Tất cả"]]
+    });
 
-  $('#timeFilter').on('change', function() {
-    var filterValue = $(this).val();
+    // Chuyển đổi giữa chế độ xem lưới và danh sách
+    $('#gridViewBtn').click(function() {
+      $(this).addClass('active').removeClass('btn-outline-primary').addClass('btn-primary');
+      $('#listViewBtn').removeClass('active').removeClass('btn-primary').addClass('btn-outline-primary');
+      $('#gridView').show();
+      $('#listView').hide();
+    });
 
-    if (filterValue === 'active') {
-      // Lọc dự án đang hoạt động (ngày kết thúc > ngày hiện tại)
-      $.fn.dataTable.ext.search.push(
-        function(settings, data, dataIndex) {
-          var endDate = new Date(data[3].split('/').reverse().join('-'));
-          var today = new Date();
-          return endDate > today;
+    $('#listViewBtn').click(function() {
+      $(this).addClass('active').removeClass('btn-outline-primary').addClass('btn-primary');
+      $('#gridViewBtn').removeClass('active').removeClass('btn-primary').addClass('btn-outline-primary');
+      $('#gridView').hide();
+      $('#listView').show();
+    });
+
+    // Bộ lọc trạng thái
+    $('#statusFilter').change(function() {
+      var status = $(this).val();
+      filterProjects();
+    });
+
+    // Bộ lọc phân loại
+    $('#viewFilter').change(function() {
+      var view = $(this).val();
+      filterProjects();
+    });
+
+    // Bộ lọc sắp xếp
+    $('#sortFilter').change(function() {
+      var sort = $(this).val();
+      sortProjects(sort);
+    });
+
+    // Tìm kiếm
+    $('#searchInput').keyup(function() {
+      var searchTerm = $(this).val().toLowerCase();
+      filterBySearch(searchTerm);
+    });
+
+    // Hàm lọc dự án
+    function filterProjects() {
+      var status = $('#statusFilter').val();
+      var view = $('#viewFilter').val();
+      var searchTerm = $('#searchInput').val().toLowerCase();
+
+      // Lọc trong chế độ xem lưới
+      $('.project-card').each(function() {
+        var projectStatus = $(this).data('status').toLowerCase();
+        var projectView = $(this).data('view');
+        var projectManager = $(this).data('manager');
+        var projectName = $(this).find('.card-header h5').text().toLowerCase();
+        var projectDesc = $(this).find('.card-text').text().toLowerCase();
+
+        var statusMatch = status === 'all' || projectStatus === status;
+        var viewMatch = view === 'all' ||
+                       (view === 'my' && projectView === 'my') ||
+                       (view === 'managed' && projectManager === 'managed');
+        var searchMatch = projectName.includes(searchTerm) || projectDesc.includes(searchTerm);
+
+        if (statusMatch && viewMatch && searchMatch) {
+          $(this).show();
+        } else {
+          $(this).hide();
         }
-      );
-    } else if (filterValue === 'completed') {
-      // Lọc dự án đã hoàn thành (ngày kết thúc < ngày hiện tại)
-      $.fn.dataTable.ext.search.push(
-        function(settings, data, dataIndex) {
-          var endDate = new Date(data[3].split('/').reverse().join('-'));
-          var today = new Date();
-          return endDate < today;
-        }
-      );
-    } else if (filterValue === 'overdue') {
-      // Lọc dự án quá hạn (ngày kết thúc < ngày hiện tại và chưa hoàn thành)
-      $.fn.dataTable.ext.search.push(
-        function(settings, data, dataIndex) {
-          var endDate = new Date(data[3].split('/').reverse().join('-'));
-          var today = new Date();
-          return endDate < today && data[3].includes('text-danger');
-        }
-      );
+      });
+
+      // Lọc trong chế độ xem danh sách
+      projectTable.draw();
     }
 
-    table.draw();
-    $.fn.dataTable.ext.search.pop(); // Xóa bộ lọc sau khi áp dụng
-  });
+    // Hàm sắp xếp dự án
+    function sortProjects(sort) {
+      var $grid = $('.project-grid');
+      var $projects = $grid.find('.project-card');
 
-  $('#resetFilter').on('click', function() {
-    $('#timeFilter').val('');
-    table.search('').columns().search('').draw();
+      $projects.sort(function(a, b) {
+        if (sort === 'date-desc') {
+          // Sắp xếp theo ngày giảm dần
+          return $(b).data('date') - $(a).data('date');
+        } else if (sort === 'date-asc') {
+          // Sắp xếp theo ngày tăng dần
+          return $(a).data('date') - $(b).data('date');
+        } else if (sort === 'alpha-asc') {
+          // Sắp xếp theo tên A-Z
+          return $(a).find('.card-header h5').text().localeCompare($(b).find('.card-header h5').text());
+        } else if (sort === 'alpha-desc') {
+          // Sắp xếp theo tên Z-A
+          return $(b).find('.card-header h5').text().localeCompare($(a).find('.card-header h5').text());
+        } else if (sort === 'progress-asc') {
+          // Sắp xếp theo tiến độ tăng dần
+          return parseFloat($(a).find('.progress-bar').css('width')) - parseFloat($(b).find('.progress-bar').css('width'));
+        } else if (sort === 'progress-desc') {
+          // Sắp xếp theo tiến độ giảm dần
+          return parseFloat($(b).find('.progress-bar').css('width')) - parseFloat($(a).find('.progress-bar').css('width'));
+        }
+      });
+
+      $grid.append($projects);
+    }
+
+    // Hàm lọc theo từ khóa tìm kiếm
+    function filterBySearch(searchTerm) {
+      // Lọc trong chế độ xem lưới
+      $('.project-card').each(function() {
+        var projectName = $(this).find('.card-header h5').text().toLowerCase();
+        var projectDesc = $(this).find('.card-text').text().toLowerCase();
+
+        if (projectName.includes(searchTerm) || projectDesc.includes(searchTerm)) {
+          $(this).show();
+        } else {
+          $(this).hide();
+        }
+      });
+
+      // Lọc trong chế độ xem danh sách
+      projectTable.search(searchTerm).draw();
+    }
+
+    // Lấy dữ liệu chi tiết dự án
+    $('.view-details').click(function() {
+      var projectId = $(this).data('id');
+
+      // Gọi API để lấy dữ liệu chi tiết dự án
+      $.ajax({
+        url: `/api/projects/${projectId}/`,
+        method: 'GET',
+        success: function(data) {
+          // Cập nhật tab Tổng quan
+          var overviewHtml = `
+            <div class="p-3">
+              <div class="d-flex justify-content-between mb-3">
+                <h4>${data.name}</h4>
+                <span class="badge ${data.status === 'Completed' ? 'bg-success' : data.is_overdue ? 'bg-danger' : 'bg-primary'}">${data.status_display}</span>
+              </div>
+              <div class="mb-3">
+                <h6 class="text-muted">Mô tả</h6>
+                <p>${data.description}</p>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <h6 class="text-muted">Ngày bắt đầu</h6>
+                  <p>${data.start_date}</p>
+                </div>
+                <div class="col-md-6">
+                  <h6 class="text-muted">Ngày kết thúc</h6>
+                  <p class="${data.is_overdue ? 'text-danger' : ''}">${data.end_date}</p>
+                </div>
+              </div>
+              <div class="mb-3">
+                <h6 class="text-muted">Quản lý dự án</h6>
+                <p>${data.manager.full_name}</p>
+              </div>
+              <div class="mb-3">
+                <h6 class="text-muted">Tiến độ</h6>
+                <div class="d-flex align-items-center">
+                  <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                    <div class="progress-bar ${data.status === 'Completed' ? 'bg-success' : data.is_overdue ? 'bg-danger' : 'bg-primary'}" role="progressbar" style="width: ${data.progress}%" aria-valuenow="${data.progress}" aria-valuemin="0" aria-valuemax="100"></div>
+                  </div>
+                  <span class="fw-bold">${data.progress}%</span>
+                </div>
+              </div>
+            </div>
+          `;
+          $('#projectOverview').html(overviewHtml);
+
+          // Cập nhật tab Thành viên
+          var membersHtml = '';
+          data.team_members.forEach(function(member) {
+            membersHtml += `
+              <div class="member-card">
+                <div class="member-avatar">${member.initials}</div>
+                <div class="member-info">
+                  <div class="member-name">${member.full_name}</div>
+                  <div class="member-role">${member.role || 'Thành viên dự án'}</div>
+                </div>
+              </div>
+            `;
+          });
+          $('#projectMembers').html(membersHtml);
+
+          // Cập nhật tab Công việc
+          var tasksHtml = '';
+          if (data.tasks && data.tasks.length > 0) {
+            tasksHtml = `
+              <div class="table-responsive p-3">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>Tên công việc</th>
+                      <th>Trạng thái</th>
+                      <th>Phân công</th>
+                      <th>Hạn</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            `;
+
+            data.tasks.forEach(function(task) {
+              tasksHtml += `
+                <tr>
+                  <td>${task.title}</td>
+                  <td>
+                    <span class="badge ${
+                      task.status === 'Completed' ? 'bg-success' :
+                      task.status === 'In progress' ? 'bg-primary' :
+                      task.status === 'Late' ? 'bg-danger' : 'bg-secondary'
+                    }">${task.status_display}</span>
+                  </td>
+                  <td>${task.assigned_to ? task.assigned_to.full_name : 'Chưa phân công'}</td>
+                  <td class="${task.is_overdue ? 'text-danger' : ''}">${task.deadline}</td>
+                </tr>
+              `;
+            });
+
+            tasksHtml += `
+                  </tbody>
+                </table>
+              </div>
+            `;
+          } else {
+            tasksHtml = `
+              <div class="text-center p-4">
+                <i class="bi bi-clipboard-x display-4 text-muted mb-3"></i>
+                <h5 class="text-muted">Chưa có công việc nào cho dự án này</h5>
+              </div>
+            `;
+          }
+          $('#projectTasks').html(tasksHtml);
+
+          // Cập nhật tab Trạng thái
+          var statusHtml = `
+            <div class="p-3">
+              <div class="project-status-item">
+                <div class="fw-bold">Tổng số công việc</div>
+                <div>${data.task_stats.total || 0}</div>
+              </div>
+              <div class="project-status-item">
+                <div class="fw-bold">Đã hoàn thành</div>
+                <div>${data.task_stats.completed || 0}</div>
+              </div>
+              <div class="project-status-item">
+                <div class="fw-bold">Đang thực hiện</div>
+                <div>${data.task_stats.in_progress || 0}</div>
+              </div>
+              <div class="project-status-item">
+                <div class="fw-bold">Trễ hạn</div>
+                <div>${data.task_stats.late || 0}</div>
+              </div>
+              <div class="progress-container">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="fw-bold">Tiến độ tổng thể</div>
+                  <div>${data.progress}%</div>
+                </div>
+                <div class="progress">
+                  <div class="progress-bar ${data.status === 'Completed' ? 'bg-success' : data.is_overdue ? 'bg-danger' : 'bg-primary'}" role="progressbar" style="width: ${data.progress}%" aria-valuenow="${data.progress}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+              </div>
+            </div>
+          `;
+          $('#projectStatus').html(statusHtml);
+
+          // Cập nhật link Xem tiến độ
+          $('#viewProjectStatistics').attr('href', `/projects/project-statistics/?project_id=${projectId}`);
+        },
+        error: function(error) {
+          console.error('Error fetching project details:', error);
+          alert('Có lỗi xảy ra khi tải dữ liệu dự án. Vui lòng thử lại.');
+        }
+      });
   });
 });
 </script>

@@ -14,9 +14,10 @@ from django.views.decorators.http import require_POST
 from .models import Users, UserFaceImage, CheckInCheckOut
 from .utils import (
     get_task_counts,
+    get_task_stats,
     get_time_tracking,
     get_kpi_snapshot,
-    get_project_progress,
+    get_project_statistics,
     get_recent_tasks,
     get_project_time_allocation,
     handle_check_in,
@@ -171,37 +172,35 @@ def check_in(request):
         location = request.POST.get('checkin_location', '')
         image_data = request.POST.get('checkin_image', '')
 
-        if not location or not image_data:
-            messages.error(request, "Thiếu thông tin vị trí hoặc ảnh check-in.")
+        if not location:
             return JsonResponse({
                 "success": False,
-                "message": "Thiếu thông tin vị trí hoặc ảnh check-in.",
-                "redirect": False
+                "message": "Vui lòng cung cấp vị trí của bạn."
             })
+
+        if not image_data:
+            return JsonResponse({
+                "success": False,
+                "message": "Vui lòng chụp ảnh để check-in."
+            })
+
+        # Ghi log với thời gian chính xác
+        request_time = timezone.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+        print(f"Check-in request received at {request_time} - User: {request.user.username}, Location: {location[:20]}..., Image data length: {len(image_data)}")
 
         success, message = handle_check_in(request.user, location, image_data)
 
-        if success:
-            messages.success(request, message)
-        else:
-            messages.error(request, message)
-
         return JsonResponse({
             "success": success,
-            "message": message,
-            "redirect": True,
-            "redirect_url": reverse('users:profile')
+            "message": message
         })
     except Exception as e:
         import traceback
         print(f"Check-in error: {str(e)}")
         print(traceback.format_exc())
-        messages.error(request, f"Lỗi hệ thống: {str(e)}")
         return JsonResponse({
             "success": False,
-            "message": f"Lỗi hệ thống: {str(e)}",
-            "redirect": True,
-            "redirect_url": reverse('users:profile')
+            "message": f"Lỗi hệ thống: {str(e)}"
         })
 
 
@@ -218,24 +217,19 @@ def check_out(request):
         if not location:
             return JsonResponse({
                 "success": False,
-                "message": "Vui lòng cung cấp vị trí của bạn.",
-                "redirect": False
+                "message": "Vui lòng cung cấp vị trí của bạn."
             })
 
         if not image_data:
             return JsonResponse({
                 "success": False,
-                "message": "Vui lòng chụp ảnh để check-out.",
-                "redirect": False
+                "message": "Vui lòng chụp ảnh để check-out."
             })
 
-        # Thêm log để debug
+        # Ghi log một lần duy nhất
         print(f"Check-out request received - Location: {location[:20]}..., Image data length: {len(image_data)}")
 
         success, message = handle_check_out(request.user, location, image_data)
-
-        # Thêm log kết quả
-        print(f"Check-out result: Success={success}, Message={message}")
 
         if success:
             messages.success(request, message)
@@ -244,9 +238,7 @@ def check_out(request):
 
         return JsonResponse({
             "success": success,
-            "message": message,
-            "redirect": True,
-            "redirect_url": reverse('users:profile')
+            "message": message
         })
     except Exception as e:
         import traceback
@@ -255,8 +247,7 @@ def check_out(request):
         messages.error(request, f"Lỗi hệ thống: {str(e)}")
         return JsonResponse({
             "success": False,
-            "message": f"Lỗi hệ thống: {str(e)}",
-            "redirect": False
+            "message": f"Lỗi hệ thống: {str(e)}"
         })
 
 
@@ -281,9 +272,10 @@ def index(request):
             "week_chart_data": get_time_tracking(user.id, period="week", as_json=True),
             "kpi_completion": get_kpi_snapshot(user.id, "completion"),
             "kpi_percentage": round(float(get_kpi_snapshot(user.id, "percentage")), 2),
-            "project_progress": get_project_progress(user.id),
+            "project_statistics": get_project_statistics(user.id),
             "recent_tasks": get_recent_tasks(user.id),
             "project_time_allocation": get_project_time_allocation(user.id, as_json=True),
+            "task_stats": get_task_stats(user),
         })
     except Exception as e:
         # Nếu có lỗi, chỉ hiển thị thông tin cơ bản
@@ -456,3 +448,31 @@ def attendance(request):
     }
 
     return render(request, "main/pages/users/attendance.html", context)
+
+
+@login_required
+def get_current_work_time(request):
+    """
+    API endpoint trả về thời gian làm việc hiện tại của người dùng.
+    Được sử dụng để cập nhật UI mà không cần tải lại trang.
+    """
+    try:
+        user = request.user
+
+        # Lấy thông tin thời gian làm việc
+        today_time = get_time_tracking(user.id, period="today")
+        week_time = get_time_tracking(user.id, period="week")
+
+        # Trả về dữ liệu dạng JSON
+        return JsonResponse({
+            "success": True,
+            "today_time": today_time,
+            "week_time": week_time
+        })
+    except Exception as e:
+        print(f"Error getting current work time: {str(e)}")
+        return JsonResponse({
+            "success": False,
+            "message": "Không thể lấy thông tin thời gian làm việc",
+            "error": str(e)
+        })

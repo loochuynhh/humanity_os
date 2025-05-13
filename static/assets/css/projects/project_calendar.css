@@ -1,6 +1,10 @@
 /* ==========================================================================
-   Project Calendar Styles
+   Project Calendar Styles - Humanity OS
    ========================================================================== */
+
+/* Import các file CSS cần thiết */
+@import '../custom_main.css';
+@import './project_common.css';
 
 /* --------------------------------------
    General Calendar Styling
@@ -18,10 +22,11 @@
 }
 
 .calendar-container {
-  background-color: #fff;
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
-  margin-bottom: 2rem;
+  background-color: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+  padding: 1rem;
   overflow: hidden;
 }
 
@@ -296,18 +301,18 @@
    Project Selection and Filters
    -------------------------------------- */
 .project-select-container {
-  background-color: #fff;
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
+  background-color: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   padding: 1.25rem;
   margin-bottom: 1.5rem;
 }
 
 .filter-label {
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: var(--secondary-color);
+  font-weight: 500;
   font-size: 0.875rem;
+  color: var(--secondary);
+  margin-bottom: 0.5rem;
 }
 
 .project-select,
@@ -319,6 +324,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 .filter-option {
@@ -337,7 +343,7 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  margin-right: 0.375rem;
+  margin-right: 0.5rem;
 }
 
 .calendar-legend {
@@ -345,16 +351,16 @@
   flex-wrap: wrap;
   gap: 1rem;
   padding: 0.75rem;
-  background-color: #f8f9fa;
-  border-radius: 0.25rem;
-  margin-bottom: 1rem;
+  background-color: var(--light);
+  border-radius: var(--radius-md);
+  margin: 1rem 0;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
   font-size: 0.875rem;
-  color: var(--secondary-color);
+  color: var(--secondary);
 }
 
 /* --------------------------------------
@@ -419,6 +425,90 @@
 }
 
 /* --------------------------------------
+   FullCalendar Customization
+   -------------------------------------- */
+.fc-header-toolbar {
+  margin-bottom: 1.5rem !important;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.fc-toolbar-title {
+  font-size: 1.25rem !important;
+  font-weight: 600;
+}
+
+.fc .fc-button-primary {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+.fc .fc-button-primary:not(:disabled):active,
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+  background-color: var(--primary-dark) !important;
+  border-color: var(--primary-dark) !important;
+}
+
+.fc .fc-button-primary:hover {
+  background-color: var(--primary-dark) !important;
+  border-color: var(--primary-dark) !important;
+}
+
+.fc .fc-col-header-cell-cushion {
+  font-weight: 600;
+  color: var(--dark);
+  padding: 0.75rem 0;
+}
+
+.fc .fc-daygrid-day-number {
+  color: var(--dark);
+  font-weight: 500;
+  padding: 0.5rem;
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+  background-color: rgba(0, 123, 255, 0.1) !important;
+}
+
+.fc .fc-event {
+  border-radius: 4px;
+  padding: 0.25rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  border: none;
+}
+
+.fc .fc-event:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Event types */
+.fc .fc-event.milestone-event {
+  background-color: rgba(0, 123, 255, 0.2);
+  border-left: 3px solid var(--primary);
+  color: var(--primary);
+}
+
+.fc .fc-event.task-event {
+  background-color: rgba(40, 167, 69, 0.2);
+  border-left: 3px solid var(--success);
+  color: var(--success);
+}
+
+.fc .fc-event.deadline-event {
+  background-color: rgba(220, 53, 69, 0.2);
+  border-left: 3px solid var(--danger);
+  color: var(--danger);
+}
+
+.fc .fc-event.meeting-event {
+  background-color: rgba(108, 117, 125, 0.2);
+  border-left: 3px solid var(--secondary);
+  color: var(--secondary);
+}
+
+/* --------------------------------------
    Responsive adjustments
    -------------------------------------- */
 @media (max-width: 991.98px) {
@@ -452,5 +542,26 @@
   .calendar-week {
     display: block;
     overflow-x: auto;
+  }
+
+  .fc-header-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .fc-toolbar-chunk {
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .fc-toolbar-chunk:last-child {
+    margin-bottom: 0;
+  }
+
+  .calendar-legend {
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }

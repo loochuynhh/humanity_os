@@ -1,30 +1,53 @@
 from django.urls import path
-from . import views
+from .views import (
+    all_projects,
+    project_detail,
+    all_tasks,
+    my_tasks,
+    task_detail,
+    update_status,
+    toggle_time,
+    update_task_details,
+    request_deadline_extension,
+    extend_deadline,
+    time_tracking,
+    update_time_entry,
+    update_assignment_status,
+    team_members_data,
+    project_calendar,
+    project_calendar_events,
+    project_statistics,
+    project_statistics_data,
+    project_progress,
+    project_progress_data
+)
 
 urlpatterns = [
-    path('tasks/all/', views.all_tasks, name='all_tasks'),
-    path('tasks/my-tasks/', views.my_tasks, name='my_tasks'),
-    path('tasks/update-status/', views.update_status, name='update_status'),
-    path('tasks/toggle-time/', views.toggle_time, name='toggle_time'),
-    path('tasks/update-details/', views.update_task_details, name='update_task_details'),
-    path('tasks/request-deadline-extension/', views.request_deadline_extension, name='request_deadline_extension'),
-    path('tasks/extend-deadline/<int:task_id>/', views.extend_deadline, name='extend_deadline'),
-    path("time-tracking/", views.time_tracking, name="time_tracking"),
-    path('tasks/<int:task_id>/', views.task_detail, name='task_detail'),
+    # Các route dự án
+    path("projects/", all_projects, name="all_projects"),
+    path("projects/<int:project_id>/", project_detail, name="project_detail"),
+    path("project-statistics/", project_statistics, name="project_statistics"),
+    path("project-statistics-data/", project_statistics_data, name="project_statistics_data"),
+    path("project-progress/", project_progress, name="project_progress"),
+    path("project-progress-data/", project_progress_data, name="project_progress_data"),
+    path("team-members-data/", team_members_data, name="team_members_data"),
 
-    # Projects URLs
-    path('all/', views.all_projects, name='all_projects'),
-    path('my-projects/', views.my_projects, name='my_projects'),
-    path('team-members/', views.team_members, name='team_members'),
-    path('team-members/data/', views.team_members_data, name='team_members_data'),
-    path('progress/', views.project_progress, name='project_progress'),
-    path('progress/data/', views.project_progress_data, name='project_progress_data'),
-    path('calendar/', views.project_calendar, name='project_calendar'),
-    path('calendar/events/', views.project_calendar_events, name='project_calendar_events'),
-    path('statistics/', views.project_statistics, name='project_statistics'),
-    path('statistics/data/', views.project_statistics_data, name='project_statistics_data'),
+    # Calendar
+    path("project-calendar/", project_calendar, name="project_calendar"),
+    path("project-calendar-events/", project_calendar_events, name="project_calendar_events"),
 
-    # Time entries
-    path('time-entries/update/', views.update_time_entry, name='update_time_entry'),
-    path('tasks/update-assignment-status/', views.update_assignment_status, name='update_assignment_status'),
+    # Các route task
+    path("tasks/", all_tasks, name="all_tasks"),
+    path("my-tasks/", my_tasks, name="my_tasks"),
+    path("tasks/<int:task_id>/", task_detail, name="task_detail"),
+    path("update-status/", update_status, name="update_status"),
+    path("toggle-time/", toggle_time, name="toggle_time"),
+    path("update-task-details/", update_task_details, name="update_task_details"),
+    path("request-deadline-extension/", request_deadline_extension, name="request_deadline_extension"),
+    path("extend-deadline/<int:task_id>/", extend_deadline, name="extend_deadline"),
+
+    # Thời gian làm việc
+    path("time-tracking/", time_tracking, name="time_tracking"),
+    path("update-time-entry/", update_time_entry, name="update_time_entry"),
+    path("update-assignment-status/", update_assignment_status, name="update_assignment_status"),
 ]

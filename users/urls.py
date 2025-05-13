@@ -12,7 +12,8 @@ from .views import (
     update_profile,
     upload_face_image,
     update_fixed_location,
-    attendance
+    attendance,
+    get_current_work_time
 )
 
 urlpatterns = [
@@ -29,4 +30,5 @@ urlpatterns = [
     path('attendance/', attendance, name='attendance'),
     path('profile/upload-face-image/', upload_face_image, name='upload_face_image'),
     path('update-fixed-location/', update_fixed_location, name='update_fixed_location'),
+    path('api/current-work-time/', get_current_work_time, name='get_current_work_time'),
 ]

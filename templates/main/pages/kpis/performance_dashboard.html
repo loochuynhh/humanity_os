@@ -175,9 +175,9 @@
                                     <td>{{ kpi.start_date|date:"d/m/Y" }} - {{ kpi.end_date|date:"d/m/Y" }}</td>
                                     <td>
                                         {% if kpi.kpi.project %}
-                                            <a href="{% url 'projects:project_progress' %}?project_id={{ kpi.kpi.project.id }}">{{ kpi.kpi.project.name }}</a>
+                                            <a href="{% url 'projects:project_statistics' %}?project_id={{ kpi.kpi.project.id }}">{{ kpi.kpi.project.name }}</a>
                                         {% elif kpi.task and kpi.task.project %}
-                                            <a href="{% url 'projects:project_progress' %}?project_id={{ kpi.task.project.id }}">{{ kpi.task.project.name }}</a>
+                                            <a href="{% url 'projects:project_statistics' %}?project_id={{ kpi.task.project.id }}">{{ kpi.task.project.name }}</a>
                                         {% else %}
                                             N/A
                                         {% endif %}

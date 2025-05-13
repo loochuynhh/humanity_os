@@ -50,38 +50,65 @@ def get_task_counts(user_id, as_json=False):
     return task_status
 
 def get_time_tracking(user_id, period='today', as_json=False):
+    from users.models import CheckInCheckOut
+    from django.utils import timezone
+    from datetime import timedelta
+
     today = timezone.now().date()
+    now = timezone.now()
     week_start = today - timedelta(days=today.weekday())
+
     if period == 'today':
-        entries = TimeEntries.objects.filter(user_id=user_id, start_time__date=today)
+        checkin = CheckInCheckOut.objects.filter(user_id=user_id, date=today).first()
+        if checkin and checkin.checkin_time:
+            if checkin.checkout_time:
+                duration = checkin.checkout_time - checkin.checkin_time
+            else:
+                duration = now - checkin.checkin_time
+            total_hours = duration.total_seconds() / 3600
+        else:
+            total_hours = 0
+        hours = int(total_hours)
+        minutes = int((total_hours - hours) * 60)
+        return f"{hours}h {minutes}m" if not as_json else mark_safe(json.dumps([float(total_hours)], ensure_ascii=False))
+
     elif period == 'week':
-        entries = TimeEntries.objects.filter(user_id=user_id, start_time__gte=week_start)
-    total_hours = entries.filter(duration__isnull=False).aggregate(total=Sum('duration'))['total'] or 0
-    if period == 'week' and as_json:
         week_data = [0] * 7
+        total_hours = 0
         for i in range(7):
             day = week_start + timedelta(days=i)
-            day_entries = entries.filter(start_time__date=day, duration__isnull=False)
-            day_hours = day_entries.aggregate(total=Sum('duration'))['total'] or 0
-            week_data[i] = float(day_hours)
-        return mark_safe(json.dumps(week_data, ensure_ascii=False))
-    hours = int(total_hours)
-    minutes = int((total_hours - hours) * 60)
-    return f"{hours}h {minutes}m" if not as_json else mark_safe(json.dumps([float(total_hours)], ensure_ascii=False))
+            checkin = CheckInCheckOut.objects.filter(user_id=user_id, date=day).first()
+            if checkin and checkin.checkin_time:
+                if checkin.checkout_time:
+                    duration = checkin.checkout_time - checkin.checkin_time
+                elif day == today:
+                    duration = now - checkin.checkin_time
+                else:
+                    duration = timedelta(0)
+                hours = duration.total_seconds() / 3600
+            else:
+                hours = 0
+            week_data[i] = float(hours)
+            total_hours += hours
+        if as_json:
+            return mark_safe(json.dumps(week_data, ensure_ascii=False))
+        hours = int(total_hours)
+        minutes = int((total_hours - hours) * 60)
+        return f"{hours}h {minutes}m"
 
 def get_kpi_snapshot(user_id, metric='completion'):
-    kpi = EmployeeKPIs.objects.filter(user_id=user_id, time_period='monthly').first()
-    if not kpi or not kpi.target_value:
+    from kpis.models import EmployeeKPIs
+    # Lấy tất cả KPI của user (có thể lọc theo thời gian nếu muốn)
+    kpis = EmployeeKPIs.objects.filter(user_id=user_id)
+    if not kpis.exists():
         return "0/0" if metric == 'completion' else 0
-    try:
-        actual = int(kpi.actual_value) if kpi.actual_value else 0
-        target = int(kpi.target_value)
-        completion = f"{actual}/{target}"
-        percentage = (actual / target * 100) if target != 0 else 0
-    except ValueError:
-        completion = "0/0"
-        percentage = 0
-    return completion if metric == 'completion' else percentage
+    total = kpis.count()
+    achieved = kpis.filter(evaluation__in=['Achieved', 'Exceeded', 'Partially Achieved']).count()
+    if metric == 'completion':
+        return f"{achieved}/{total}"
+    else:
+        percentage = (achieved / total * 100) if total > 0 else 0
+        return round(percentage, 2)
 
 def get_project_data(user):
     projects = Projects.objects.filter(team_members=user).distinct()
@@ -97,11 +124,14 @@ def get_project_data(user):
         })
     return project_data
 
-def get_project_progress(user_id):
+def get_project_statistics(user_id):
     return [
         {'name': project['name'], 'progress': project['progress']}
         for project in get_project_data(Users.objects.get(id=user_id))
     ]
+
+def get_project_progress(user_id):
+    return get_project_statistics(user_id)
 
 def get_ai_suggestions(user_id):
     return Tasks.objects.filter(
@@ -113,20 +143,15 @@ def get_recent_tasks(user_id):
     return Tasks.objects.filter(task_assignments__user_id=user_id).select_related('project').order_by('-deadline')[:5]
 
 def get_project_time_allocation(user_id, as_json=False):
-    today = timezone.now().date()
-    week_start = today - timedelta(days=today.weekday())
-    entries = TimeEntries.objects.filter(
-        user_id=user_id,
-        start_time__gte=week_start
-    ).select_related('task__project')
-
+    entries = TimeEntries.objects.filter(user_id=user_id).select_related('task__project')
     project_times = {}
     for entry in entries:
         if entry.task and entry.task.project:
-            project_name = escape(entry.task.project.name.strip())
-            project_name = slugify(project_name, allow_unicode=True)
+            project_name = entry.task.project.name.strip()
             duration = entry.duration or 0
             project_times[project_name] = project_times.get(project_name, 0) + duration
+    # Làm tròn tất cả giá trị thời gian đến 2 chữ số thập phân
+    project_times = {k: round(v, 2) for k, v in project_times.items()}
     data = {
         'labels': list(project_times.keys()) or ['Không có dự án'],
         'data': list(project_times.values()) or [1]
@@ -136,8 +161,8 @@ def get_project_time_allocation(user_id, as_json=False):
         return mark_safe(json_str)
     return project_times
 
-
 def get_task_stats(user):
+    from projects.models import Tasks
     tasks = Tasks.objects.filter(task_assignments__user=user).distinct()
     total_tasks = tasks.count()
     completed_tasks = tasks.filter(status='Completed').count()
@@ -197,66 +222,131 @@ def verify_face(check_image, user):
         print(f"Face recognition error: {str(e)}")
         return False
 
-# Sửa hàm handle_check_in trong users/utils.py
+
 def handle_check_in(user, location, image_data):
     """
     Xử lý logic check-in, lưu thông tin và kiểm tra nhận diện khuôn mặt.
     """
-    today = timezone.now().date()
+    try:
+        today = timezone.now().date()
+        now = timezone.now()
 
-    # Sử dụng transaction để tránh tạo nhiều bản ghi
-    from django.db import transaction
+        # Xử lý hình ảnh
+        image_content = None
+        try:
+            if ',' in image_data:
+                image_data = image_data.split(',')[1]
 
-    with transaction.atomic():
-        # Kiểm tra một lần nữa và xóa các bản ghi check-in trùng lặp (nếu có)
-        existing_checkins = CheckInCheckOut.objects.filter(user=user, date=today)
+            # Giải mã base64
+            image_binary = base64.b64decode(image_data)
+            img = Image.open(io.BytesIO(image_binary))
 
-        if existing_checkins.exists():
-            # Nếu đã có bản ghi, không tạo thêm bản ghi mới
-            return False, "Bạn đã check-in hôm nay rồi."
+            # Kiểm tra định dạng ảnh
+            if img.format not in ['JPEG', 'PNG']:
+                print(f"Định dạng ảnh không hỗ trợ: {img.format}")
+                return False, "Định dạng ảnh không hỗ trợ. Vui lòng sử dụng JPEG hoặc PNG."
 
-        # Tạo bản ghi check-in mới
-        checkin = CheckInCheckOut(
-            user=user,
-            checkin_time=timezone.now(),
-            date=today,
-            checkin_location=location,
-        )
+            # Resize và nén ảnh
+            img = img.resize((320, 240), Image.Resampling.LANCZOS)
+            buffer = io.BytesIO()
+            img.save(buffer, format="JPEG", quality=70)
 
-        if image_data:
+            timestamp = int(time.time())
+            image_name = f"checkin_{user.username}_{today.strftime('%Y-%m-%d')}_{timestamp}.jpg"
+            image_content = ContentFile(buffer.getvalue(), name=image_name)
+            print(f"Check-in image processed: {image_name}, size={len(buffer.getvalue())/1024:.2f}KB")
+
+        except Exception as e:
+            print(f"Error processing check-in image: {str(e)}")
+            return False, f"Lỗi xử lý hình ảnh: {str(e)}"
+
+        # Kiểm tra vị trí cố định
+        is_valid_location = True
+        distance = None
+
+        if user.fixed_location:
             try:
-                # Xử lý ảnh
-                if ',' in image_data:
-                    image_data = image_data.split(',')[1]
-                img_bytes = base64.b64decode(image_data)
-                img = Image.open(io.BytesIO(img_bytes))
-                img = img.resize((320, 240), Image.Resampling.LANCZOS)
-                buffer = io.BytesIO()
-                img.save(buffer, format="JPEG", quality=70)
+                fixed_lat, fixed_lng = map(float, user.fixed_location.split(','))
+                current_lat, current_lng = map(float, location.split(','))
 
-                # Tạo tên file với timestamp để tránh trùng lặp
-                timestamp = int(time.time())
-                img_name = f"checkin_{user.username}_{today}_{timestamp}.jpg"
+                # Tính khoảng cách bằng công thức Haversine
+                R = 6371  # Bán kính trái đất (km)
+                lat1, lng1 = radians(fixed_lat), radians(fixed_lng)
+                lat2, lng2 = radians(current_lat), radians(current_lng)
+                dlat = lat2 - lat1
+                dlng = lng2 - lng1
+                a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlng/2)**2
+                c = 2 * atan2(sqrt(a), sqrt(1-a))
+                distance = R * c
 
-                # Lưu ảnh
-                checkin.checkin_image.save(img_name, ContentFile(buffer.getvalue()), save=False)
+                is_valid_location = distance <= 0.5  # Cho phép trong vòng 500m
+                print(f"Location check: Distance={distance:.2f}km, Valid={is_valid_location}")
 
-                # Kiểm tra nhận diện khuôn mặt
-                checkin.is_valid_checkin = verify_face(checkin.checkin_image, user)
             except Exception as e:
-                print(f"Error processing check-in image: {str(e)}")
+                print(f"Location validation error: {str(e)}")
+                is_valid_location = False
+                return False, f"Lỗi kiểm tra vị trí: {str(e)}"
+
+        from django.db import transaction
+
+        with transaction.atomic():
+            # Khóa bản ghi của user để ngăn các giao dịch song song
+            user_locked = Users.objects.select_for_update().get(id=user.id)
+
+            # Kiểm tra xem đã có check-in hôm nay chưa
+            existing_checkin = CheckInCheckOut.objects.filter(
+                user=user_locked,
+                date=today,
+                checkin_time__isnull=False
+            ).first()
+
+            if existing_checkin:
+                print(f"Check-in already exists for user {user_locked.username} on {today}, ID={existing_checkin.id}")
+                return False, "Bạn đã check-in hôm nay."
+
+            # Xóa các bản ghi trùng lặp (nếu có) trước khi tạo mới
+            CheckInCheckOut.objects.filter(user=user_locked, date=today).delete()
+
+            # Tạo bản ghi check-in mới
+            checkin = CheckInCheckOut(
+                user=user_locked,
+                date=today,
+                checkin_time=now,
+                checkin_location=location
+            )
+
+            if image_content:
+                checkin.checkin_image.save(image_content.name, image_content, save=False)
+                is_valid_face = verify_face(checkin.checkin_image, user_locked)
+                checkin.is_valid_checkin = is_valid_face and is_valid_location
+                print(f"Face recognition: Valid={is_valid_face}, Overall check-in valid={checkin.is_valid_checkin}")
+            else:
                 checkin.is_valid_checkin = False
-                return False, f"Lỗi xử lý ảnh: {str(e)}"
+                print("No image provided, marking check-in as invalid")
 
-        # Lưu bản ghi check-in
-        checkin.save()
+            # Lưu bản ghi
+            checkin.save()
+            print(f"Check-in record saved: ID={checkin.id}, User={user_locked.username}, Date={today}")
 
-        if not checkin.is_valid_checkin:
-            return True, "Check-in thành công nhưng ảnh không hợp lệ. Vui lòng chụp lại nếu cần."
+        # Chuẩn bị thông báo trả về
+        if not is_valid_location:
+            message = f"Check-in không hợp lệ: Vị trí cách quá xa ({distance:.2f}km)."
+        elif not is_valid_face:
+            message = "Check-in không hợp lệ: Không nhận diện được khuôn mặt."
+        elif not checkin.is_valid_checkin:
+            message = "Check-in không hợp lệ: Dữ liệu không đầy đủ."
+        else:
+            message = "Check-in thành công!"
 
-        return True, "Check-in thành công."
+        return checkin.is_valid_checkin, message
 
-# Sửa hàm handle_check_out trong users/utils.py
+    except Exception as e:
+        import traceback
+        print(f"Check-in error: {str(e)}")
+        print(traceback.format_exc())
+        return False, f"Lỗi hệ thống khi check-in: {str(e)}"
+
+
 def handle_check_out(user, location, image_data):
     """
     Xử lý logic check-out, cập nhật thông tin và kiểm tra nhận diện khuôn mặt.
@@ -268,25 +358,27 @@ def handle_check_out(user, location, image_data):
         # Xử lý hình ảnh
         image_content = None
         try:
-            # Xử lý hình ảnh
             if ',' in image_data:
                 image_data = image_data.split(',')[1]
 
             # Giải mã base64
             image_binary = base64.b64decode(image_data)
-
-            # Xử lý ảnh để giảm kích thước
             img = Image.open(io.BytesIO(image_binary))
+
+            # Kiểm tra định dạng ảnh
+            if img.format not in ['JPEG', 'PNG']:
+                print(f"Định dạng ảnh không hỗ trợ: {img.format}")
+                return False, "Định dạng ảnh không hỗ trợ. Vui lòng sử dụng JPEG hoặc PNG."
+
+            # Resize và nén ảnh
             img = img.resize((320, 240), Image.Resampling.LANCZOS)
             buffer = io.BytesIO()
             img.save(buffer, format="JPEG", quality=70)
 
-            # Tạo tên file với timestamp để tránh trùng lặp
             timestamp = int(time.time())
             image_name = f"checkout_{user.username}_{today.strftime('%Y-%m-%d')}_{timestamp}.jpg"
-
-            # Tạo ContentFile từ ảnh đã xử lý
             image_content = ContentFile(buffer.getvalue(), name=image_name)
+            print(f"Check-out image processed: {image_name}, size={len(buffer.getvalue())/1024:.2f}KB")
 
         except Exception as e:
             print(f"Error processing check-out image: {str(e)}")
@@ -294,104 +386,79 @@ def handle_check_out(user, location, image_data):
 
         # Kiểm tra vị trí cố định
         is_valid_location = True
-        is_valid_face = False
+        distance = None
 
         if user.fixed_location:
             try:
-                # Phân tích vị trí
-                parts = user.fixed_location.split(',')
-                if len(parts) != 2:
-                    raise ValueError("Định dạng vị trí không hợp lệ")
+                fixed_lat, fixed_lng = map(float, user.fixed_location.split(','))
+                current_lat, current_lng = map(float, location.split(','))
 
-                fixed_lat = float(parts[0].strip())
-                fixed_lng = float(parts[1].strip())
-
-                parts = location.split(',')
-                if len(parts) != 2:
-                    raise ValueError("Định dạng vị trí không hợp lệ")
-
-                current_lat = float(parts[0].strip())
-                current_lng = float(parts[1].strip())
-
-                # Tính khoảng cách
+                # Tính khoảng cách bằng công thức Haversine
                 R = 6371  # Bán kính trái đất (km)
-
                 lat1, lng1 = radians(fixed_lat), radians(fixed_lng)
                 lat2, lng2 = radians(current_lat), radians(current_lng)
-
                 dlat = lat2 - lat1
                 dlng = lng2 - lng1
-
                 a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlng/2)**2
                 c = 2 * atan2(sqrt(a), sqrt(1-a))
                 distance = R * c
 
-                # Kiểm tra khoảng cách (cho phép sai lệch 0.5km)
-                is_valid_location = distance <= 0.5
+                is_valid_location = distance <= 0.5  # Cho phép trong vòng 500m
+                print(f"Location check: Distance={distance:.2f}km, Valid={is_valid_location}")
 
             except Exception as e:
                 print(f"Location validation error: {str(e)}")
                 is_valid_location = False
+                return False, f"Lỗi kiểm tra vị trí: {str(e)}"
 
-        # Sử dụng transaction để đảm bảo tính nhất quán
         from django.db import transaction
 
         with transaction.atomic():
-            # Xử lý trường hợp có nhiều bản ghi check-in trong cùng một ngày
-            checkin_records = CheckInCheckOut.objects.filter(user=user, date=today).order_by('-checkin_time')
+            # Tìm bản ghi check-in hôm nay
+            checkin = CheckInCheckOut.objects.filter(user=user, date=today).first()
 
-            if checkin_records.exists():
-                # Giữ lại bản ghi đầu tiên, xóa các bản ghi còn lại
-                main_record = checkin_records.first()
+            if not checkin:
+                print("No check-in record found for today")
+                return False, "Không tìm thấy bản ghi check-in hôm nay."
 
-                if len(checkin_records) > 1:
-                    checkin_records.exclude(id=main_record.id).delete()
+            if checkin.checkout_time:
+                print(f"Duplicate check-out attempt for {today}")
+                return False, "Bạn đã check-out hôm nay."
 
-                # Cập nhật thông tin check-out
-                main_record.checkout_time = now
-                main_record.checkout_location = location
+            # Cập nhật bản ghi check-out
+            checkin.checkout_time = now
+            checkin.checkout_location = location
 
-                if image_content:
-                    main_record.checkout_image.save(image_content.name, image_content, save=False)
-
-                    # Kiểm tra nhận diện khuôn mặt
-                    is_valid_face = verify_face(main_record.checkout_image, user)
-                    main_record.is_valid_checkout = is_valid_location and is_valid_face
-
-                main_record.save()
-
-                if not is_valid_location or not is_valid_face:
-                    return True, "Check-out thành công nhưng có thể có vấn đề về vị trí hoặc nhận diện. Quản lý sẽ kiểm tra sau."
-
-                return True, "Check-out thành công!"
+            if image_content:
+                checkin.checkout_image.save(image_content.name, image_content, save=False)
+                is_valid_face = verify_face(checkin.checkout_image, user)
+                checkin.is_valid_checkout = is_valid_face and is_valid_location
+                print(f"Face recognition: Valid={is_valid_face}, Overall check-out valid={checkin.is_valid_checkout}")
             else:
-                # Tạo bản ghi mới nếu không có check-in trước đó
-                checkout = CheckInCheckOut(
-                    user=user,
-                    date=today,
-                    checkout_time=now,
-                    checkout_location=location,
-                )
+                checkin.is_valid_checkout = False
+                print("No image provided, marking check-out as invalid")
 
-                if image_content:
-                    checkout.checkout_image.save(image_content.name, image_content, save=False)
+            # Lưu bản ghi
+            checkin.save()
+            print(f"Check-out record saved: ID={checkin.id}, User={user.username}, Date={today}")
 
-                    # Kiểm tra nhận diện khuôn mặt
-                    is_valid_face = verify_face(checkout.checkout_image, user)
+        # Chuẩn bị thông báo trả về
+        if not is_valid_location:
+            message = f"Check-out không hợp lệ: Vị trí cách quá xa ({distance:.2f}km)."
+        elif not is_valid_face:
+            message = "Check-out không hợp lệ: Không nhận diện được khuôn mặt."
+        elif not checkin.is_valid_checkout:
+            message = "Check-out không hợp lệ: Dữ liệu không đầy đủ."
+        else:
+            message = "Check-out thành công!"
 
-                checkout.is_valid_checkout = is_valid_location and is_valid_face
-                checkout.save()
-
-                if not is_valid_location or not is_valid_face:
-                    return True, "Check-out thành công nhưng có thể có vấn đề về vị trí hoặc nhận diện. Quản lý sẽ kiểm tra sau."
-
-                return True, "Check-out thành công! (Không có check-in trước đó)"
+        return checkin.is_valid_checkout, message
 
     except Exception as e:
         import traceback
-        print(f"Handle check-out error: {str(e)}")
+        print(f"Check-out error: {str(e)}")
         print(traceback.format_exc())
-        return False, f"Lỗi khi xử lý check-out: {str(e)}"
+        return False, f"Lỗi hệ thống khi check-out: {str(e)}"
 
 
 def get_today_work_hours(user):

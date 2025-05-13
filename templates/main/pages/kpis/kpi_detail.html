@@ -18,7 +18,7 @@
                         <h1 class="h4 mb-0 fw-bold">{{ kpi.kpi.name }}</h1>
                         <small class="text-white-50">
                             {% if kpi.kpi.project %}
-                                Dự án: <a href="{% url 'projects:project_progress' %}?project_id={{ kpi.kpi.project.id }}" class="text-white">{{ kpi.kpi.project.name }}</a>
+                                Dự án: <a href="{% url 'projects:project_statistics' %}?project_id={{ kpi.kpi.project.id }}" class="text-white">{{ kpi.kpi.project.name }}</a>
                             {% else %}
                                 Không liên kết dự án
                             {% endif %}

@@ -1,0 +1,333 @@
+/* ==========================================================================
+   DataTables Custom Styles - Humanity OS
+   ========================================================================== */
+
+/* --------------------------------------
+   General DataTable Wrapper
+   -------------------------------------- */
+.dataTables_wrapper {
+  font-family: 'Roboto', sans-serif;
+}
+
+/* --------------------------------------
+   Filter and Length Controls
+   -------------------------------------- */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem;
+  background-color: var(--white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-normal);
+}
+
+.dataTables_wrapper .dataTables_length:hover,
+.dataTables_wrapper .dataTables_filter:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.dataTables_wrapper .dataTables_length label,
+.dataTables_wrapper .dataTables_filter label {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--dark);
+}
+
+/* Dropdown for "Xem 10 mục" */
+.dataTables_wrapper .dataTables_length select {
+  width: 90px;
+  margin: 0 12px;
+  padding: 0.5rem 2rem 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--dark);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--input-border);
+  background-color: var(--light);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23495057'%3E%3Cpath d='M4.646 6.646a.5.5 0 0 1 .708 0L8 9.293l2.646-2.647a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 12px;
+  transition: all var(--transition-normal);
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.dataTables_wrapper .dataTables_length select:hover {
+  background-color: #e9ecef;
+  border-color: #ced4da;
+}
+
+.dataTables_wrapper .dataTables_length select:focus {
+  border-color: var(--primary);
+  background-color: var(--white);
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+  outline: none;
+}
+
+/* Search input (Tìm) */
+.dataTables_wrapper .dataTables_filter input {
+  width: 220px;
+  padding: 0.5rem 2.5rem 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--dark);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--input-border);
+  background: var(--light) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23495057'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E") no-repeat right 0.75rem center/14px 14px;
+  transition: all var(--transition-normal);
+}
+
+.dataTables_wrapper .dataTables_filter input:hover {
+  background-color: #e9ecef;
+  border-color: #ced4da;
+}
+
+.dataTables_wrapper .dataTables_filter input:focus {
+  border-color: var(--primary);
+  background-color: var(--white);
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+  outline: none;
+}
+
+/* --------------------------------------
+   Pagination
+   -------------------------------------- */
+.dataTables_wrapper .dataTables_paginate {
+  margin-top: 0.75rem;
+}
+
+.dataTables_wrapper .dataTables_paginate .pagination {
+  justify-content: flex-end;
+  gap: 0.15rem;
+}
+
+.dataTables_wrapper .dataTables_paginate .page-item {
+  padding: 0;
+  margin: 0;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.page-item .page-link {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.65rem;
+  line-height: 1.5;
+  color: var(--primary);
+  background-color: var(--white);
+  border: 1px solid var(--input-border);
+  border-radius: 0.2rem;
+  transition: all var(--transition-normal);
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.page-item .page-link:hover {
+  background-color: var(--primary-lightest);
+  border-color: #b3d4ff;
+  color: var(--primary-dark);
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.page-item.active .page-link {
+  background-color: var(--primary-light);
+  border-color: var(--primary-light);
+  color: var(--white);
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.page-item.disabled .page-link {
+  color: var(--muted);
+  background-color: var(--light);
+  border-color: var(--input-border);
+  cursor: not-allowed;
+}
+
+/* Pagination info */
+.dataTables_wrapper .dataTables_info {
+  padding-top: 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* --------------------------------------
+   Table Styles
+   -------------------------------------- */
+table.dataTable {
+  border: 1px solid var(--border-color);
+  border-collapse: collapse;
+}
+
+/* Table header */
+table.dataTable thead th {
+  padding: 1rem 0.75rem;
+  background: linear-gradient(180deg, #e6f0fa 0%, #c3e0ff 100%);
+  border-bottom: 2px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--dark);
+  letter-spacing: 0.05em;
+  position: relative;
+}
+
+table.dataTable thead th:last-child {
+  border-right: none;
+}
+
+/* Table body rows */
+table.dataTable tbody tr {
+  transition: background-color var(--transition-normal), transform var(--transition-fast);
+}
+
+table.dataTable tbody tr:hover {
+  background-color: #f1f3f5;
+  transform: translateY(-1px);
+}
+
+/* Table body cells */
+table.dataTable tbody td {
+  padding: 0.75rem;
+  vertical-align: middle;
+  font-size: 0.875rem;
+  color: var(--dark);
+  border-right: 1px solid var(--border-color);
+}
+
+table.dataTable tbody td:last-child {
+  border-right: none;
+}
+
+/* --------------------------------------
+   Sorting Arrows
+   -------------------------------------- */
+table.dataTable thead th.sorting,
+table.dataTable thead th,
+table.dataTable thead th.sorting_asc,
+table.dataTable thead th.sorting_desc {
+  padding-right: 2rem;
+  background-image: none !important;
+  cursor: pointer;
+}
+
+table.dataTable thead th.sorting::after {
+  content: '';
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%239aa0a6'%3E%3Cpath d='M8 4a.5.5 0 0 1 .5.5v7.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 .708-.708L7.5 12.293V4.5A.5.5 0 0 1 8 4z'/%3E%3Cpath d='M8 12a.5.5 0 0 1-.5-.5V3.707L5.354 5.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 3.707V11.5a.5.5 0 0 1-.5.5z'/%3E%3C/svg%3E") no-repeat center center;
+  background-size: 10px;
+  opacity: 0.6;
+  transition: opacity var(--transition-normal);
+}
+
+table.dataTable thead th.sorting_asc::after {
+  content: '';
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23007bff'%3E%3Cpath d='M8 4a.5.5 0 0 1 .5.5v7.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 .708-.708L7.5 12.293V4.5A.5.5 0 0 1 8 4z'/%3E%3C/svg%3E") no-repeat center center;
+  background-size: 10px;
+  opacity: 1;
+}
+
+table.dataTable thead th.sorting_desc::after {
+  content: '';
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23007bff'%3E%3Cpath d='M8 12a.5.5 0 0 1-.5-.5V3.707L5.354 5.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 3.707V11.5a.5.5 0 0 1-.5.5z'/%3E%3C/svg%3E") no-repeat center center;
+  background-size: 10px;
+  opacity: 1;
+}
+
+/* --------------------------------------
+   Status Badges
+   -------------------------------------- */
+table.dataTable .badge {
+  display: inline-block;
+  min-width: 90px;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 1rem;
+  transition: background-color var(--transition-normal), transform var(--transition-fast);
+}
+
+table.dataTable .badge:hover {
+  transform: scale(1.05);
+}
+
+table.dataTable .badge.bg-success {
+  background-color: var(--success) !important;
+}
+
+table.dataTable .badge.bg-danger {
+  background-color: var(--danger) !important;
+}
+
+table.dataTable .badge.bg-warning {
+  background-color: var(--warning) !important;
+  color: var(--dark) !important;
+}
+
+table.dataTable .badge.bg-primary {
+  background-color: var(--primary) !important;
+}
+
+/* --------------------------------------
+   Action Buttons
+   -------------------------------------- */
+table.dataTable .btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-normal), transform var(--transition-fast);
+}
+
+table.dataTable .btn-sm:hover {
+  transform: translateY(-1px);
+}
+
+/* --------------------------------------
+   Responsive
+   -------------------------------------- */
+@media (max-width: 768px) {
+  .dataTables_wrapper .dataTables_length select {
+    width: 80px;
+  }
+
+  .dataTables_wrapper .dataTables_filter input {
+    width: 180px;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.page-item .page-link {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.6rem;
+  }
+
+  table.dataTable thead th,
+  table.dataTable tbody td {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  table.dataTable .btn-sm {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+  }
+}

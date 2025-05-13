@@ -1,9 +1,10 @@
-{% extends 'main/layouts/user_base.html' %}
+{% extends 'main/layouts/base.html' %}
 {% load static %}
-{% block title %}Thống kê tiến độ - Humanity OS{% endblock %}
+{% block title %}Tiến độ dự án - Humanity OS{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
+<link rel="stylesheet" href="{% static 'assets/css/projects/project_common.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -14,60 +15,199 @@
     <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
       <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom fade-in-down">
         <h1 class="h2 fw-bold">
-          <i class="bi bi-graph-up me-2"></i>Thống kê tiến độ
+          <i class="bi bi-graph-up-arrow me-2"></i>Tiến độ dự án
         </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <a href="{% url 'projects:project_statistics' %}" class="btn btn-outline-primary">
+            <i class="bi bi-bar-chart me-1"></i>Xem thống kê chi tiết
+          </a>
+        </div>
       </div>
 
-      <div class="row mb-4 fade-in-up">
-        <div class="col-12">
-          <div class="card shadow-sm">
-            <div class="card-body">
-              <select id="projectFilter" class="form-select mb-3">
+      <!-- Bộ lọc dự án -->
+      <div class="filter-container fade-in-up mb-4">
+        <div class="row">
+          <div class="col-md-6">
+            <label class="filter-label">Chọn dự án</label>
+            <select id="projectFilter" class="form-select mb-0">
                 <option value="">Chọn dự án</option>
                 {% for project in projects %}
                 <option value="{{ project.id }}">{{ project.name }}</option>
                 {% endfor %}
               </select>
             </div>
+          <div class="col-md-6">
+            <label class="filter-label">Khoảng thời gian</label>
+            <select id="timeRangeFilter" class="form-select mb-0">
+              <option value="week">Tuần này</option>
+              <option value="month" selected>Tháng này</option>
+              <option value="quarter">Quý này</option>
+              <option value="year">Năm nay</option>
+              <option value="all">Tất cả</option>
+            </select>
           </div>
         </div>
       </div>
 
-      <div class="row fade-in-up">
-        <div class="col-md-4">
-          <div class="card shadow-sm">
+      <!-- Thống kê tổng quan -->
+      <div class="row mb-4 fade-in-up">
+        <div class="col-md-3">
+          <div class="dashboard-card">
             <div class="card-body text-center">
-              <h6 class="text-muted">Tổng số task</h6>
-              <h4 class="text-success" id="totalTasks">0</h4>
+              <div class="project-stat">
+                <div class="stat-icon mx-auto">
+                  <i class="bi bi-list-check"></i>
+                </div>
+                <div class="stat-info mt-3">
+                  <h3 id="totalTasks">0</h3>
+                  <p>Tổng số task</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        <div class="col-md-4">
-          <div class="card shadow-sm">
+        <div class="col-md-3">
+          <div class="dashboard-card">
             <div class="card-body text-center">
-              <h6 class="text-muted">Task hoàn thành</h6>
-              <h4 class="text-primary" id="completedTasks">0</h4>
+              <div class="project-stat">
+                <div class="stat-icon mx-auto" style="background-color: rgba(40, 167, 69, 0.1); color: #28a745;">
+                  <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-info mt-3">
+                  <h3 id="completedTasks">0</h3>
+                  <p>Task hoàn thành</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        <div class="col-md-4">
-          <div class="card shadow-sm">
+        <div class="col-md-3">
+          <div class="dashboard-card">
             <div class="card-body text-center">
-              <h6 class="text-muted">Tiến độ</h6>
-              <h4 class="text-info" id="progress">0%</h4>
+              <div class="project-stat">
+                <div class="stat-icon mx-auto" style="background-color: rgba(255, 193, 7, 0.1); color: #ffc107;">
+                  <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div class="stat-info mt-3">
+                  <h3 id="inProgressTasks">0</h3>
+                  <p>Đang thực hiện</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="dashboard-card">
+            <div class="card-body text-center">
+              <div class="project-stat">
+                <div class="stat-icon mx-auto" style="background-color: rgba(0, 123, 255, 0.1); color: #007bff;">
+                  <i class="bi bi-percent"></i>
+                </div>
+                <div class="stat-info mt-3">
+                  <h3 id="progress">0%</h3>
+                  <p>Hoàn thành</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="row mt-4 fade-in-up">
-        <div class="col-12">
-          <div class="card shadow-sm">
+      <!-- Biểu đồ tiến độ -->
+      <div class="row mb-4 fade-in-up">
+        <div class="col-lg-8">
+          <div class="dashboard-card">
             <div class="card-header">
-              <h5 class="mb-0">Biểu đồ tiến độ</h5>
+              <h5 class="mb-0">Biểu đồ tiến độ theo thời gian</h5>
             </div>
             <div class="card-body">
-              <canvas id="progressChart" height="100"></canvas>
+              <div class="chart-container">
+                <canvas id="progressTimelineChart" height="300"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="dashboard-card">
+            <div class="card-header">
+              <h5 class="mb-0">Phân bổ trạng thái task</h5>
+            </div>
+            <div class="card-body">
+              <div class="chart-container">
+                <canvas id="taskStatusChart" height="300"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tiến độ chi tiết dự án -->
+      <div class="row fade-in-up">
+        <div class="col-12">
+          <div class="dashboard-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Chi tiết tiến độ dự án</h5>
+              <button class="btn btn-sm btn-outline-light" id="refreshData">
+                <i class="bi bi-arrow-repeat me-1"></i>Cập nhật
+              </button>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="project-table table mb-0">
+                  <thead>
+                    <tr>
+                      <th>Giai đoạn</th>
+                      <th>Tiến độ</th>
+                      <th>Số task</th>
+                      <th>Hoàn thành</th>
+                      <th>Đang thực hiện</th>
+                      <th>Trễ hạn</th>
+                      <th>Mức độ hoàn thành</th>
+                    </tr>
+                  </thead>
+                  <tbody id="projectPhases">
+                    <tr>
+                      <td colspan="7" class="text-center py-4">
+                        <p class="text-muted mb-0">Vui lòng chọn dự án để xem chi tiết tiến độ</p>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thành viên và tiến độ -->
+      <div class="row mt-4 fade-in-up">
+        <div class="col-12">
+          <div class="dashboard-card">
+            <div class="card-header">
+              <h5 class="mb-0">Tiến độ theo thành viên</h5>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="project-table table mb-0">
+                  <thead>
+                    <tr>
+                      <th>Thành viên</th>
+                      <th>Số task phân công</th>
+                      <th>Hoàn thành</th>
+                      <th>Đang thực hiện</th>
+                      <th>Trễ hạn</th>
+                      <th>Tiến độ</th>
+                    </tr>
+                  </thead>
+                  <tbody id="memberProgress">
+                    <tr>
+                      <td colspan="6" class="text-center py-4">
+                        <p class="text-muted mb-0">Vui lòng chọn dự án để xem tiến độ theo thành viên</p>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -78,54 +218,356 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'assets/js/plugin/chartjs/chart.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 $(document).ready(function() {
-  var ctx = document.getElementById('progressChart').getContext('2d');
-  var progressChart = new Chart(ctx, {
-    type: 'bar',
+  // Chart objects
+  let progressTimelineChart = null;
+  let taskStatusChart = null;
+
+  // Khởi tạo biểu đồ trạng thái task
+  function initTaskStatusChart(data) {
+    if (taskStatusChart) {
+      taskStatusChart.destroy();
+    }
+
+    const ctx = document.getElementById('taskStatusChart').getContext('2d');
+    taskStatusChart = new Chart(ctx, {
+      type: 'doughnut',
     data: {
-      labels: ['To-do', 'In progress', 'Completed', 'Late'],
+        labels: ['Hoàn thành', 'Đang thực hiện', 'Chưa bắt đầu', 'Trễ hạn'],
       datasets: [{
-        label: 'Số lượng task',
-        data: [0, 0, 0, 0],
-        backgroundColor: ['#dc3545', '#ffc107', '#28a745', '#6c757d'],
+          data: [
+            data.task_counts['Completed'] || 0,
+            data.task_counts['In progress'] || 0,
+            data.task_counts['To-do'] || 0,
+            data.task_counts['Late'] || 0
+          ],
+          backgroundColor: ['#28a745', '#007bff', '#6c757d', '#dc3545'],
         borderWidth: 1
       }]
     },
     options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+          }
+        }
+      }
+    });
+  }
+
+  // Khởi tạo biểu đồ tiến độ theo thời gian
+  function initProgressTimelineChart() {
+    if (progressTimelineChart) {
+      progressTimelineChart.destroy();
+    }
+
+    const ctx = document.getElementById('progressTimelineChart').getContext('2d');
+    progressTimelineChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
+        datasets: [{
+          label: 'Tiến độ dự án (%)',
+          data: [10, 20, 30, 35, 45, 50, 60, 65, 70, 75, 80, 85],
+          borderColor: '#007bff',
+          backgroundColor: 'rgba(0, 123, 255, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4
+        },
+        {
+          label: 'Mục tiêu (%)',
+          data: [15, 25, 35, 45, 55, 65, 70, 75, 80, 85, 90, 95],
+          borderColor: '#28a745',
+          borderWidth: 2,
+          borderDash: [5, 5],
+          fill: false,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
       scales: {
         y: {
           beginAtZero: true,
-          title: { display: true, text: 'Số lượng' }
+            max: 100,
+            ticks: {
+              callback: function(value) {
+                return value + '%';
+              }
+            }
+          }
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.dataset.label + ': ' + context.parsed.y + '%';
+              }
+            }
         }
       }
     }
   });
+  }
 
+  // Xử lý lọc dự án
   $('#projectFilter').change(function() {
-    var projectId = $(this).val();
+    const projectId = $(this).val();
+
+    if (!projectId) {
+      resetView();
+      return;
+    }
+
+    fetchProjectProgress(projectId);
+  });
+
+  // Lấy dữ liệu tiến độ dự án
+  function fetchProjectProgress(projectId) {
     $.ajax({
       url: "{% url 'projects:project_progress_data' %}",
       method: 'GET',
       data: { 'project_id': projectId },
       success: function(response) {
-        $('#totalTasks').text(response.total_tasks);
-        $('#completedTasks').text(response.completed_tasks);
-        $('#progress').text(response.progress + '%');
-        progressChart.data.datasets[0].data = [
-          response.task_counts['To-do'] || 0,
-          response.task_counts['In progress'] || 0,
-          response.task_counts['Completed'] || 0,
-          response.task_counts['Late'] || 0
-        ];
-        progressChart.update();
+        updateProgressData(response);
+        initTaskStatusChart(response);
+        initProgressTimelineChart(); // Mô phỏng dữ liệu
+        updateProjectPhases(projectId);
+        updateMemberProgress(projectId);
       },
       error: function() {
         alert('Có lỗi xảy ra, vui lòng thử lại.');
       }
     });
+  }
+
+  // Cập nhật dữ liệu tiến độ
+  function updateProgressData(data) {
+    $('#totalTasks').text(data.total_tasks);
+    $('#completedTasks').text(data.completed_tasks);
+    $('#inProgressTasks').text(data.task_counts['In progress'] || 0);
+    $('#progress').text(data.progress + '%');
+  }
+
+  // Cập nhật thông tin giai đoạn dự án
+  function updateProjectPhases(projectId) {
+    // Trong thực tế, dữ liệu này sẽ được lấy từ API
+    const phases = [
+      {
+        name: 'Khởi động dự án',
+        progress: 100,
+        totalTasks: 5,
+        completed: 5,
+        inProgress: 0,
+        late: 0
+      },
+      {
+        name: 'Phân tích yêu cầu',
+        progress: 80,
+        totalTasks: 10,
+        completed: 8,
+        inProgress: 2,
+        late: 0
+      },
+      {
+        name: 'Thiết kế',
+        progress: 65,
+        totalTasks: 8,
+        completed: 5,
+        inProgress: 2,
+        late: 1
+      },
+      {
+        name: 'Phát triển',
+        progress: 40,
+        totalTasks: 15,
+        completed: 6,
+        inProgress: 7,
+        late: 2
+      },
+      {
+        name: 'Kiểm thử',
+        progress: 20,
+        totalTasks: 12,
+        completed: 2,
+        inProgress: 4,
+        late: 0
+      },
+      {
+        name: 'Triển khai',
+        progress: 0,
+        totalTasks: 5,
+        completed: 0,
+        inProgress: 0,
+        late: 0
+      }
+    ];
+
+    let html = '';
+
+    phases.forEach(phase => {
+      const badgeClass = phase.progress === 100 ? 'bg-success' :
+                          phase.progress > 75 ? 'bg-primary' :
+                          phase.progress > 50 ? 'bg-info' :
+                          phase.progress > 25 ? 'bg-warning' : 'bg-secondary';
+
+      html += `
+        <tr>
+          <td>
+            <div class="d-flex align-items-center">
+              <div class="phase-icon bg-light text-primary d-flex align-items-center justify-content-center rounded me-2" style="width: 30px; height: 30px;">
+                <i class="bi bi-flag"></i>
+              </div>
+              <div>
+                <h6 class="mb-0">${phase.name}</h6>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="project-progress">
+              <div class="progress">
+                <div class="progress-bar ${badgeClass}" role="progressbar" style="width: ${phase.progress}%" aria-valuenow="${phase.progress}" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+              <small class="text-muted">${phase.progress}%</small>
+            </div>
+          </td>
+          <td>${phase.totalTasks}</td>
+          <td>${phase.completed}</td>
+          <td>${phase.inProgress}</td>
+          <td>${phase.late}</td>
+          <td>
+            <span class="badge ${badgeClass}">
+              ${phase.progress === 100 ? 'Hoàn thành' :
+                phase.progress > 75 ? 'Gần hoàn thành' :
+                phase.progress > 50 ? 'Đang tiến triển' :
+                phase.progress > 25 ? 'Mới bắt đầu' : 'Chưa bắt đầu'}
+            </span>
+          </td>
+        </tr>
+      `;
+    });
+
+    $('#projectPhases').html(html);
+  }
+
+  // Cập nhật tiến độ thành viên
+  function updateMemberProgress(projectId) {
+    // Trong thực tế, dữ liệu này sẽ được lấy từ API
+    const members = [
+      {
+        name: 'Nguyễn Văn A',
+        avatar: 'NA',
+        totalTasks: 12,
+        completed: 8,
+        inProgress: 3,
+        late: 1,
+        progress: 67
+      },
+      {
+        name: 'Trần Thị B',
+        avatar: 'TB',
+        totalTasks: 8,
+        completed: 7,
+        inProgress: 1,
+        late: 0,
+        progress: 88
+      },
+      {
+        name: 'Phạm Văn C',
+        avatar: 'PC',
+        totalTasks: 10,
+        completed: 4,
+        inProgress: 5,
+        late: 1,
+        progress: 40
+      },
+      {
+        name: 'Lê Thị D',
+        avatar: 'LD',
+        totalTasks: 5,
+        completed: 2,
+        inProgress: 2,
+        late: 1,
+        progress: 40
+      }
+    ];
+
+    let html = '';
+
+    members.forEach(member => {
+      const badgeClass = member.progress > 75 ? 'bg-success' :
+                          member.progress > 50 ? 'bg-primary' :
+                          member.progress > 25 ? 'bg-warning' : 'bg-secondary';
+
+      html += `
+        <tr>
+          <td>
+            <div class="d-flex align-items-center">
+              <div class="avatar rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;">
+                ${member.avatar}
+              </div>
+              <div>
+                <h6 class="mb-0">${member.name}</h6>
+              </div>
+            </div>
+          </td>
+          <td>${member.totalTasks}</td>
+          <td>${member.completed}</td>
+          <td>${member.inProgress}</td>
+          <td>${member.late}</td>
+          <td>
+            <div class="project-progress">
+              <div class="progress">
+                <div class="progress-bar ${badgeClass}" role="progressbar" style="width: ${member.progress}%" aria-valuenow="${member.progress}" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+              <small class="text-muted">${member.progress}%</small>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+
+    $('#memberProgress').html(html);
+  }
+
+  // Đặt lại view
+  function resetView() {
+    $('#totalTasks').text('0');
+    $('#completedTasks').text('0');
+    $('#inProgressTasks').text('0');
+    $('#progress').text('0%');
+
+    $('#projectPhases').html('<tr><td colspan="7" class="text-center py-4"><p class="text-muted mb-0">Vui lòng chọn dự án để xem chi tiết tiến độ</p></td></tr>');
+    $('#memberProgress').html('<tr><td colspan="6" class="text-center py-4"><p class="text-muted mb-0">Vui lòng chọn dự án để xem tiến độ theo thành viên</p></td></tr>');
+
+    if (taskStatusChart) {
+      taskStatusChart.destroy();
+      taskStatusChart = null;
+    }
+
+    if (progressTimelineChart) {
+      progressTimelineChart.destroy();
+      progressTimelineChart = null;
+    }
+  }
+
+  // Nút cập nhật dữ liệu
+  $('#refreshData').click(function() {
+    const projectId = $('#projectFilter').val();
+    if (projectId) {
+      fetchProjectProgress(projectId);
+    }
   });
+
+  // Khởi tạo ban đầu với giá trị mặc định
+  initTaskStatusChart({task_counts: {'Completed': 0, 'In progress': 0, 'To-do': 0, 'Late': 0}});
+  initProgressTimelineChart();
 });
 </script>
 {% endblock %}

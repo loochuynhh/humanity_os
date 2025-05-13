@@ -114,8 +114,9 @@ function initProjectTimeChart(data) {
                           const label = context.label || '';
                           const value = context.raw || 0;
                           const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                          const percentage = total ? Math.round((value / total) * 100) : 0;
-                          return `${label}: ${value.toFixed(1)}h (${percentage}%)`;
+                          const valueRounded = Number(value).toFixed(2);
+                          const percentage = total ? ((value / total) * 100).toFixed(2) : "0.00";
+                          return `${label}: ${valueRounded}h (${percentage}%)`;
                       }
                   }
               }
@@ -214,7 +215,10 @@ function setupWebcam(modalId, videoId, canvasId, snapButtonId, imageDataId, prev
 
       // Kiểm tra để kích hoạt nút submit
       const locationInput = document.getElementById(modalId === 'checkInModal' ? 'checkin_location' : 'checkout_location');
-      submitButton.disabled = !imageDataInput.value || !locationInput?.value;
+      const submitButton = document.getElementById(modalId === 'checkInModal' ? 'checkin_submit' : 'checkout_submit');
+      if (submitButton) {
+          submitButton.disabled = !imageDataInput.value || !locationInput?.value;
+      }
   });
 }
 
@@ -225,7 +229,7 @@ function setupGeolocation(modalId, inputId, loadingId) {
   const modal = document.getElementById(modalId);
   const input = document.getElementById(inputId);
   const loading = document.getElementById(loadingId);
-  const submitButtonId = modalId.toLowerCase().replace('modal', '_submit');
+  const submitButtonId = modalId === 'checkInModal' ? 'checkin_submit' : 'checkout_submit';
   const submitButton = document.getElementById(submitButtonId);
 
   if (!modal || !input || !loading || !submitButton) {
@@ -261,6 +265,8 @@ function setupGeolocation(modalId, inputId, loadingId) {
 * Initialize all charts and features
 */
 document.addEventListener('DOMContentLoaded', function () {
+  console.log('DOM content loaded - initializing scripts');
+
   function initChart(elementId, initFunction, expectedType) {
       const element = document.getElementById(elementId);
       if (!element) {
@@ -310,6 +316,7 @@ document.addEventListener('DOMContentLoaded', function () {
   initChart('projectTimeChart', initProjectTimeChart, 'object');
 
   // Initialize webcam and geolocation
+  console.log('Setting up webcam and geolocation');
   if (document.getElementById('checkInModal')) {
       setupWebcam(
           'checkInModal',
@@ -338,65 +345,321 @@ document.addEventListener('DOMContentLoaded', function () {
       setupGeolocation('checkOutModal', 'checkout_location', 'checkout_location_loading');
   }
 
-  // Xử lý form check-out
-  const checkOutForm = document.getElementById('checkOutForm');
-  if (checkOutForm) {
-      checkOutForm.addEventListener('submit', function(e) {
-          e.preventDefault();
+  // Xử lý nút check-in
+  console.log('Setting up check-in button handler');
+  const checkInBtn = document.getElementById('checkin_submit');
 
-          // Lấy dữ liệu form
-          var formData = new FormData(this);
-          const submitBtn = document.getElementById('checkout_submit');
-          const errorDiv = document.getElementById('checkout_error');
+  if (checkInBtn) {
+      console.log('Found check-in button:', checkInBtn);
+      checkInBtn.addEventListener('click', handleCheckInClick);
+  } else {
+      console.warn('Check-in button not found!');
+  }
 
-          // Disable button and show loading
-          submitBtn.disabled = true;
-          submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...';
-          errorDiv.classList.add('d-none');
+  // Xử lý nút check-out
+  console.log('Setting up check-out button handler');
+  const checkOutBtn = document.getElementById('checkout_submit');
 
-          // Gửi request
-          fetch(checkOutForm.action, {
-              method: 'POST',
-              body: formData,
-              credentials: 'same-origin'
-          })
-          .then(response => response.json())
-          .then(data => {
-              submitBtn.disabled = false;
-              submitBtn.innerHTML = 'Check-out';
+  if (checkOutBtn) {
+      console.log('Found check-out button:', checkOutBtn);
+      checkOutBtn.addEventListener('click', handleCheckOutClick);
+  } else {
+      console.warn('Check-out button not found!');
+  }
 
-              if (data.success) {
-                  // Hiển thị thông báo thành công
-                  Swal.fire({
-                      icon: 'success',
-                      title: 'Check-out thành công',
-                      text: data.message,
-                      confirmButtonText: 'OK',
-                      timer: 5000,
-                      timerProgressBar: true,
-                      showConfirmButton: true,
-                      allowOutsideClick: false
-                  }).then((result) => {
-                      // Chỉ reload khi người dùng nhấn OK hoặc hết thời gian
-                      const modal = bootstrap.Modal.getInstance(document.getElementById('checkOutModal'));
-                      if (modal) modal.hide();
-                      if (data.redirect) {
-                          window.location.href = data.redirect_url;
-                      }
-                  });
-              } else {
-                  // Hiển thị lỗi
-                  errorDiv.textContent = data.message;
-                  errorDiv.classList.remove('d-none');
-              }
-          })
-          .catch(error => {
-              submitBtn.disabled = false;
-              submitBtn.innerHTML = 'Check-out';
-              errorDiv.textContent = 'Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại.';
-              errorDiv.classList.remove('d-none');
-              console.error('Error:', error);
-          });
+  // Thêm event listener để đảm bảo các modal được khởi tạo đúng cách
+  const checkInModal = document.getElementById('checkInModal');
+  if (checkInModal) {
+      checkInModal.addEventListener('shown.bs.modal', function() {
+          console.log('Check-in modal shown');
+      });
+  }
+
+  const checkOutModal = document.getElementById('checkOutModal');
+  if (checkOutModal) {
+      checkOutModal.addEventListener('shown.bs.modal', function() {
+          console.log('Check-out modal shown');
       });
   }
 });
+
+/**
+* Cập nhật thông tin thời gian làm việc mà không cần tải lại trang
+*/
+function updateWorkTimeDisplay() {
+  // Gửi AJAX request để lấy thời gian làm việc hiện tại
+  fetch('/api/current-work-time/', {
+      method: 'GET',
+      credentials: 'same-origin',
+      headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+      }
+  })
+  .then(response => response.json())
+  .then(data => {
+      if (data.success) {
+          // Cập nhật thời gian hiển thị trên trang chủ
+          const todayTimeDisplay = document.getElementById('today-time-display');
+          if (todayTimeDisplay) {
+              todayTimeDisplay.textContent = data.today_time;
+          }
+
+          // Cập nhật thông tin khác nếu cần
+          const timeCard = document.querySelector('.card-body p.text-muted:first-of-type');
+          if (timeCard) {
+              timeCard.innerHTML = 'Hôm nay: <span class="fw-bold">' + data.today_time + '</span>';
+          }
+      }
+  })
+  .catch(error => {
+      console.error('Error fetching work time:', error);
+  });
+}
+
+/**
+* Xử lý sau khi check-in/check-out thành công
+*/
+function handleSuccessfulAttendance(type) {
+  // Cập nhật UI mà không cần reload
+  updateWorkTimeDisplay();
+
+  // Cập nhật nút check-in/check-out theo trạng thái mới nếu cần
+  const checkInBtn = document.querySelector('button[data-bs-target="#checkInModal"]');
+  const checkOutBtn = document.querySelector('button[data-bs-target="#checkOutModal"]');
+
+  if (type === 'checkin') {
+      // Đã check-in, disable nút check-in và enable nút check-out
+      if (checkInBtn) checkInBtn.classList.add('disabled');
+      if (checkOutBtn) checkOutBtn.classList.remove('disabled');
+  } else if (type === 'checkout') {
+      // Đã check-out, disable cả hai nút
+      if (checkInBtn) checkInBtn.classList.add('disabled');
+      if (checkOutBtn) checkOutBtn.classList.add('disabled');
+  }
+}
+
+/**
+ * Xử lý sự kiện click nút check-in
+ */
+function handleCheckInClick() {
+  console.log('handleCheckInClick called');
+
+  const checkInForm = document.getElementById('checkInForm');
+  const submitBtn = document.getElementById('checkin_submit');
+  const errorDiv = document.getElementById('checkin_error');
+
+  if (!checkInForm || !submitBtn) {
+    console.error('Check-in form or submit button not found');
+    return;
+  }
+
+  // Kiểm tra nếu nút đang bị disable để tránh click liên tục
+  if (submitBtn.disabled) {
+    console.log('Submit button is disabled, ignoring click');
+    return;
+  }
+
+  // Lấy dữ liệu form
+  const formData = new FormData(checkInForm);
+
+  // Kiểm tra dữ liệu
+  const imageData = formData.get('checkin_image');
+  const location = formData.get('checkin_location');
+
+  console.log('Check-in data:', {
+    'Has image': !!imageData,
+    'Has location': !!location,
+    'Image data length': imageData ? imageData.length : 0,
+    'Location value': location || 'empty'
+  });
+
+  if (!imageData || !location) {
+    errorDiv.textContent = 'Vui lòng chụp ảnh và cho phép truy cập vị trí';
+    errorDiv.classList.remove('d-none');
+    return;
+  }
+
+  // Disable nút ngay lập tức để ngăn click liên tục
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...';
+  errorDiv.classList.add('d-none');
+
+  // Gửi request
+  const url = checkInForm.getAttribute('action');
+  console.log('Sending check-in request to:', url);
+
+  // Thêm CSRF token vào FormData
+  const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+  formData.append('csrfmiddlewaretoken', csrfToken);
+
+  fetch(url, {
+    method: 'POST',
+    body: formData,
+    credentials: 'same-origin',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRFToken': csrfToken // Đảm bảo gửi CSRF token trong header
+    }
+  })
+  .then(response => {
+    console.log('Check-in response status:', response.status);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log('Check-in response data:', data);
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = 'Check-in';
+
+    // Đóng modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('checkInModal'));
+    if (modal) modal.hide();
+
+    // Hiển thị thông báo
+    Swal.fire({
+      icon: data.success ? 'success' : 'error',
+      title: data.success ? 'Check-in thành công' : 'Lỗi',
+      text: data.message,
+      confirmButtonText: 'OK',
+      timer: data.success ? 3000 : null,
+      timerProgressBar: data.success
+    }).then(() => {
+      // Cập nhật UI nếu cần
+      if (data.success) {
+        handleSuccessfulAttendance('checkin');
+      }
+    });
+  })
+  .catch(error => {
+    console.error('Check-in error:', error);
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = 'Check-in';
+
+    // Đóng modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('checkInModal'));
+    if (modal) modal.hide();
+
+    // Hiển thị thông báo lỗi chi tiết
+    Swal.fire({
+      icon: 'error',
+      title: 'Lỗi hệ thống',
+      text: `Có lỗi xảy ra khi gửi yêu cầu: ${error.message}. Vui lòng thử lại.`,
+      confirmButtonText: 'OK'
+    });
+  });
+}
+
+/**
+ * Xử lý sự kiện click nút check-out
+ */
+function handleCheckOutClick() {
+  console.log('handleCheckOutClick called');
+
+  const checkOutForm = document.getElementById('checkOutForm');
+  const submitBtn = document.getElementById('checkout_submit');
+  const errorDiv = document.getElementById('checkout_error');
+
+  if (!checkOutForm || !submitBtn) {
+    console.error('Check-out form or submit button not found');
+    return;
+  }
+
+  // Kiểm tra nếu nút đang bị disable để tránh click liên tục
+  if (submitBtn.disabled) {
+    console.log('Submit button is disabled, ignoring click');
+    return;
+  }
+
+  // Lấy dữ liệu form
+  const formData = new FormData(checkOutForm);
+
+  // Kiểm tra dữ liệu
+  const imageData = formData.get('checkout_image');
+  const location = formData.get('checkout_location');
+
+  console.log('Check-out data:', {
+    'Has image': !!imageData,
+    'Has location': !!location,
+    'Image data length': imageData ? imageData.length : 0,
+    'Location value': location || 'empty'
+  });
+
+  if (!imageData || !location) {
+    errorDiv.textContent = 'Vui lòng chụp ảnh và cho phép truy cập vị trí';
+    errorDiv.classList.remove('d-none');
+    return;
+  }
+
+  // Disable nút và hiển thị loading
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...';
+  errorDiv.classList.add('d-none');
+
+  // Gửi request
+  const url = checkOutForm.getAttribute('action');
+  console.log('Sending check-out request to:', url);
+
+  // Thêm CSRF token vào FormData
+  const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+  formData.append('csrfmiddlewaretoken', csrfToken);
+
+  fetch(url, {
+    method: 'POST',
+    body: formData,
+    credentials: 'same-origin',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRFToken': csrfToken // Đảm bảo gửi CSRF token trong header
+    }
+  })
+  .then(response => {
+    console.log('Check-out response status:', response.status);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log('Check-out response data:', data);
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = 'Check-out';
+
+    // Đóng modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('checkOutModal'));
+    if (modal) modal.hide();
+
+    // Hiển thị thông báo
+    Swal.fire({
+      icon: data.success ? 'success' : 'error',
+      title: data.success ? 'Check-out thành công' : 'Lỗi',
+      text: data.message,
+      confirmButtonText: 'OK',
+      timer: data.success ? 3000 : null,
+      timerProgressBar: data.success
+    }).then(() => {
+      // Cập nhật UI nếu cần
+      if (data.success) {
+        handleSuccessfulAttendance('checkout');
+      }
+    });
+  })
+  .catch(error => {
+    console.error('Check-out error:', error);
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = 'Check-out';
+
+    // Đóng modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('checkOutModal'));
+    if (modal) modal.hide();
+
+    // Hiển thị thông báo lỗi chi tiết
+    Swal.fire({
+      icon: 'error',
+      title: 'Lỗi hệ thống',
+      text: `Có lỗi xảy ra khi gửi yêu cầu: ${error.message}. Vui lòng thử lại.`,
+      confirmButtonText: 'OK'
+    });
+  });
+}

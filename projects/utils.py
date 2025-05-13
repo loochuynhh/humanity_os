@@ -85,22 +85,25 @@ def get_project_progress(project):
 
 def calculate_team_member_data(project_id):
     members_data = []
-    project = Projects.objects.get(id=project_id)
-    memberships = TeamProjectMembership.objects.filter(project=project).select_related('user')
-    for membership in memberships:
-        user = membership.user
-        task_count = Tasks.objects.filter(task_assignments__user=user, project=project).count()
-        total_time = TimeEntries.objects.filter(user=user, task__project=project).aggregate(
-            total=Sum('duration')
-        )['total'] or 0
-        total_time_str = f"{int(total_time)}h {int((total_time % 1) * 60)}m"
-        members_data.append({
-            'name': user.get_full_name(),
-            'role': 'Quản lý' if user == project.manager else 'Thành viên',
-            'join_date': membership.join_date.strftime('%d/%m/%Y'),
-            'task_count': task_count,
-            'total_time': total_time_str,
-        })
+    try:
+        project = Projects.objects.get(id=project_id)
+        memberships = TeamProjectMembership.objects.filter(project=project).select_related('user')
+        for membership in memberships:
+            user = membership.user
+            task_count = Tasks.objects.filter(task_assignments__user=user, project=project).count()
+            total_time = TimeEntries.objects.filter(user=user, task__project=project).aggregate(
+                total=Sum('duration')
+            )['total'] or 0
+            total_time_str = f"{int(total_time)}h {int((total_time % 1) * 60)}m"
+            members_data.append({
+                'name': user.get_full_name(),
+                'role': 'Quản lý' if user == project.manager else 'Thành viên',
+                'join_date': membership.join_date.strftime('%d/%m/%Y'),
+                'task_count': task_count,
+                'total_time': total_time_str,
+            })
+    except Exception as e:
+        print(f"Error in calculate_team_member_data: {str(e)}")
     return members_data
 
 
@@ -119,6 +122,86 @@ def calculate_project_progress_data(project_id):
     }
 
 
+def get_project_progress_data(project_id):
+    """
+    Lấy dữ liệu tiến độ chi tiết của dự án.
+    """
+    try:
+        project = Projects.objects.get(id=project_id)
+        today = timezone.now().date()
+
+        # Lấy thông tin cơ bản về tasks
+        tasks = Tasks.objects.filter(project=project)
+        total_tasks = tasks.count()
+        completed_tasks = tasks.filter(status='Completed').count()
+        task_counts = dict(tasks.values('status').annotate(count=Count('status')).values_list('status', 'count'))
+        progress = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+
+        # Xác định trạng thái dự án
+        status = 'In progress'
+        if completed_tasks == total_tasks and total_tasks > 0:
+            status = 'Completed'
+        elif project.end_date.date() < today:
+            status = 'Late'
+
+        # Tính toán thời gian còn lại
+        days_left = (project.end_date.date() - today).days if project.end_date else 0
+
+        # Dữ liệu task theo độ khó
+        difficulty_counts = dict(tasks.values('difficulty').annotate(count=Count('difficulty')).values_list('difficulty', 'count'))
+
+        # Dữ liệu tiến độ theo thời gian (tháng hiện tại)
+        month_start = today.replace(day=1)
+        progress_by_date = {}
+        for i in range(31):  # Tối đa 31 ngày/tháng
+            date = month_start + timedelta(days=i)
+            if date > today:
+                break
+            completed_by_date = tasks.filter(
+                status='Completed',
+                completed_date__date__lte=date
+            ).count()
+            progress_by_date_value = (completed_by_date / total_tasks * 100) if total_tasks > 0 else 0
+            progress_by_date[date.strftime('%d/%m')] = round(progress_by_date_value, 1)
+
+        # Thống kê thành viên
+        member_statistics = []
+        for user in project.team_members.all():
+            user_tasks = tasks.filter(task_assignments__user=user)
+            user_completed = user_tasks.filter(task_assignments__status='Completed').count()
+            user_progress = (user_completed / user_tasks.count() * 100) if user_tasks.count() > 0 else 0
+
+            member_statistics.append({
+                'name': f"{user.first_name} {user.last_name}",
+                'task_count': user_tasks.count(),
+                'completed': user_completed,
+                'progress': round(user_progress, 1)
+            })
+
+        return {
+            'project_name': project.name,
+            'status': status,
+            'start_date': project.start_date.strftime('%d/%m/%Y') if project.start_date else None,
+            'end_date': project.end_date.strftime('%d/%m/%Y') if project.end_date else None,
+            'days_left': days_left,
+            'total_tasks': total_tasks,
+            'completed_tasks': completed_tasks,
+            'progress': round(progress, 1),
+            'task_counts': task_counts,
+            'difficulty_counts': difficulty_counts,
+            'progress_by_date': progress_by_date,
+            'member_statistics': member_statistics
+        }
+    except Exception as e:
+        print(f"Error in get_project_progress_data: {str(e)}")
+        return {
+            'total_tasks': 0,
+            'completed_tasks': 0,
+            'progress': 0,
+            'task_counts': {}
+        }
+
+
 def check_deadline_warnings(task):
     days_until_deadline = task.days_until_deadline
     if task.is_overdue:
@@ -127,20 +210,6 @@ def check_deadline_warnings(task):
         return {'type': 'warning', 'message': f'Task sắp đến hạn ({days_until_deadline} ngày còn lại)!'}
     return None
 
-
-def get_project_progress_data(project_id):
-    project = Projects.objects.get(id=project_id)
-    tasks = Tasks.objects.filter(project=project)
-    total_tasks = tasks.count()
-    completed_tasks = tasks.filter(status='Completed').count()
-    task_counts = dict(tasks.values('status').annotate(count=Count('status')).values_list('status', 'count'))
-    progress = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
-    return {
-        'total_tasks': total_tasks,
-        'completed_tasks': completed_tasks,
-        'progress': round(progress, 1),
-        'task_counts': task_counts
-    }
 
 def calculate_time_by_day(user):
     today = timezone.now().date()
@@ -174,9 +243,10 @@ def calculate_time_by_day(user):
         data.append({
             'day': day.strftime('%d/%m'),
             'total_time': round(total_time, 2)
-        })
+            })
 
     return data
+
 
 def calculate_time_by_task(user):
     data = []
@@ -192,5 +262,26 @@ def calculate_time_by_task(user):
             data.append({
                 'task_title': task.title,
                 'total_time': round(total_time, 2)
-            })
+                })
     return data
+
+
+def get_project_status(project):
+    """
+    Xác định trạng thái dự án dựa trên tiến độ và deadline.
+    """
+    today = timezone.now().date()
+    tasks = Tasks.objects.filter(project=project)
+    total_tasks = tasks.count()
+    completed_tasks = tasks.filter(status='Completed').count()
+
+    if total_tasks == 0:
+        return 'Not started'
+
+    if completed_tasks == total_tasks:
+        return 'Completed'
+
+    if project.end_date and project.end_date.date() < today:
+        return 'Late'
+
+    return 'In progress'
