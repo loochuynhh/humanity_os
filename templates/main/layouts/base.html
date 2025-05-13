@@ -14,6 +14,7 @@
 
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="{% static 'assets/css/components/datatables.css' %}">
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
@@ -31,6 +32,26 @@
     <script src="{% static 'assets/js/core/bootstrap.min.js' %}"></script>
     <script src="{% static 'assets/js/plugin/sweetalert/sweetalert2.all.min.js' %}"></script>
     <script src="{% static 'assets/js/plugin/chart.js/chart.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
+
+    <!-- Script khởi tạo DataTables -->
+    <script>
+        $(document).ready(function() {
+            // Định nghĩa cấu hình mặc định cho tất cả DataTables
+            $.extend(true, $.fn.dataTable.defaults, {
+                "language": {
+                    "url": "{% static 'assets/js/plugin/datatables/i18n/Vietnamese.json' %}"
+                },
+                "dom": "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                       "<'row'<'col-sm-12'tr>>" +
+                       "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                "pageLength": 10,
+                "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "Tất cả"]]
+            });
+            
+            // Không tự động khởi tạo ở đây - để cho từng file JS riêng khởi tạo
+        });
+    </script>
 
     <!-- Script xử lý thông báo bằng SweetAlert2 -->
     <script>

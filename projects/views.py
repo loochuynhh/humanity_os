@@ -66,18 +66,16 @@ def all_projects(request):
         in_progress_tasks = tasks.filter(status='In Progress').count()
         late_tasks = tasks.filter(status='Late').count()
 
-        # Xác định trạng thái dự án
-        if total_tasks > 0 and completed_tasks == total_tasks:
-            status = 'completed'
-        elif project.end_date.date() < today and (total_tasks == 0 or completed_tasks < total_tasks):
-            status = 'delayed'
+        # Xác định trạng thái dự án dựa vào start_date và end_date
+        if project.start_date.date() > today:
+            status = 'not_started'  # Chưa thực hiện
+            status_display = 'Chưa thực hiện'
+        elif total_tasks > 0 and completed_tasks == total_tasks:
+            status = 'completed'    # Đã hoàn thành
+            status_display = 'Đã hoàn thành'
         else:
-            # Kiểm tra xem có task nào đang tạm dừng không
-            paused_tasks = tasks.filter(status='Paused').count()
-            if paused_tasks > 0 and paused_tasks == total_tasks:
-                status = 'paused'
-            else:
-                status = 'active'
+            status = 'in_progress'  # Đang thực hiện
+            status_display = 'Đang thực hiện'
 
         # Lọc theo trạng thái
         if status_filter != 'all' and status != status_filter:
@@ -98,7 +96,7 @@ def all_projects(request):
             'in_progress_tasks': in_progress_tasks,
             'late_tasks': late_tasks,
             'status': status,
-            'status_display': 'Hoàn thành' if status == 'completed' else 'Trễ hạn' if status == 'delayed' else 'Tạm dừng' if status == 'paused' else 'Đang thực hiện',
+            'status_display': status_display,
             'is_member': request.user in project.team_members.all(),
             'is_manager': request.user == project.manager,
             'team_members': project.team_members.all()
@@ -488,15 +486,39 @@ def project_calendar_events(request):
     # Chuyển đổi string date thành datetime
     if start_date and end_date:
         try:
-            start_date = timezone.datetime.fromisoformat(start_date.replace('Z', '+00:00'))
-            end_date = timezone.datetime.fromisoformat(end_date.replace('Z', '+00:00'))
-        except ValueError:
-            return JsonResponse({'success': False, 'error': 'Định dạng ngày không hợp lệ'}, status=400)
+            # Xử lý nhiều định dạng khác nhau có thể được gửi từ FullCalendar
+            try:
+                start_date = timezone.datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            except ValueError:
+                # Thử một format khác nếu format đầu tiên không thành công
+                from datetime import datetime
+                start_date = timezone.make_aware(datetime.strptime(start_date, '%Y-%m-%dT%H:%M:%S.%fZ'))
+                
+            try:
+                end_date = timezone.datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            except ValueError:
+                # Thử một format khác nếu format đầu tiên không thành công
+                from datetime import datetime
+                end_date = timezone.make_aware(datetime.strptime(end_date, '%Y-%m-%dT%H:%M:%S.%fZ'))
+        except (ValueError, TypeError) as e:
+            # Log lỗi để debug
+            print(f"Lỗi chuyển đổi datetime: {e}, start_date={start_date}, end_date={end_date}")
+            # Nếu không thể chuyển đổi, lấy phạm vi mặc định (tháng hiện tại)
+            today = timezone.now()
+            start_date = timezone.datetime(today.year, today.month, 1)
+            if today.month == 12:
+                end_date = timezone.datetime(today.year + 1, 1, 1)
+            else:
+                end_date = timezone.datetime(today.year, today.month + 1, 1)
 
     # Lọc dự án nếu có project_id
     projects = get_user_projects(request.user)
-    if project_id:
-        projects = projects.filter(id=project_id)
+    if project_id and project_id != '':
+        try:
+            projects = projects.filter(id=int(project_id))
+        except (ValueError, TypeError):
+            # Nếu project_id không phải số hợp lệ, vẫn lấy tất cả dự án
+            pass
 
     # Lấy các task trong khoảng thời gian
     tasks = Tasks.objects.filter(project__in=projects)
@@ -518,7 +540,9 @@ def project_calendar_events(request):
             'url': f'/projects/tasks/{task.id}/',
             'extendedProps': {
                 'type': 'task',
-                'project': task.project.name
+                'project': task.project.name,
+                'description': task.description[:100] + '...' if len(task.description) > 100 else task.description,
+                'status': task.status
             }
         })
 
@@ -534,7 +558,8 @@ def project_calendar_events(request):
                 'textColor': '#ffffff',
                 'extendedProps': {
                     'type': 'project',
-                    'project': project.name
+                    'project': project.name,
+                    'description': f'Ngày bắt đầu dự án {project.name}'
                 }
             })
 
@@ -548,11 +573,12 @@ def project_calendar_events(request):
                 'textColor': '#000000',
                 'extendedProps': {
                     'type': 'project',
-                    'project': project.name
+                    'project': project.name,
+                    'description': f'Ngày kết thúc dự án {project.name}'
                 }
             })
 
-    return JsonResponse(events, safe=False)
+    return JsonResponse({'events': events}, safe=False)
 
 
 @login_required
@@ -726,11 +752,15 @@ def project_detail(request, project_id):
 
         # Trạng thái dự án
         today = timezone.now().date()
-        status = 'In progress'
-        if completed_tasks == total_tasks and total_tasks > 0:
-            status = 'Completed'
-        elif project.end_date.date() < today:
-            status = 'Late'
+        if project.start_date.date() > today:
+            status = 'not_started'  # Chưa thực hiện
+            status_display = 'Chưa thực hiện'
+        elif completed_tasks == total_tasks and total_tasks > 0:
+            status = 'completed'    # Đã hoàn thành
+            status_display = 'Đã hoàn thành'
+        else:
+            status = 'in_progress'  # Đang thực hiện
+            status_display = 'Đang thực hiện'
 
         # Dữ liệu task theo trạng thái
         task_statuses = dict(Tasks.objects.filter(project=project).values('status').annotate(count=Count('status')).values_list('status', 'count'))
@@ -748,6 +778,7 @@ def project_detail(request, project_id):
                     'name': f"{project.manager.first_name} {project.manager.last_name}" if project.manager else 'Chưa phân công'
                 },
                 'status': status,
+                'status_display': status_display,
                 'progress': round(progress, 1),
                 'member_count': project.team_members.count(),
                 'task_count': total_tasks,

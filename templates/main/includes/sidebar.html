@@ -46,8 +46,8 @@
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link sub-link {% if '/projects/statistics/' in request.path or '/projects/progress/' in request.path %}active{% endif %}" href="{% url 'projects:project_statistics' %}">
-                <i class="bi bi-graph-up-arrow me-2"></i>Thống kê & Tiến độ
+              <a class="nav-link sub-link {% if request.resolver_match.url_name == 'project_calendar' %}active{% endif %}" href="{% url 'projects:project_calendar' %}">
+                <i class="bi bi-calendar-event me-2"></i>Lịch
               </a>
             </li>
           </ul>
@@ -75,11 +75,6 @@
             <li class="nav-item">
               <a class="nav-link sub-link {% if request.resolver_match.url_name == 'time_tracking' %}active{% endif %}" href="{% url 'projects:time_tracking' %}">
                 <i class="bi bi-clock-history me-2"></i>Theo dõi thời gian
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link sub-link {% if request.resolver_match.url_name == 'project_calendar' %}active{% endif %}" href="{% url 'projects:project_calendar' %}">
-                <i class="bi bi-calendar-event me-2"></i>Lịch
               </a>
             </li>
           </ul>

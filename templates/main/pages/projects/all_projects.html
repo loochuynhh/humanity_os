@@ -20,7 +20,7 @@
         <h1 class="h2 fw-bold">
           <i class="bi bi-folder2-open me-2"></i>Quản lý dự án
         </h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
+        <!-- <div class="btn-toolbar mb-2 mb-md-0">
           <div class="btn-group me-2">
             <button type="button" class="btn btn-sm btn-outline-primary" id="btnCreateProject" data-bs-toggle="modal" data-bs-target="#createProjectModal">
               <i class="bi bi-plus-circle me-1"></i>Thêm dự án
@@ -29,7 +29,7 @@
               <i class="bi bi-file-earmark-excel me-1"></i>Xuất dữ liệu
             </button>
           </div>
-        </div>
+        </div> -->
       </div>
 
       <!-- Bộ lọc -->
@@ -39,10 +39,9 @@
             <label class="filter-label">Trạng thái</label>
             <select id="statusFilter" class="form-select filter-control">
               <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Tất cả trạng thái</option>
-              <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Đang thực hiện</option>
-              <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Hoàn thành</option>
-              <option value="delayed" {% if status_filter == 'delayed' %}selected{% endif %}>Trễ hạn</option>
-              <option value="paused" {% if status_filter == 'paused' %}selected{% endif %}>Tạm dừng</option>
+              <option value="not_started" {% if status_filter == 'not_started' %}selected{% endif %}>Chưa thực hiện</option>
+              <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>Đang thực hiện</option>
+              <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Đã hoàn thành</option>
             </select>
           </div>
           <div class="col-md-3">
@@ -50,7 +49,6 @@
             <select id="viewFilter" class="form-select filter-control">
               <option value="all" {% if filter_type == 'all' %}selected{% endif %}>Tất cả dự án</option>
               <option value="my" {% if filter_type == 'my' %}selected{% endif %}>Dự án của tôi</option>
-              <option value="managed" {% if filter_type == 'managed' %}selected{% endif %}>Dự án quản lý</option>
             </select>
           </div>
           <div class="col-md-3">
@@ -77,8 +75,7 @@
           </div>
         </div>
 
-        <!-- Nút tìm kiếm nâng cao -->
-        <div class="row mt-3">
+        <!-- <div class="row mt-3">
         <div class="col-12">
             <button class="btn btn-sm btn-link text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#advancedFilters" aria-expanded="false" aria-controls="advancedFilters">
               <i class="bi bi-sliders me-1"></i>Tìm kiếm nâng cao
@@ -86,7 +83,6 @@
           </div>
         </div>
 
-        <!-- Bộ lọc nâng cao -->
         <div class="collapse mt-3" id="advancedFilters">
           <div class="card card-body">
               <div class="row g-3">
@@ -133,7 +129,7 @@
               </div>
             </div>
           </div>
-        </div>
+        </div> -->
       </div>
 
       <!-- Chế độ xem -->
@@ -171,44 +167,55 @@
                 </ul>
               </div>
             </div>
+            <!-- Phần sửa đổi cho hiển thị lưới -->
             <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <span class="badge {% if project.status == 'completed' %}bg-success{% elif project.status == 'delayed' %}bg-danger{% elif project.status == 'paused' %}bg-warning{% else %}bg-primary{% endif %}">
-                  {{ project.status_display }}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="badge {% if project.status == 'completed' %}bg-success{% elif project.status == 'not_started' %}bg-secondary{% else %}bg-primary{% endif %}">
+                    {{ project.status_display }}
                 </span>
-                <small class="text-muted">
-                  <i class="bi bi-calendar me-1"></i>{{ project.end_date|date:"d/m/Y" }}
-                </small>
-              </div>
-              <p class="card-text small mb-3 text-truncate-2">{{ project.description }}</p>
-              <div class="d-flex justify-content-between align-items-center mb-2">
+                </div>
+                <p class="card-text small mb-3 text-truncate-2">{{ project.description }}</p>
+                <!-- Hiển thị cả ngày bắt đầu và kết thúc -->
+                <div class="dates-container mb-3">
+                <div class="small text-muted">
+                    <i class="bi bi-calendar-check me-1"></i>Bắt đầu: {{ project.start_date|date:"d/m/Y" }}
+                </div>
+                <div class="small text-muted">
+                    <i class="bi bi-calendar-x me-1"></i>Kết thúc: {{ project.end_date|date:"d/m/Y" }}
+                </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
                 <div class="task-stats small">
-                  <span class="text-success me-2" title="Hoàn thành"><i class="bi bi-check-circle-fill me-1"></i>{{ project.completed_tasks }}</span>
-                  <span class="text-primary me-2" title="Đang thực hiện"><i class="bi bi-play-circle-fill me-1"></i>{{ project.in_progress_tasks }}</span>
-                  <span class="text-danger" title="Trễ hạn"><i class="bi bi-exclamation-circle-fill me-1"></i>{{ project.late_tasks }}</span>
+                    <span class="text-success me-2" title="Hoàn thành"><i class="bi bi-check-circle-fill me-1"></i>{{ project.completed_tasks }}</span>
+                    <span class="text-primary me-2" title="Đang thực hiện"><i class="bi bi-play-circle-fill me-1"></i>{{ project.in_progress_tasks }}</span>
                 </div>
                 <span class="fw-bold small">{{ project.progress }}%</span>
-              </div>
-              <div class="progress mb-3" style="height: 8px;">
-                <div class="progress-bar {% if project.status == 'completed' %}bg-success{% elif project.status == 'delayed' %}bg-danger{% elif project.status == 'paused' %}bg-warning{% else %}bg-primary{% endif %}" role="progressbar" style="width: {{ project.progress }}%" aria-valuenow="{{ project.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="avatar-group">
-                  {% for member in project.team_members|slice:":4" %}
-                  <div class="avatar" title="{{ member.get_full_name }}">
-                    {{ member.get_initials }}
-                  </div>
-                  {% endfor %}
-                  {% if project.team_members.count > 4 %}
-                  <div class="avatar" title="Xem thêm">
-                    +{{ project.team_members.count|add:"-4" }}
-                  </div>
-                  {% endif %}
                 </div>
-                <button class="btn btn-sm btn-primary view-details" data-bs-toggle="modal" data-bs-target="#projectDetailModal" data-id="{{ project.id }}">
-                  Chi tiết
-                </button>
-              </div>
+                <div class="progress mb-3" style="height: 8px;">
+                <div class="progress-bar {% if project.status == 'completed' %}bg-success{% elif project.status == 'not_started' %}bg-secondary{% else %}bg-primary{% endif %}" role="progressbar" style="width: {{ project.progress }}%" aria-valuenow="{{ project.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                <div class="avatar-group">
+                    {% for member in project.team_members|slice:":4" %}
+                    <div class="avatar" title="{{ member.get_full_name }}">
+                    {{ member.get_initials }}
+                    </div>
+                    {% endfor %}
+                    {% if project.team_members.count > 4 %}
+                    <div class="avatar" title="Xem thêm">
+                    +{{ project.team_members.count|add:"-4" }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-primary view-details" data-bs-toggle="modal" data-bs-target="#projectDetailModal" data-id="{{ project.id }}">
+                    <i class="bi bi-eye me-1"></i>Chi tiết
+                    </button>
+                    <a href="{% url 'projects:project_statistics' %}?project_id={{ project.id }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-graph-up me-1"></i>Tiến độ
+                    </a>
+                </div>
+                </div>
             </div>
           </div>
           {% empty %}
@@ -246,36 +253,32 @@
                   <tr data-id="{{ project.id }}" data-status="{{ project.status }}" data-view="{% if project.is_member %}my{% else %}all{% endif %}" data-manager="{% if project.is_manager %}managed{% else %}all{% endif %}">
                     <td>
                       <div class="d-flex align-items-center">
-                        <div class="project-icon {% if project.status == 'completed' %}bg-success{% elif project.status == 'delayed' %}bg-danger{% elif project.status == 'paused' %}bg-warning{% else %}bg-primary{% endif %} text-white rounded me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                          <i class="bi bi-folder2"></i>
-                        </div>
                         <div>
                           <h6 class="mb-0">{{ project.name }}</h6>
                           <small class="text-muted text-truncate d-inline-block" style="max-width: 250px;">{{ project.description }}</small>
-                          </div>
                         </div>
-                      </td>
-                      <td>
-                      <span class="badge {% if project.status == 'completed' %}bg-success{% elif project.status == 'delayed' %}bg-danger{% elif project.status == 'paused' %}bg-warning{% else %}bg-primary{% endif %}">
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge {% if project.status == 'completed' %}bg-success{% elif project.status == 'not_started' %}bg-secondary{% else %}bg-primary{% endif %}">
                         {{ project.status_display }}
                       </span>
-                      </td>
-                      <td>
+                    </td>
+                    <td>
                       <div class="d-flex align-items-center">
                         <div class="progress me-2" style="width: 100px; height: 6px;">
-                          <div class="progress-bar {% if project.status == 'completed' %}bg-success{% elif project.status == 'delayed' %}bg-danger{% elif project.status == 'paused' %}bg-warning{% else %}bg-primary{% endif %}" role="progressbar" style="width: {{ project.progress }}%" aria-valuenow="{{ project.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                          <div class="progress-bar {% if project.status == 'completed' %}bg-success{% elif project.status == 'not_started' %}bg-secondary{% else %}bg-primary{% endif %}" role="progressbar" style="width: {{ project.progress }}%" aria-valuenow="{{ project.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
                         <span class="small fw-bold">{{ project.progress }}%</span>
                       </div>
-                      </td>
-                      <td>
+                    </td>
+                    <td>
                       <div class="task-stats small">
                         <span class="text-success me-2" title="Hoàn thành"><i class="bi bi-check-circle-fill me-1"></i>{{ project.completed_tasks }}</span>
                         <span class="text-primary me-2" title="Đang thực hiện"><i class="bi bi-play-circle-fill me-1"></i>{{ project.in_progress_tasks }}</span>
-                        <span class="text-danger" title="Trễ hạn"><i class="bi bi-exclamation-circle-fill me-1"></i>{{ project.late_tasks }}</span>
                       </div>
-                      </td>
-                      <td>
+                    </td>
+                    <td>
                       <div class="avatar-group">
                         {% for member in project.team_members|slice:":3" %}
                         <div class="avatar" title="{{ member.get_full_name }}">
@@ -292,7 +295,7 @@
                     <td>
                       <div class="small">
                         <div><i class="bi bi-calendar-check me-1"></i>{{ project.start_date|date:"d/m/Y" }}</div>
-                        <div class="{% if project.status == 'delayed' %}text-danger{% endif %}">
+                        <div>
                           <i class="bi bi-calendar-x me-1"></i>{{ project.end_date|date:"d/m/Y" }}
                         </div>
                       </div>
@@ -302,29 +305,26 @@
                         <button type="button" class="btn btn-sm btn-primary view-details" data-bs-toggle="modal" data-bs-target="#projectDetailModal" data-id="{{ project.id }}">
                           <i class="bi bi-eye"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProjectModal" data-id="{{ project.id }}">
-                          <i class="bi bi-pencil"></i>
-                        </button>
                         <a href="{% url 'projects:project_statistics' %}?project_id={{ project.id }}" class="btn btn-sm btn-outline-primary">
                           <i class="bi bi-graph-up"></i>
                         </a>
-                        </div>
-                      </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                    <td colspan="7" class="text-center py-5">
-                      <i class="bi bi-folder2-open display-4 text-muted mb-3"></i>
-                      <h5 class="text-muted">Chưa có dự án nào</h5>
-                      <p class="text-muted">Nhấn "Thêm dự án" để tạo dự án mới</p>
-                      <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#createProjectModal">
-                        <i class="bi bi-plus-circle me-2"></i>Thêm dự án mới
-                      </button>
-                      </td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
+                      </div>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                  <td colspan="7" class="text-center py-5">
+                    <i class="bi bi-folder2-open display-4 text-muted mb-3"></i>
+                    <h5 class="text-muted">Chưa có dự án nào</h5>
+                    <p class="text-muted">Nhấn "Thêm dự án" để tạo dự án mới</p>
+                    <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+                      <i class="bi bi-plus-circle me-2"></i>Thêm dự án mới
+                    </button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -549,41 +549,41 @@ $(document).ready(function() {
 
       // Gọi API để lấy dữ liệu chi tiết dự án
       $.ajax({
-        url: `/api/projects/${projectId}/`,
+        url: `/projects/projects/${projectId}/`,
         method: 'GET',
         success: function(data) {
           // Cập nhật tab Tổng quan
           var overviewHtml = `
             <div class="p-3">
               <div class="d-flex justify-content-between mb-3">
-                <h4>${data.name}</h4>
-                <span class="badge ${data.status === 'Completed' ? 'bg-success' : data.is_overdue ? 'bg-danger' : 'bg-primary'}">${data.status_display}</span>
+                <h4>${data.project.name}</h4>
+                <span class="badge ${data.project.status === 'completed' ? 'bg-success' : data.project.status === 'not_started' ? 'bg-secondary' : 'bg-primary'}">${data.project.status === 'completed' ? 'Đã hoàn thành' : data.project.status === 'not_started' ? 'Chưa thực hiện' : 'Đang thực hiện'}</span>
               </div>
               <div class="mb-3">
                 <h6 class="text-muted">Mô tả</h6>
-                <p>${data.description}</p>
+                <p>${data.project.description}</p>
               </div>
               <div class="row mb-3">
                 <div class="col-md-6">
                   <h6 class="text-muted">Ngày bắt đầu</h6>
-                  <p>${data.start_date}</p>
+                  <p>${data.project.start_date}</p>
                 </div>
                 <div class="col-md-6">
                   <h6 class="text-muted">Ngày kết thúc</h6>
-                  <p class="${data.is_overdue ? 'text-danger' : ''}">${data.end_date}</p>
+                  <p>${data.project.end_date}</p>
                 </div>
               </div>
               <div class="mb-3">
                 <h6 class="text-muted">Quản lý dự án</h6>
-                <p>${data.manager.full_name}</p>
+                <p>${data.project.manager.name}</p>
               </div>
               <div class="mb-3">
                 <h6 class="text-muted">Tiến độ</h6>
                 <div class="d-flex align-items-center">
                   <div class="progress flex-grow-1 me-2" style="height: 8px;">
-                    <div class="progress-bar ${data.status === 'Completed' ? 'bg-success' : data.is_overdue ? 'bg-danger' : 'bg-primary'}" role="progressbar" style="width: ${data.progress}%" aria-valuenow="${data.progress}" aria-valuemin="0" aria-valuemax="100"></div>
+                    <div class="progress-bar ${data.project.status === 'completed' ? 'bg-success' : data.project.status === 'not_started' ? 'bg-secondary' : 'bg-primary'}" role="progressbar" style="width: ${data.project.progress}%" aria-valuenow="${data.project.progress}" aria-valuemin="0" aria-valuemax="100"></div>
                   </div>
-                  <span class="fw-bold">${data.progress}%</span>
+                  <span class="fw-bold">${data.project.progress}%</span>
                 </div>
               </div>
             </div>
@@ -592,13 +592,17 @@ $(document).ready(function() {
 
           // Cập nhật tab Thành viên
           var membersHtml = '';
-          data.team_members.forEach(function(member) {
+          data.members.forEach(function(member) {
             membersHtml += `
               <div class="member-card">
-                <div class="member-avatar">${member.initials}</div>
                 <div class="member-info">
-                  <div class="member-name">${member.full_name}</div>
-                  <div class="member-role">${member.role || 'Thành viên dự án'}</div>
+                  <div class="member-name">${member.name}</div>
+                  <div class="member-role">${member.role}</div>
+                  <div class="member-stats">
+                    <span class="badge bg-info">Công việc: ${member.tasks_count}</span>
+                    <span class="badge bg-success">Hoàn thành: ${member.completed_tasks}</span>
+                    <span class="badge bg-secondary">Thời gian: ${member.total_time}h</span>
+                  </div>
                 </div>
               </div>
             `;
@@ -631,10 +635,10 @@ $(document).ready(function() {
                       task.status === 'Completed' ? 'bg-success' :
                       task.status === 'In progress' ? 'bg-primary' :
                       task.status === 'Late' ? 'bg-danger' : 'bg-secondary'
-                    }">${task.status_display}</span>
+                    }">${task.status}</span>
                   </td>
-                  <td>${task.assigned_to ? task.assigned_to.full_name : 'Chưa phân công'}</td>
-                  <td class="${task.is_overdue ? 'text-danger' : ''}">${task.deadline}</td>
+                  <td>${task.assignee_count > 0 ? `${task.assignee_count} thành viên` : 'Chưa phân công'}</td>
+                  <td>${new Date(task.deadline).toLocaleDateString('vi-VN')}</td>
                 </tr>
               `;
             });
@@ -659,27 +663,23 @@ $(document).ready(function() {
             <div class="p-3">
               <div class="project-status-item">
                 <div class="fw-bold">Tổng số công việc</div>
-                <div>${data.task_stats.total || 0}</div>
+                <div>${data.project.task_count || 0}</div>
               </div>
               <div class="project-status-item">
                 <div class="fw-bold">Đã hoàn thành</div>
-                <div>${data.task_stats.completed || 0}</div>
+                <div>${data.project.completed_tasks || 0}</div>
               </div>
               <div class="project-status-item">
-                <div class="fw-bold">Đang thực hiện</div>
-                <div>${data.task_stats.in_progress || 0}</div>
-              </div>
-              <div class="project-status-item">
-                <div class="fw-bold">Trễ hạn</div>
-                <div>${data.task_stats.late || 0}</div>
+                <div class="fw-bold">Trạng thái</div>
+                <div><span class="badge ${data.project.status === 'completed' ? 'bg-success' : data.project.status === 'not_started' ? 'bg-secondary' : 'bg-primary'}">${data.project.status === 'completed' ? 'Đã hoàn thành' : data.project.status === 'not_started' ? 'Chưa thực hiện' : 'Đang thực hiện'}</span></div>
               </div>
               <div class="progress-container">
                 <div class="d-flex justify-content-between align-items-center">
                   <div class="fw-bold">Tiến độ tổng thể</div>
-                  <div>${data.progress}%</div>
+                  <div>${data.project.progress}%</div>
                 </div>
                 <div class="progress">
-                  <div class="progress-bar ${data.status === 'Completed' ? 'bg-success' : data.is_overdue ? 'bg-danger' : 'bg-primary'}" role="progressbar" style="width: ${data.progress}%" aria-valuenow="${data.progress}" aria-valuemin="0" aria-valuemax="100"></div>
+                  <div class="progress-bar ${data.project.status === 'completed' ? 'bg-success' : data.project.status === 'not_started' ? 'bg-secondary' : 'bg-primary'}" role="progressbar" style="width: ${data.project.progress}%" aria-valuenow="${data.project.progress}" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
               </div>
             </div>

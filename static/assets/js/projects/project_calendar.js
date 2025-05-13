@@ -4,13 +4,8 @@
  */
 
 $(document).ready(function() {
-  // Lấy dữ liệu tháng và năm từ data attributes
-  const calendarData = $('#calendarData');
-  const currentMonth = parseInt(calendarData.data('current-month')) || new Date().getMonth() + 1;
-  const currentYear = parseInt(calendarData.data('current-year')) || new Date().getFullYear();
-
   // Khởi tạo lịch
-  initCalendar(new Date(currentYear, currentMonth - 1, 1));
+  initCalendar();
 
   // Thiết lập bộ lọc dự án
   setupProjectFilters();
@@ -24,27 +19,26 @@ $(document).ready(function() {
 
 /**
  * Khởi tạo lịch dự án
- * @param {Date} initialDate - Ngày khởi tạo ban đầu
  */
-function initCalendar(initialDate) {
+function initCalendar() {
   // Sử dụng FullCalendar API
   var calendarEl = document.getElementById('calendar');
   if (!calendarEl) return;
 
   var calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
-    initialDate: initialDate,
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
-      right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
     },
     locale: 'vi',
     buttonText: {
       today: 'Hôm nay',
       month: 'Tháng',
       week: 'Tuần',
-      day: 'Ngày'
+      day: 'Ngày',
+      list: 'Danh sách'
     },
     navLinks: true,
     editable: false,
@@ -72,7 +66,7 @@ function loadEvents(start, end, successCallback, failureCallback) {
   const projectId = $('#projectFilter').val();
 
   $.ajax({
-    url: '/projects/calendar/events/',
+    url: '/projects/project-calendar-events/',
     data: {
       start: start.toISOString(),
       end: end.toISOString(),
@@ -82,8 +76,8 @@ function loadEvents(start, end, successCallback, failureCallback) {
       successCallback(result);
     },
     error: function(error) {
-      failureCallback(error);
       console.error('Lỗi khi tải sự kiện:', error);
+      failureCallback([]);  // Gửi mảng rỗng để tránh lỗi
     }
   });
 }
@@ -93,12 +87,10 @@ function loadEvents(start, end, successCallback, failureCallback) {
  */
 function setupProjectFilters() {
   // Sự kiện thay đổi dự án
-  $('#projectSelect').on('change', function() {
-    var projectId = $(this).val();
-    var currentDate = getCurrentViewDate();
-
-    // Tải lại sự kiện cho dự án đã chọn
-    loadCalendarEvents(currentDate, window.currentCalendarView, projectId);
+  $('#projectFilter').on('change', function() {
+    if (window.calendar) {
+      window.calendar.refetchEvents();
+    }
   });
 
   // Sự kiện thay đổi loại sự kiện
@@ -196,44 +188,72 @@ function setupEventModals() {
 
 /**
  * Hiển thị chi tiết sự kiện
- * @param {number} eventId - ID của sự kiện
+ * @param {Object} event - Sự kiện cần hiển thị chi tiết
  */
-function showEventDetails(eventId) {
-  $.ajax({
-    url: '/projects/events/' + eventId + '/',
-    method: 'GET',
-    dataType: 'json',
-    success: function(event) {
-      // Cập nhật nội dung modal
-      var modal = $('#eventModal');
+function showEventDetails(event) {
+  // Cập nhật thông tin sự kiện vào modal
+  $('#eventTitle').text(event.title);
+  $('#eventStart').text(formatDate(event.start));
+  $('#eventEnd').text(event.end ? formatDate(event.end) : formatDate(event.start));
+  $('#eventProject').text(event.extendedProps.project || 'Không có');
+  $('#eventDescription').text(event.extendedProps.description || 'Không có mô tả');
 
-      modal.find('.modal-title').text(event.title);
-      modal.find('.event-project').text(event.project_name);
-      modal.find('.event-date').text(formatDate(event.date));
-      modal.find('.event-time').text(event.start_time + (event.end_time ? ' - ' + event.end_time : ''));
-      modal.find('.event-description').text(event.description || 'Không có mô tả');
+  // Kiểm tra có phải task không
+  if (event.extendedProps.type === 'task') {
+    $('#taskDetails').removeClass('d-none');
+    $('#eventStatus').text(event.extendedProps.status || 'Không có');
+    $('#eventStatus').attr('class', getStatusClass(event.extendedProps.status));
+    $('#eventAssignees').text(event.extendedProps.assignees || 'Không có');
 
-      // Cập nhật danh sách thành viên
-      var membersContainer = modal.find('.project-members');
-      membersContainer.empty();
-
-      if (event.members && event.members.length > 0) {
-        event.members.forEach(function(member) {
-          membersContainer.append('<img src="' + member.avatar + '" alt="' + member.name + '" class="member-avatar" title="' + member.name + '">');
-        });
-      } else {
-        membersContainer.append('<p>Không có thành viên</p>');
-      }
-
-      // Hiển thị modal
-      var eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
-      eventModal.show();
-    },
-    error: function(xhr, status, error) {
-      console.error('Lỗi khi tải chi tiết sự kiện:', error);
-      showErrorNotification('Không thể tải chi tiết sự kiện. Vui lòng thử lại sau.');
+    // Hiển thị nút xem chi tiết nếu có link
+    if (event.url) {
+      $('#eventLink').attr('href', event.url).removeClass('d-none');
+    } else {
+      $('#eventLink').addClass('d-none');
     }
-  });
+  } else {
+    $('#taskDetails').addClass('d-none');
+    $('#eventLink').addClass('d-none');
+  }
+
+  // Hiển thị modal bằng Bootstrap 5 API
+  var modal = document.getElementById('eventModal');
+  if (modal) {
+    var bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+  }
+}
+
+/**
+ * Định dạng ngày tháng
+ * @param {Date} date - Ngày cần định dạng
+ * @returns {string} Chuỗi ngày đã định dạng
+ */
+function formatDate(date) {
+  if (!date) return '';
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+  return date.toLocaleDateString('vi-VN', options);
+}
+
+/**
+ * Lấy class tương ứng với trạng thái
+ * @param {string} status - Trạng thái task
+ * @returns {string} Class CSS tương ứng
+ */
+function getStatusClass(status) {
+  if (!status) return '';
+  
+  status = status.toLowerCase();
+  if (status.includes('completed') || status.includes('hoàn thành'))
+    return 'badge bg-success';
+  else if (status.includes('progress') || status.includes('đang'))
+    return 'badge bg-warning';
+  else if (status.includes('late') || status.includes('trễ'))
+    return 'badge bg-danger';
+  else if (status.includes('todo') || status.includes('chưa'))
+    return 'badge bg-secondary';
+  else
+    return 'badge bg-primary';
 }
 
 /**
@@ -301,20 +321,6 @@ function showDayEvents(date) {
       showErrorNotification('Không thể tải sự kiện trong ngày. Vui lòng thử lại sau.');
     }
   });
-}
-
-/**
- * Định dạng ngày từ ISO date string sang ngày tháng năm
- * @param {string} dateString - Chuỗi ngày (YYYY-MM-DD)
- * @returns {string} Chuỗi ngày đã định dạng (DD/MM/YYYY)
- */
-function formatDate(dateString) {
-  var date = new Date(dateString);
-  var day = date.getDate().toString().padStart(2, '0');
-  var month = (date.getMonth() + 1).toString().padStart(2, '0');
-  var year = date.getFullYear();
-
-  return day + '/' + month + '/' + year;
 }
 
 /**

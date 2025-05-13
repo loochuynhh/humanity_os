@@ -10,20 +10,12 @@
 {% endblock %}
 
 {% block content %}
-<!-- Ẩn dữ liệu từ Django để JS có thể lấy -->
-<div id="calendarData"
-    data-current-month="{{ current_month }}"
-    data-current-year="{{ current_year }}"
-    data-project-id=""
-    style="display: none;">
-</div>
-
 <div class="container-fluid">
   <div class="row">
     {% include 'main/includes/sidebar.html' %}
 
     <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
-      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom fade-in-down">
         <h1 class="h2 fw-bold">
           <i class="fas fa-calendar me-2"></i>Lịch dự án
         </h1>
@@ -105,7 +97,6 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales-all.min.js"></script>
-<script src="{% static 'assets/js/projects/project_calendar.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   // Khởi tạo lịch
@@ -126,18 +117,25 @@ document.addEventListener('DOMContentLoaded', function() {
       list: 'Danh sách'
     },
     eventClick: function(info) {
-      // Hiển thị thông tin chi tiết sự kiện
+      // Hiển thị thông tin chi tiết sự kiện trong modal
       showEventDetails(info.event);
     },
     events: function(info, successCallback, failureCallback) {
       // Lấy sự kiện từ API
       const projectId = document.getElementById('projectFilter').value;
-      const url = "{% url 'projects:project_calendar_events' %}";
-
-      fetch(`${url}?project_id=${projectId}&start=${info.startStr}&end=${info.endStr}`)
-        .then(response => response.json())
+      
+      // Sử dụng API endpoint đã được định nghĩa trong URLs
+      fetch('{% url "projects:project_calendar_events" %}?project_id=' + projectId + '&start=' + info.startStr + '&end=' + info.endStr)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
         .then(data => {
-          successCallback(data.events);
+          // Kiểm tra dữ liệu trả về có dạng { events: [...] } không
+          const events = data.events || data;
+          successCallback(events);
         })
         .catch(error => {
           console.error('Error loading events:', error);
@@ -150,17 +148,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Cập nhật lịch khi thay đổi dự án
   document.getElementById('projectFilter').addEventListener('change', function() {
-    // Lưu project ID vào data attribute
-    document.getElementById('calendarData').dataset.projectId = this.value;
-    // Refetch events
     calendar.refetchEvents();
   });
 
   // Hiển thị thông tin chi tiết sự kiện trong modal
   function showEventDetails(event) {
-    const modal = new bootstrap.Modal(document.getElementById('eventModal'));
-
-    // Cập nhật thông tin cơ bản
+    const modal = document.getElementById('eventModal');
+    
+    // Cập nhật thông tin sự kiện
     document.getElementById('eventTitle').textContent = event.title;
     document.getElementById('eventStart').textContent = formatDate(event.start);
     document.getElementById('eventEnd').textContent = event.end ? formatDate(event.end) : formatDate(event.start);
@@ -168,25 +163,33 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('eventDescription').textContent = event.extendedProps.description || 'Không có mô tả';
 
     // Kiểm tra có phải task không
-    if (event.extendedProps.isTask) {
+    if (event.extendedProps.type === 'task') {
       document.getElementById('taskDetails').classList.remove('d-none');
-      document.getElementById('eventStatus').textContent = event.extendedProps.status || 'Không có';
-      document.getElementById('eventStatus').className = getStatusClass(event.extendedProps.status);
+      
+      // Hiển thị trạng thái task
+      const statusElement = document.getElementById('eventStatus'); 
+      statusElement.textContent = event.extendedProps.status || 'Không có';
+      statusElement.className = getStatusClass(event.extendedProps.status);
+      
+      // Hiển thị người phụ trách
       document.getElementById('eventAssignees').textContent = event.extendedProps.assignees || 'Không có';
 
       // Hiển thị nút xem chi tiết nếu có link
-      if (event.extendedProps.url) {
-        document.getElementById('eventLink').href = event.extendedProps.url;
-        document.getElementById('eventLink').classList.remove('d-none');
+      const eventLink = document.getElementById('eventLink');
+      if (event.url) {
+        eventLink.href = event.url;
+        eventLink.classList.remove('d-none');
       } else {
-        document.getElementById('eventLink').classList.add('d-none');
+        eventLink.classList.add('d-none');
       }
     } else {
       document.getElementById('taskDetails').classList.add('d-none');
       document.getElementById('eventLink').classList.add('d-none');
     }
 
-    modal.show();
+    // Tạo mới instance của Modal với bootstrap 5
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
   }
 
   // Định dạng ngày tháng
@@ -207,6 +210,8 @@ document.addEventListener('DOMContentLoaded', function() {
       return 'badge bg-warning';
     else if (status.includes('late') || status.includes('trễ'))
       return 'badge bg-danger';
+    else if (status.includes('todo') || status.includes('chưa'))
+      return 'badge bg-secondary';
     else
       return 'badge bg-primary';
   }

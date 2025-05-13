@@ -179,63 +179,149 @@ $(document).ready(function() {
         });
     });
 
-    // Vẽ biểu đồ thời gian theo ngày
-    const ctxDay = document.getElementById('timeByDayChart').getContext('2d');
-    new Chart(ctxDay, {
-        type: 'bar',
-        data: {
-            labels: timeByDayData.map(item => item.day),
-            datasets: [{
-                label: 'Thời gian làm việc (giờ)',
-                data: timeByDayData.map(item => item.total_time),
-                backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true,
+    // Biểu đồ mới 1: Phân bổ thời gian theo dự án
+    function createProjectTimeDistributionChart() {
+        // Xử lý dữ liệu thời gian theo task để nhóm theo dự án
+        const projectData = {};
+        
+        // Giả sử timeByTaskData là mảng các task và thời gian
+        timeByTaskData.forEach(item => {
+            // Lấy tên dự án từ tiêu đề task (giả sử format: "ProjectName: TaskName")
+            const projectName = item.task_title.split(':')[0].trim();
+            if (!projectData[projectName]) {
+                projectData[projectName] = 0;
+            }
+            projectData[projectName] += item.total_time;
+        });
+        
+        // Chuyển đổi dữ liệu thành mảng để sử dụng với Chart.js
+        const labels = Object.keys(projectData);
+        const data = Object.values(projectData);
+        
+        // Tạo màu ngẫu nhiên cho các dự án
+        const backgroundColors = labels.map(() => {
+            const r = Math.floor(Math.random() * 255);
+            const g = Math.floor(Math.random() * 255);
+            const b = Math.floor(Math.random() * 255);
+            return `rgba(${r}, ${g}, ${b}, 0.6)`;
+        });
+        
+        const ctxProjectTime = document.getElementById('timeByDayChart').getContext('2d');
+        new Chart(ctxProjectTime, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: backgroundColors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
                     title: {
                         display: true,
-                        text: 'Giờ'
+                        text: 'Phân bổ thời gian theo dự án'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value.toFixed(2)} giờ (${percentage}%)`;
+                            }
+                        }
                     }
                 }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                }
             }
-        }
-    });
+        });
+    }
 
-    // Vẽ biểu đồ phân bổ thời gian theo task
-    const ctxTask = document.getElementById('timeByTaskChart').getContext('2d');
-    new Chart(ctxTask, {
-        type: 'pie',
-        data: {
-            labels: timeByTaskData.map(item => item.task_title),
-            datasets: [{
-                data: timeByTaskData.map(item => item.total_time),
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.6)',
-                    'rgba(54, 162, 235, 0.6)',
-                    'rgba(255, 206, 86, 0.6)',
-                    'rgba(75, 192, 192, 0.6)',
-                    'rgba(153, 102, 255, 0.6)',
+    // Biểu đồ mới 2: Hiệu suất làm việc theo thời gian
+    function createProductivityChart() {
+        // Xử lý dữ liệu thời gian theo ngày để tính hiệu suất
+        // Hiệu suất = (Thời gian làm việc thực tế / Thời gian dự kiến) * 100
+        
+        // Giả sử dữ liệu theo ngày cung cấp thời gian làm việc thực tế
+        const days = timeByDayData.map(item => item.day);
+        const actualTime = timeByDayData.map(item => item.total_time);
+        
+        // Giả lập thời gian dự kiến (8 giờ làm việc mỗi ngày)
+        const estimatedTime = actualTime.map(() => 8);
+        
+        // Tính hiệu suất
+        const productivity = actualTime.map((time, index) => 
+            Math.min((time / estimatedTime[index]) * 100, 100) // Giới hạn hiệu suất tối đa 100%
+        );
+        
+        const ctxProductivity = document.getElementById('timeByTaskChart').getContext('2d');
+        new Chart(ctxProductivity, {
+            type: 'line',
+            data: {
+                labels: days,
+                datasets: [
+                    {
+                        label: 'Thời gian làm việc (giờ)',
+                        data: actualTime,
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Hiệu suất (%)',
+                        data: productivity,
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        yAxisID: 'y1'
+                    }
                 ]
-            }]
-        },
-        options: {
-            plugins: {
-                legend: {
-                    position: 'right'
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Hiệu suất làm việc theo thời gian'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Thời gian (giờ)'
+                        }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Hiệu suất (%)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
                 }
             }
-        }
-    });
+        });
+    }
+
+    // Gọi hai hàm tạo biểu đồ mới
+    createProjectTimeDistributionChart();
+    createProductivityChart();
 
     // Xuất PDF (tạm thời giữ nguyên)
     $('#export-pdf').click(function() {

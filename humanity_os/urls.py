@@ -19,6 +19,8 @@ urlpatterns = [
     path("kpis/", include(("kpis.urls", "kpis"), namespace="kpis")),
     path("projects/", include(("projects.urls", "projects"), namespace="projects")),
     path("users/", include(("users.urls", "users"), namespace="users")),
+    # API routes
+    path("api/projects/", include("projects.urls")),
 ]
 
 if settings.DEBUG:
