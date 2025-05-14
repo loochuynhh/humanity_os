@@ -17,11 +17,6 @@
         <h1 class="h2 fw-bold">
           <i class="bi bi-clock me-2"></i>Time Tracking
         </h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-          <button class="btn btn-outline-primary btn-sm" id="export-pdf">
-            <i class="bi bi-file-earmark-pdf me-1"></i>Xuất PDF
-          </button>
-        </div>
       </div>
 
       <!-- Tổng hợp thời gian -->
@@ -57,20 +52,32 @@
         <div class="col-md-6">
           <div class="card shadow-sm">
             <div class="card-header">
-              <h5 class="mb-0">Phân bổ thời gian theo dự án</h5>
+              <h5 class="mb-0">Hiệu suất làm việc theo thời gian</h5>
             </div>
             <div class="card-body">
               <canvas id="timeByDayChart"></canvas>
+            </div>
+            <div class="card-footer bg-white">
+              <small class="text-muted">
+                <i class="bi bi-info-circle me-1"></i>
+                Biểu đồ hiển thị thời gian làm việc và hiệu suất theo thời gian với mục tiêu 8 giờ/ngày. Xu hướng hiệu suất (đường cam) giúp theo dõi sự thay đổi hiệu suất.
+              </small>
             </div>
           </div>
         </div>
         <div class="col-md-6">
           <div class="card shadow-sm">
             <div class="card-header">
-              <h5 class="mb-0">Hiệu suất làm việc theo thời gian</h5>
+              <h5 class="mb-0">Hiệu quả sử dụng thời gian theo công việc</h5>
             </div>
-            <div class="card-body">
+            <div class="card-body" style="height: 400px;">
               <canvas id="timeByTaskChart"></canvas>
+            </div>
+            <div class="card-footer bg-white">
+              <small class="text-muted">
+                <i class="bi bi-info-circle me-1"></i>
+                So sánh thời gian ước tính và thực tế cho mỗi công việc. Hiệu quả càng cao (>100%) nghĩa là hoàn thành nhanh hơn dự kiến.
+              </small>
             </div>
           </div>
         </div>
@@ -153,8 +160,47 @@
 <script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
 <script src="{% static 'assets/js/projects/time_tracking.js' %}"></script>
 <script>
-  // Dữ liệu cho biểu đồ
-  const timeByDayData = {{ time_by_day|safe }};
-  const timeByTaskData = {{ time_by_task|safe }};
+  // Dữ liệu cho biểu đồ 
+  var timeByDayData = [];
+  var timeByTaskData = [];
+  
+  {% if time_by_day %}
+    timeByDayData = {{ time_by_day|safe }};
+  {% endif %}
+  
+  {% if time_by_task %}
+    timeByTaskData = {{ time_by_task|safe }};
+  {% endif %}
+  
+  // Kiểm tra dữ liệu trước khi truyền vào biểu đồ
+  console.log('Dữ liệu thời gian theo ngày:', timeByDayData);
+  console.log('Dữ liệu thời gian theo công việc:', timeByTaskData);
+  
+  // Kiểm tra xem dữ liệu có hợp lệ không
+  if (Array.isArray(timeByDayData)) {
+    timeByDayData.forEach(function(item, index) {
+      if (!item || typeof item !== 'object') {
+        console.error('Dữ liệu timeByDayData[' + index + '] không hợp lệ:', item);
+      } else if (item.total_time === null || item.total_time === undefined) {
+        console.error('timeByDayData[' + index + '].total_time null hoặc undefined:', item);
+      }
+    });
+  } else {
+    console.error('timeByDayData không phải là mảng:', timeByDayData);
+  }
+  
+  if (Array.isArray(timeByTaskData)) {
+    timeByTaskData.forEach(function(item, index) {
+      if (!item || typeof item !== 'object') {
+        console.error('Dữ liệu timeByTaskData[' + index + '] không hợp lệ:', item);
+      } else if (item.total_time === null || item.total_time === undefined) {
+        console.error('timeByTaskData[' + index + '].total_time null hoặc undefined:', item);
+      } else if (item.estimated_time === null || item.estimated_time === undefined) {
+        console.error('timeByTaskData[' + index + '].estimated_time null hoặc undefined:', item);
+      }
+    });
+  } else {
+    console.error('timeByTaskData không phải là mảng:', timeByTaskData);
+  }
 </script>
 {% endblock %}

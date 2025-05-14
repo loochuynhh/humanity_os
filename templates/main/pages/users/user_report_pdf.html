@@ -1,0 +1,666 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Báo cáo Hiệu suất Nhân Viên - Humanity OS</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm;
+            @top-center {
+                content: "Báo cáo Hiệu suất Nhân Viên - {{ period_display }}";
+                font-family: 'Helvetica', Arial, sans-serif;
+                font-size: 10pt;
+                color: #003087;
+            }
+            @bottom-center {
+                content: "Trang " counter(page) " / " counter(pages);
+                font-family: 'Helvetica', Arial, sans-serif;
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+        body {
+            font-family: 'Helvetica', Arial, sans-serif;
+            margin: 0;
+            color: #333;
+            line-height: 1.5;
+            font-size: 10pt;
+        }
+        .container {
+            width: 95%;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #003087;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .header img.logo {
+            width: 100px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        .header h1 {
+            color: #003087;
+            font-size: 18pt;
+            margin: 0;
+            font-weight: bold;
+        }
+        .header p {
+            font-size: 10pt;
+            color: #555;
+            margin: 5px 0;
+        }
+        .section {
+            margin: 15px 0 30px 0;
+            page-break-inside: avoid;
+        }
+        .section h2 {
+            color: #003087;
+            font-size: 14pt;
+            margin: 0 0 10px 0;
+            font-weight: bold;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+        .user-info {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #ddd;
+            margin-right: 20px;
+        }
+        .info-details {
+            flex: 1;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .info-item {
+            margin-bottom: 5px;
+        }
+        .info-item strong {
+            font-weight: bold;
+            color: #003087;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .metric-card {
+            background-color: #f5f7fa;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 3px solid #003087;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .metric-card .value {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #003087;
+            margin: 5px 0;
+        }
+        .metric-card .label {
+            font-size: 8pt;
+            color: #666;
+            text-transform: uppercase;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th {
+            background-color: #003087;
+            color: white;
+            font-weight: bold;
+            text-align: left;
+            padding: 8px;
+            font-size: 9pt;
+        }
+        td {
+            border-bottom: 1px solid #ddd;
+            padding: 8px;
+            font-size: 9pt;
+        }
+        tr:nth-child(even) {
+            background-color: #f5f7fa;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #003087;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 8pt;
+            font-weight: bold;
+            color: white;
+        }
+        .badge-success {
+            background-color: #28a745;
+        }
+        .badge-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .badge-danger {
+            background-color: #dc3545;
+        }
+        .badge-info {
+            background-color: #17a2b8;
+        }
+        .badge-primary {
+            background-color: #007bff;
+        }
+        .badge-secondary {
+            background-color: #6c757d;
+        }
+        .chart-container {
+            max-width: 100%;
+            height: 300px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 9pt;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+        .column-2 {
+            column-count: 2;
+            column-gap: 20px;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-muted {
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{% static 'assets/images/logo.png' %}" alt="Humanity OS Logo" class="logo">
+            <h1>Báo cáo Hiệu suất Nhân Viên</h1>
+            <p>{{ period_display }} ({{ start_date|date:"d/m/Y" }} - {{ end_date|date:"d/m/Y" }})</p>
+        </div>
+
+        <!-- Thông tin cá nhân -->
+        <div class="section">
+            <h2>Thông tin cá nhân</h2>
+            <div class="user-info">
+                <img src="{{ user_info.avatar_url }}" alt="{{ user_info.full_name }}" class="avatar">
+                <div class="info-details">
+                    <h3 style="margin-top: 0; color: #003087;">{{ user_info.full_name }}</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <strong>Email:</strong> {{ user_info.email }}
+                        </div>
+                        <div class="info-item">
+                            <strong>Vai trò:</strong> {{ user_info.role }}
+                        </div>
+                        <div class="info-item">
+                            <strong>Phòng ban:</strong> {{ user_info.department }}
+                        </div>
+                        <div class="info-item">
+                            <strong>Số điện thoại:</strong> {{ user_info.phone }}
+                        </div>
+                        <div class="info-item">
+                            <strong>Trạng thái:</strong> {{ user_info.status }}
+                        </div>
+                        <div class="info-item">
+                            <strong>Ngày vào công ty:</strong> {% if user_info.date_of_joining %}{{ user_info.date_of_joining|date:"d/m/Y" }}{% else %}Chưa cập nhật{% endif %}
+                        </div>
+                    </div>
+                    {% if user_info.bio %}
+                    <div class="info-item" style="margin-top: 10px;">
+                        <strong>Giới thiệu:</strong><br>
+                        {{ user_info.bio }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Tổng quan hiệu suất -->
+        <div class="section">
+            <h2>Tổng quan hiệu suất</h2>
+            <div class="metrics">
+                <div class="metric-card">
+                    <div class="label">Tổng số ngày làm việc</div>
+                    <div class="value">{{ time_tracking.working_days }}</div>
+                    <div class="text-muted">{{ attendance.total_days }} ngày trong kỳ</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Tỷ lệ đi làm</div>
+                    <div class="value">{{ attendance.attendance_rate }}%</div>
+                    <div class="text-muted">{{ attendance.present_days }}/{{ attendance.total_days }} ngày</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Tổng thời gian làm việc</div>
+                    <div class="value">{{ time_tracking.total_hours }}</div>
+                    <div class="text-muted">giờ</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Tỷ lệ hiệu suất</div>
+                    <div class="value">{{ time_tracking.productivity_rate }}%</div>
+                    <div class="text-muted">Dựa trên 8 giờ/ngày</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Tỷ lệ hoàn thành công việc</div>
+                    <div class="value">{{ tasks.completion_rate }}%</div>
+                    <div class="text-muted">{{ tasks.completed }}/{{ tasks.total }} tác vụ</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Tỷ lệ đạt KPI</div>
+                    <div class="value">{{ kpis.completion_rate }}%</div>
+                    <div class="text-muted">{{ kpis.achieved }}/{{ kpis.total }} KPI</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Điểm danh -->
+        <div class="section">
+            <h2>Thống kê điểm danh</h2>
+            <div class="metrics" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="metric-card">
+                    <div class="label">Ngày đi làm</div>
+                    <div class="value">{{ attendance.present_days }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Ngày vắng mặt</div>
+                    <div class="value">{{ attendance.absent_days }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Check-in hợp lệ</div>
+                    <div class="value">{{ attendance.valid_checkins }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Check-out hợp lệ</div>
+                    <div class="value">{{ attendance.valid_checkouts }}</div>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ngày</th>
+                        <th>Check-in</th>
+                        <th>Check-out</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in attendance.records %}
+                    <tr>
+                        <td>{{ record.date|date:"d/m/Y" }}</td>
+                        <td>
+                            {% if record.checkin_time %}
+                                {{ record.checkin_time|time:"H:i" }}
+                                <span class="badge {% if record.is_valid_checkin %}badge-success{% else %}badge-danger{% endif %}">
+                                    {% if record.is_valid_checkin %}✓{% else %}✗{% endif %}
+                                </span>
+                            {% else %}
+                                --:--
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if record.checkout_time %}
+                                {{ record.checkout_time|time:"H:i" }}
+                                <span class="badge {% if record.is_valid_checkout %}badge-success{% else %}badge-danger{% endif %}">
+                                    {% if record.is_valid_checkout %}✓{% else %}✗{% endif %}
+                                </span>
+                            {% else %}
+                                --:--
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if record.checkin_time and record.checkout_time %}
+                                <span class="badge badge-success">Hoàn thành</span>
+                            {% elif record.checkin_time %}
+                                <span class="badge badge-warning">Chưa check-out</span>
+                            {% else %}
+                                <span class="badge badge-danger">Vắng mặt</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">Không có dữ liệu điểm danh</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Page break -->
+        <div class="page-break"></div>
+
+        <!-- Thống kê công việc -->
+        <div class="section">
+            <h2>Thống kê công việc</h2>
+            <div class="metrics" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="metric-card">
+                    <div class="label">Tổng số task</div>
+                    <div class="value">{{ tasks.total }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Hoàn thành</div>
+                    <div class="value">{{ tasks.completed }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Đang thực hiện</div>
+                    <div class="value">{{ tasks.in_progress }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Bị trễ hạn</div>
+                    <div class="value">{{ tasks.late }}</div>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tên công việc</th>
+                        <th>Dự án</th>
+                        <th>Deadline</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks.all_tasks %}
+                    <tr>
+                        <td>{{ task.title }}</td>
+                        <td>{{ task.project.name }}</td>
+                        <td>{{ task.deadline|date:"d/m/Y" }}</td>
+                        <td>
+                            <span class="badge {% if task.status == 'Completed' %}badge-success{% elif task.status == 'In progress' %}badge-primary{% elif task.status == 'Late' %}badge-danger{% else %}badge-secondary{% endif %}">
+                                {{ task.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">Không có dữ liệu công việc</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Thống kê dự án -->
+        <div class="section">
+            <h2>Thống kê dự án</h2>
+            <div class="metrics" style="grid-template-columns: repeat(2, 1fr);">
+                <div class="metric-card">
+                    <div class="label">Số dự án tham gia</div>
+                    <div class="value">{{ projects.count }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Tổng thời gian</div>
+                    <div class="value">{{ time_tracking.total_hours }}</div>
+                    <div class="text-muted">giờ</div>
+                </div>
+            </div>
+
+            {% if projects.all_projects %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tên dự án</th>
+                        <th>Số công việc</th>
+                        <th>Hoàn thành</th>
+                        <th>Thời gian (giờ)</th>
+                        <th>Tiến độ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for project, data in projects.with_tasks.items %}
+                    <tr>
+                        <td>{{ project.name }}</td>
+                        <td>{{ data.total }}</td>
+                        <td>{{ data.completed }}</td>
+                        <td>{{ data.time }}</td>
+                        <td>
+                            {% with progress=data.completed|floatformat:0|divisibleby:data.total %}
+                            <div class="progress-container">
+                                <div class="progress-bar" style="width: {{ progress }}%;"></div>
+                            </div>
+                            <span class="text-muted">{{ progress }}%</span>
+                            {% endwith %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-center text-muted">Không có dữ liệu dự án</p>
+            {% endif %}
+        </div>
+
+        <!-- Phân bổ thời gian -->
+        <div class="section">
+            <h2>Phân bổ thời gian</h2>
+            <div class="metrics" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="metric-card">
+                    <div class="label">Tổng thời gian làm việc</div>
+                    <div class="value">{{ time_tracking.total_hours }}</div>
+                    <div class="text-muted">giờ</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Trung bình mỗi ngày</div>
+                    <div class="value">{{ time_tracking.avg_daily_hours }}</div>
+                    <div class="text-muted">giờ/ngày</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Số ngày làm việc</div>
+                    <div class="value">{{ time_tracking.working_days }}</div>
+                    <div class="text-muted">ngày</div>
+                </div>
+            </div>
+
+            <!-- Bảng thời gian theo dự án -->
+            <h3>Thời gian theo dự án</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Dự án</th>
+                        <th>Thời gian (giờ)</th>
+                        <th>Tỷ lệ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for project_name, time in time_tracking.by_project.items %}
+                    <tr>
+                        <td>{{ project_name }}</td>
+                        <td>{{ time }}</td>
+                        <td>
+                            {% with percentage=time|floatformat:0|divisibleby:time_tracking.total_hours %}
+                            <div class="progress-container">
+                                <div class="progress-bar" style="width: {{ percentage }}%;"></div>
+                            </div>
+                            <span class="text-muted">{{ percentage }}%</span>
+                            {% endwith %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center">Không có dữ liệu phân bổ thời gian</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Page break -->
+        <div class="page-break"></div>
+
+        <!-- KPIs -->
+        <div class="section">
+            <h2>Chỉ số hiệu suất (KPIs)</h2>
+            <div class="metrics" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="metric-card">
+                    <div class="label">Tổng số KPI</div>
+                    <div class="value">{{ kpis.total }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Đạt được</div>
+                    <div class="value">{{ kpis.achieved }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Tỷ lệ hoàn thành</div>
+                    <div class="value">{{ kpis.completion_rate }}%</div>
+                </div>
+            </div>
+
+            {% if kpis.all_kpis %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tên KPI</th>
+                        <th>Mục tiêu</th>
+                        <th>Thực tế</th>
+                        <th>Tỷ lệ đạt</th>
+                        <th>Đánh giá</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for kpi in kpis.all_kpis %}
+                    <tr>
+                        <td>{{ kpi.kpi.name }}</td>
+                        <td>{{ kpi.target_value|floatformat:2 }}</td>
+                        <td>{{ kpi.actual_value|floatformat:2|default:"N/A" }}</td>
+                        <td>{{ kpi.achieved_percentage|floatformat:2 }}%</td>
+                        <td>
+                            <span class="badge 
+                                {% if kpi.evaluation == 'Exceeded' %}badge-success
+                                {% elif kpi.evaluation == 'Achieved' %}badge-primary
+                                {% elif kpi.evaluation == 'Partially Achieved' %}badge-warning
+                                {% else %}badge-danger{% endif %}">
+                                {{ kpi.evaluation|default:"N/A" }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">Không có dữ liệu KPI</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-center text-muted">Không có dữ liệu KPI</p>
+            {% endif %}
+        </div>
+
+        <!-- Đánh giá -->
+        <div class="section">
+            <h2>Đánh giá</h2>
+            {% if evaluations.feedback_score %}
+            <div class="metrics" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="metric-card">
+                    <div class="label">Điểm đánh giá trung bình</div>
+                    <div class="value">{{ evaluations.feedback_score|floatformat:1 }}</div>
+                    <div class="text-muted">Trên thang điểm 5</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Điểm đánh giá cao nhất</div>
+                    <div class="value">{{ evaluations.highest_score|floatformat:1 }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Điểm đánh giá thấp nhất</div>
+                    <div class="value">{{ evaluations.lowest_score|floatformat:1 }}</div>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Thời gian</th>
+                        <th>Loại đánh giá</th>
+                        <th>Điểm số</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for response in evaluations.responses %}
+                    <tr>
+                        <td>{{ response.created_at|date:"d/m/Y" }}</td>
+                        <td>{{ response.form.type }}</td>
+                        <td>{{ response.score|floatformat:1 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center">Không có dữ liệu đánh giá</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-center text-muted">Không có dữ liệu đánh giá</p>
+            {% endif %}
+        </div>
+
+        <!-- Nhận xét chung -->
+        <div class="section">
+            <h2>Nhận xét chung</h2>
+            <p style="font-style: italic;">Báo cáo được tự động tạo dựa trên dữ liệu hệ thống Humanity OS. Đây là báo cáo hiệu suất tổng hợp của nhân viên {{ user_info.full_name }} trong {{ period_display }}.</p>
+            
+            {% with completion_rate=tasks.completion_rate|add:kpis.completion_rate|add:time_tracking.productivity_rate|add:attendance.attendance_rate|divisibleby:4 %}
+            <div style="margin: 20px 0;">
+                <p><strong>Điểm hiệu suất tổng hợp:</strong> {{ completion_rate|floatformat:2 }}%</p>
+                <div class="progress-container">
+                    <div class="progress-bar" style="width: {{ completion_rate }}%;"></div>
+                </div>
+            </div>
+            
+            <p><strong>Đánh giá:</strong> 
+            {% if completion_rate >= 90 %}
+                Xuất sắc
+            {% elif completion_rate >= 75 %}
+                Tốt
+            {% elif completion_rate >= 60 %}
+                Đạt yêu cầu
+            {% else %}
+                Cần cải thiện
+            {% endif %}
+            </p>
+            {% endwith %}
+        </div>
+
+        <div class="footer">
+            <p>Báo cáo được tạo vào {% now "d/m/Y H:i" %}</p>
+            <p>Humanity OS - Hệ thống quản lý nhân sự thông minh</p>
+        </div>
+    </div>
+</body>
+</html> 

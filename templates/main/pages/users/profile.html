@@ -21,9 +21,19 @@
           <button class="btn btn-outline-danger me-2" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
             <i class="bi bi-key-fill me-1"></i> Đổi mật khẩu
           </button>
-          <button class="btn btn-outline-secondary" id="print-profile">
-            <i class="bi bi-printer me-1"></i> In hồ sơ
-          </button>
+          <div class="btn-group">
+            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="reportMenu" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-file-earmark-text me-1"></i> Báo cáo
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="reportMenu">
+              <li><a class="dropdown-item" href="{% url 'users:generate_user_report' %}?period=monthly" target="_blank">
+                <i class="bi bi-calendar-month me-2"></i>Báo cáo tháng này
+              </a></li>
+              <li><a class="dropdown-item" href="{% url 'users:generate_user_report' %}?period=quarterly" target="_blank">
+                <i class="bi bi-calendar3 me-2"></i>Báo cáo quý này
+              </a></li>
+            </ul>
+          </div>
         </div>
       </div>
 

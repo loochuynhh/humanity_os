@@ -269,11 +269,6 @@
           });
       });
 
-      // Xử lý nút in hồ sơ
-      $('#print-profile').click(function () {
-          window.print();
-      });
-
       // Thêm hàm hiển thị ảnh check-in/check-out
       function showImage(imageUrl, title) {
           Swal.fire({

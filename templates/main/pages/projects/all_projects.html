@@ -54,14 +54,10 @@
           <div class="col-md-3">
             <label class="filter-label">Sắp xếp theo</label>
             <select id="sortFilter" class="form-select filter-control">
-              <option value="date-desc" {% if sort_by == 'date-desc' %}selected{% endif %}>Mới nhất</option>
-              <option value="date-asc" {% if sort_by == 'date-asc' %}selected{% endif %}>Cũ nhất</option>
               <option value="alpha-asc" {% if sort_by == 'alpha-asc' %}selected{% endif %}>Tên (A-Z)</option>
               <option value="alpha-desc" {% if sort_by == 'alpha-desc' %}selected{% endif %}>Tên (Z-A)</option>
               <option value="progress-asc" {% if sort_by == 'progress-asc' %}selected{% endif %}>Tiến độ (Thấp-Cao)</option>
               <option value="progress-desc" {% if sort_by == 'progress-desc' %}selected{% endif %}>Tiến độ (Cao-Thấp)</option>
-              <option value="deadline-asc" {% if sort_by == 'deadline-asc' %}selected{% endif %}>Hạn (Gần-Xa)</option>
-              <option value="deadline-desc" {% if sort_by == 'deadline-desc' %}selected{% endif %}>Hạn (Xa-Gần)</option>
             </select>
           </div>
           <div class="col-md-3">
@@ -160,7 +156,6 @@
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                   <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#projectDetailModal" data-id="{{ project.id }}"><i class="bi bi-eye me-2"></i>Xem chi tiết</a></li>
-                  <li><a class="dropdown-item" href="{% url 'projects:project_statistics' %}?project_id={{ project.id }}"><i class="bi bi-graph-up me-2"></i>Xem tiến độ</a></li>
                   <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editProjectModal" data-id="{{ project.id }}"><i class="bi bi-pencil me-2"></i>Chỉnh sửa</a></li>
                   <li><hr class="dropdown-divider"></li>
                   <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteProjectModal" data-id="{{ project.id }}"><i class="bi bi-trash me-2"></i>Xóa dự án</a></li>
@@ -211,9 +206,9 @@
                     <button class="btn btn-sm btn-primary view-details" data-bs-toggle="modal" data-bs-target="#projectDetailModal" data-id="{{ project.id }}">
                     <i class="bi bi-eye me-1"></i>Chi tiết
                     </button>
-                    <a href="{% url 'projects:project_statistics' %}?project_id={{ project.id }}" class="btn btn-sm btn-outline-primary">
+                    <!-- <a href="{% url 'projects:project_statistics' %}?project_id={{ project.id }}" class="btn btn-sm btn-outline-primary">
                     <i class="bi bi-graph-up me-1"></i>Tiến độ
-                    </a>
+                    </a> -->
                 </div>
                 </div>
             </div>
@@ -303,11 +298,11 @@
                     <td>
                       <div class="btn-group">
                         <button type="button" class="btn btn-sm btn-primary view-details" data-bs-toggle="modal" data-bs-target="#projectDetailModal" data-id="{{ project.id }}">
-                          <i class="bi bi-eye"></i>
+                          <i class="bi bi-eye">Xem chi tiết</i>
                         </button>
-                        <a href="{% url 'projects:project_statistics' %}?project_id={{ project.id }}" class="btn btn-sm btn-outline-primary">
+                        <!-- <a href="{% url 'projects:project_statistics' %}?project_id={{ project.id }}" class="btn btn-sm btn-outline-primary">
                           <i class="bi bi-graph-up"></i>
-                        </a>
+                        </a> -->
                       </div>
                     </td>
                   </tr>
@@ -316,10 +311,10 @@
                   <td colspan="7" class="text-center py-5">
                     <i class="bi bi-folder2-open display-4 text-muted mb-3"></i>
                     <h5 class="text-muted">Chưa có dự án nào</h5>
-                    <p class="text-muted">Nhấn "Thêm dự án" để tạo dự án mới</p>
+                    <!-- <p class="text-muted">Nhấn "Thêm dự án" để tạo dự án mới</p>
                     <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#createProjectModal">
                       <i class="bi bi-plus-circle me-2"></i>Thêm dự án mới
-                    </button>
+                    </button> -->
                     </td>
                   </tr>
                   {% endfor %}
@@ -385,7 +380,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-        <a href="#" id="viewProjectStatistics" class="btn btn-primary">Xem tiến độ</a>
+        <!-- <a href="#" id="viewProjectStatistics" class="btn btn-primary">Xem tiến độ</a> -->
       </div>
     </div>
   </div>

@@ -179,157 +179,512 @@ $(document).ready(function() {
         });
     });
 
-    // Biểu đồ mới 1: Phân bổ thời gian theo dự án
-    function createProjectTimeDistributionChart() {
-        // Xử lý dữ liệu thời gian theo task để nhóm theo dự án
-        const projectData = {};
-        
-        // Giả sử timeByTaskData là mảng các task và thời gian
-        timeByTaskData.forEach(item => {
-            // Lấy tên dự án từ tiêu đề task (giả sử format: "ProjectName: TaskName")
-            const projectName = item.task_title.split(':')[0].trim();
-            if (!projectData[projectName]) {
-                projectData[projectName] = 0;
+    function createProductivityTimelineChart() {
+        console.log('Creating productivity timeline chart with data:', timeByDayData);
+    
+        // Kiểm tra nếu không có dữ liệu
+        if (!timeByDayData || !Array.isArray(timeByDayData) || timeByDayData.length === 0) {
+            console.warn('Không có dữ liệu thời gian theo ngày, bỏ qua việc tạo biểu đồ 1');
+            const canvas = document.getElementById('timeByDayChart');
+            if (canvas) {
+                const container = canvas.parentElement;
+                container.innerHTML = '<div class="text-center py-5"><i class="bi bi-exclamation-circle text-muted fs-3"></i><p class="mt-2">Không có dữ liệu để hiển thị biểu đồ</p></div>';
             }
-            projectData[projectName] += item.total_time;
-        });
-        
-        // Chuyển đổi dữ liệu thành mảng để sử dụng với Chart.js
-        const labels = Object.keys(projectData);
-        const data = Object.values(projectData);
-        
-        // Tạo màu ngẫu nhiên cho các dự án
-        const backgroundColors = labels.map(() => {
-            const r = Math.floor(Math.random() * 255);
-            const g = Math.floor(Math.random() * 255);
-            const b = Math.floor(Math.random() * 255);
-            return `rgba(${r}, ${g}, ${b}, 0.6)`;
-        });
-        
-        const ctxProjectTime = document.getElementById('timeByDayChart').getContext('2d');
-        new Chart(ctxProjectTime, {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: data,
-                    backgroundColor: backgroundColors,
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                    },
-                    title: {
-                        display: true,
-                        text: 'Phân bổ thời gian theo dự án'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const label = context.label || '';
-                                const value = context.raw || 0;
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = Math.round((value / total) * 100);
-                                return `${label}: ${value.toFixed(2)} giờ (${percentage}%)`;
-                            }
-                        }
-                    }
-                }
+            return;
+        }
+    
+        // Chuẩn bị dữ liệu
+        const days = [];
+        const actualHours = [];
+        const workEfficiency = [];
+        const targetLine = [];
+    
+        // Sắp xếp ngày tăng dần
+        let sortedData = [];
+        try {
+            sortedData = [...timeByDayData].sort((a, b) => {
+                if (!a || !b || !a.day || !b.day) return 0;
+                const dateA = new Date(a.day.split('/').reverse().join('-'));
+                const dateB = new Date(b.day.split('/').reverse().join('-'));
+                return dateA - dateB;
+            });
+        } catch (e) {
+            console.error('Lỗi khi sắp xếp dữ liệu:', e);
+            sortedData = timeByDayData;
+        }
+    
+        // Xử lý dữ liệu
+        sortedData.forEach(item => {
+            if (item && item.day && item.total_time !== undefined && item.total_time !== null) {
+                days.push(item.day);
+                const totalTime = parseFloat(item.total_time) || 0;
+                actualHours.push(totalTime);
+                const efficiency = Math.min((totalTime / 8) * 100, 130);
+                workEfficiency.push(efficiency);
+                targetLine.push(100);
             }
         });
-    }
-
-    // Biểu đồ mới 2: Hiệu suất làm việc theo thời gian
-    function createProductivityChart() {
-        // Xử lý dữ liệu thời gian theo ngày để tính hiệu suất
-        // Hiệu suất = (Thời gian làm việc thực tế / Thời gian dự kiến) * 100
-        
-        // Giả sử dữ liệu theo ngày cung cấp thời gian làm việc thực tế
-        const days = timeByDayData.map(item => item.day);
-        const actualTime = timeByDayData.map(item => item.total_time);
-        
-        // Giả lập thời gian dự kiến (8 giờ làm việc mỗi ngày)
-        const estimatedTime = actualTime.map(() => 8);
-        
-        // Tính hiệu suất
-        const productivity = actualTime.map((time, index) => 
-            Math.min((time / estimatedTime[index]) * 100, 100) // Giới hạn hiệu suất tối đa 100%
-        );
-        
-        const ctxProductivity = document.getElementById('timeByTaskChart').getContext('2d');
-        new Chart(ctxProductivity, {
-            type: 'line',
-            data: {
-                labels: days,
-                datasets: [
-                    {
-                        label: 'Thời gian làm việc (giờ)',
-                        data: actualTime,
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 2,
-                        yAxisID: 'y'
-                    },
-                    {
-                        label: 'Hiệu suất (%)',
-                        data: productivity,
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                        borderColor: 'rgba(255, 99, 132, 1)',
-                        borderWidth: 2,
-                        borderDash: [5, 5],
-                        yAxisID: 'y1'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Hiệu suất làm việc theo thời gian'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        position: 'left',
-                        title: {
-                            display: true,
-                            text: 'Thời gian (giờ)'
-                        }
-                    },
-                    y1: {
-                        beginAtZero: true,
-                        position: 'right',
-                        max: 100,
-                        title: {
-                            display: true,
-                            text: 'Hiệu suất (%)'
+    
+        // Kiểm tra xem có đủ dữ liệu để tạo biểu đồ không
+        if (days.length === 0 || actualHours.length === 0) {
+            console.warn('Không có ngày hoặc dữ liệu hợp lệ trong timeByDayData');
+            const canvas = document.getElementById('timeByDayChart');
+            if (canvas) {
+                const container = canvas.parentElement;
+                container.innerHTML = '<div class="text-center py-5"><i class="bi bi-exclamation-circle text-muted fs-3"></i><p class="mt-2">Không có dữ liệu hợp lệ để hiển thị biểu đồ</p></div>';
+            }
+            return;
+        }
+    
+        // Tính trung bình động cho đường xu hướng, thay null bằng 0
+        const trendLine = calculateMovingAverage(workEfficiency, 3).map(val => val === null ? 0 : val);
+    
+        // Tạo biểu đồ
+        const ctx = document.getElementById('timeByDayChart').getContext('2d');
+        try {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: days,
+                    datasets: [
+                        {
+                            label: 'Thời gian làm việc (giờ)',
+                            data: actualHours,
+                            backgroundColor: 'rgba(65, 105, 225, 0.7)',
+                            borderColor: 'rgba(65, 105, 225, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y'
                         },
-                        grid: {
-                            drawOnChartArea: false
+                        {
+                            label: 'Hiệu suất (%)',
+                            data: workEfficiency,
+                            type: 'line',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+                            fill: false,
+                            tension: 0.2,
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: 'Xu hướng hiệu suất',
+                            data: trendLine,
+                            type: 'line',
+                            borderColor: 'rgba(255, 159, 64, 1)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            borderDash: [5, 5],
+                            fill: false,
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: 'Mục tiêu',
+                            data: targetLine,
+                            type: 'line',
+                            borderColor: 'rgba(75, 192, 192, 0.7)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            borderDash: [2, 2],
+                            fill: false,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Hiệu suất làm việc theo thời gian',
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    let value = context.raw !== undefined ? context.raw : 0;
+                                    if (label.includes('Thời gian')) {
+                                        return `${label}: ${value.toFixed(2)} giờ`;
+                                    } else if (label.includes('Hiệu suất') || label.includes('Xu hướng')) {
+                                        return `${label}: ${value.toFixed(1)}%`;
+                                    } else if (label.includes('Mục tiêu')) {
+                                        return `${label}: 100%`;
+                                    }
+                                    return `${label}: ${value}`;
+                                }
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                            labels: { usePointStyle: true, padding: 15 }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                            ticks: { maxRotation: 45, minRotation: 45 }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            position: 'left',
+                            title: { display: true, text: 'Thời gian (giờ)', font: { weight: 'bold' } },
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            max: 130,
+                            title: { display: true, text: 'Hiệu suất (%)', font: { weight: 'bold' } },
+                            grid: { display: false }
+                        }
+                    },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Lỗi khi tạo biểu đồ 1:', error);
+            const canvas = document.getElementById('timeByDayChart');
+            if (canvas) {
+                const container = canvas.parentElement;
+                container.innerHTML = '<div class="text-center py-5"><i class="bi bi-exclamation-circle text-muted fs-3"></i><p class="mt-2">Lỗi khi tạo biểu đồ</p></div>';
+            }
+        }
+    }
+
+    // Hàm tính trung bình động
+    function calculateMovingAverage(data, windowSize) {
+        if (!Array.isArray(data) || data.length === 0) return [];
+        
+        const result = [];
+        
+        // Thêm giá trị null cho những ngày đầu tiên không đủ cửa sổ
+        for (let i = 0; i < windowSize - 1; i++) {
+            result.push(null);
+        }
+        
+        // Tính trung bình động
+        for (let i = windowSize - 1; i < data.length; i++) {
+            let sum = 0;
+            let validValues = 0;
+            for (let j = 0; j < windowSize; j++) {
+                if (data[i - j] !== undefined && data[i - j] !== null) {
+                    sum += data[i - j];
+                    validValues++;
+                }
+            }
+            result.push(validValues > 0 ? sum / validValues : null);
+        }
+        
+        return result;
+    }
+
+    function createTaskTimeEfficiencyChart() {
+        console.log('Creating task time efficiency chart with data:', timeByTaskData);
+    
+        // Kiểm tra nếu không có dữ liệu
+        if (!timeByTaskData || !Array.isArray(timeByTaskData) || timeByTaskData.length === 0) {
+            console.warn('Không có dữ liệu thời gian theo task, bỏ qua việc tạo biểu đồ 2');
+            const canvas = document.getElementById('timeByTaskChart');
+            if (canvas) {
+                const container = canvas.parentElement;
+                container.innerHTML = '<div class="text-center py-5"><i class="bi bi-exclamation-circle text-muted fs-3"></i><p class="mt-2">Không có dữ liệu để hiển thị biểu đồ</p></div>';
+            }
+            return;
+        }
+    
+        // Chuẩn bị dữ liệu
+        const taskNames = [];
+        const estimatedTimes = [];
+        const actualTimes = [];
+        const efficiencyScores = [];
+        const backgrounds = [];
+    
+        // Lọc nhiệm vụ có ước tính thời gian
+        const validTasks = timeByTaskData.filter(task =>
+            task &&
+            task.task_title &&
+            task.estimated_time !== undefined &&
+            task.estimated_time !== null &&
+            parseFloat(task.estimated_time) > 0 &&
+            task.total_time !== undefined &&
+            task.total_time !== null &&
+            parseFloat(task.total_time) > 0
+        );
+    
+        if (validTasks.length === 0) {
+            console.warn('Không có nhiệm vụ nào có dữ liệu ước tính thời gian hợp lệ');
+            const canvas = document.getElementById('timeByTaskChart');
+            if (canvas) {
+                const container = canvas.parentElement;
+                container.innerHTML = '<div class="text-center py-5"><i class="bi bi-exclamation-circle text-muted fs-3"></i><p class="mt-2">Không có dữ liệu ước tính thời gian để hiển thị biểu đồ</p></div>';
+            }
+            return;
+        }
+    
+        // Xử lý dữ liệu nhiệm vụ
+        validTasks.forEach(task => {
+            try {
+                let taskName = task.task_title || '';
+                if (taskName.length > 20) {
+                    taskName = taskName.substring(0, 17) + '...';
+                }
+                taskNames.push(taskName);
+    
+                const estimatedTime = parseFloat(task.estimated_time) || 0;
+                const actualTime = parseFloat(task.total_time) || 0;
+    
+                estimatedTimes.push(estimatedTime);
+                actualTimes.push(actualTime);
+    
+                let efficiency = actualTime > 0 ? (estimatedTime / actualTime) * 100 : 0;
+                efficiency = Math.min(efficiency, 150);
+                efficiencyScores.push(efficiency);
+    
+                if (efficiency >= 100) {
+                    backgrounds.push('rgba(40, 167, 69, 0.8)'); // Xanh lá
+                } else if (efficiency >= 75) {
+                    backgrounds.push('rgba(255, 193, 7, 0.8)'); // Vàng
+                } else {
+                    backgrounds.push('rgba(220, 53, 69, 0.8)'); // Đỏ
+                }
+            } catch (e) {
+                console.error('Lỗi khi xử lý task:', task, e);
+            }
+        });
+    
+        // Sắp xếp dữ liệu theo hiệu quả
+        const sortedIndices = efficiencyScores
+            .map((score, index) => ({ score, index }))
+            .sort((a, b) => b.score - a.score)
+            .map(item => item.index);
+    
+        const sortedTaskNames = sortedIndices.map(i => taskNames[i]);
+        const sortedEstimatedTimes = sortedIndices.map(i => estimatedTimes[i]);
+        const sortedActualTimes = sortedIndices.map(i => actualTimes[i]);
+        const sortedEfficiencyScores = sortedIndices.map(i => efficiencyScores[i]);
+        const sortedBackgrounds = sortedIndices.map(i => backgrounds[i]);
+    
+        // Tạo biểu đồ
+        const ctx = document.getElementById('timeByTaskChart').getContext('2d');
+        try {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedTaskNames,
+                    datasets: [
+                        {
+                            label: 'Thời gian ước tính (giờ)',
+                            data: sortedEstimatedTimes,
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1,
+                            order: 2
+                        },
+                        {
+                            label: 'Thời gian thực tế (giờ)',
+                            data: sortedActualTimes,
+                            backgroundColor: 'rgba(153, 102, 255, 0.7)',
+                            borderColor: 'rgba(153, 102, 255, 1)',
+                            borderWidth: 1,
+                            order: 3
+                        },
+                        {
+                            label: 'Hiệu quả (%)',
+                            data: sortedEfficiencyScores,
+                            type: 'line',
+                            backgroundColor: sortedBackgrounds,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 2,
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            fill: false,
+                            yAxisID: 'y1',
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Hiệu quả sử dụng thời gian theo công việc',
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    let value = context.raw !== undefined ? context.raw : 0;
+                                    if (label.includes('Hiệu quả')) {
+                                        let rating = value >= 100 ? ' (Xuất sắc)' : value >= 75 ? ' (Tốt)' : ' (Cần cải thiện)';
+                                        return `${label}: ${value.toFixed(1)}%${rating}`;
+                                    }
+                                    return `${label}: ${value.toFixed(2)} giờ`;
+                                },
+                                footer: function(tooltipItems) {
+                                    const index = tooltipItems[0].dataIndex;
+                                    const estimated = sortedEstimatedTimes[index];
+                                    const actual = sortedActualTimes[index];
+                                    const diff = estimated - actual;
+                                    return diff >= 0 ? `Tiết kiệm: ${Math.abs(diff).toFixed(2)} giờ` : `Vượt quá: ${Math.abs(diff).toFixed(2)} giờ`;
+                                }
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                            labels: { usePointStyle: true, padding: 15 }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Thời gian (giờ)', font: { weight: 'bold' } },
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        },
+                        y: {
+                            grid: { display: false }
+                        },
+                        y1: {
+                            position: 'right',
+                            beginAtZero: true,
+                            max: 150,
+                            title: { display: true, text: 'Hiệu quả (%)', font: { weight: 'bold' } },
+                            grid: { display: false }
                         }
                     }
                 }
+            });
+        } catch (error) {
+            console.error('Lỗi khi tạo biểu đồ 2:', error);
+            const canvas = document.getElementById('timeByTaskChart');
+            if (canvas) {
+                const container = canvas.parentElement;
+                container.innerHTML = '<div class="text-center py-5"><i class="bi bi-exclamation-circle text-muted fs-3"></i><p class="mt-2">Lỗi khi tạo biểu đồ</p></div>';
             }
-        });
+        }
     }
 
-    // Gọi hai hàm tạo biểu đồ mới
-    createProjectTimeDistributionChart();
-    createProductivityChart();
+    // Gọi hàm tạo biểu đồ có kiểm tra
+    try {
+        // Kiểm tra dữ liệu toàn cầu
+        if (typeof timeByDayData === 'undefined') {
+            console.error('Biến timeByDayData không được định nghĩa');
+            timeByDayData = [];
+        }
+        
+        if (typeof timeByTaskData === 'undefined') {
+            console.error('Biến timeByTaskData không được định nghĩa');
+            timeByTaskData = [];
+        }
+        
+        console.log('Dữ liệu biểu đồ:', {
+            timeByDayData: timeByDayData || [], 
+            timeByTaskData: timeByTaskData || []
+        });
+        
+        // Tạo biểu đồ 1 nếu có canvas
+        if (document.getElementById('timeByDayChart')) {
+            setTimeout(() => {
+                try {
+                    createProductivityTimelineChart();
+                } catch (e) {
+                    console.error('Lỗi khi tạo biểu đồ 1:', e);
+                }
+            }, 100);
+        }
+        
+        // Tạo biểu đồ 2 nếu có canvas
+        if (document.getElementById('timeByTaskChart')) {
+            setTimeout(() => {
+                try {
+                    createTaskTimeEfficiencyChart();
+                } catch (e) {
+                    console.error('Lỗi khi tạo biểu đồ 2:', e);
+                }
+            }, 200);
+        }
+    } catch (error) {
+        console.error('Lỗi khi tạo biểu đồ:', error);
+    }
 
-    // Xuất PDF (tạm thời giữ nguyên)
+    // Xuất PDF - Cập nhật chức năng để sử dụng báo cáo mới
     $('#export-pdf').click(function() {
         Swal.fire({
-            icon: 'info',
-            title: 'Thông báo',
-            text: 'Chức năng xuất PDF đang được phát triển!',
-            confirmButtonColor: '#007bff'
+            title: 'Xuất báo cáo',
+            text: 'Bạn muốn xuất báo cáo theo định dạng nào?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#007bff',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Báo cáo tháng',
+            cancelButtonText: 'Hủy'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '/users/report/?period=monthly';
+            }
         });
     });
+});
+
+// Hàm chờ canvas sẵn sàng
+function waitForCanvas(canvasId, callback) {
+    const canvas = document.getElementById(canvasId);
+    if (canvas) {
+        callback();
+        return;
+    }
+    const observer = new MutationObserver((mutations, obs) => {
+        const canvas = document.getElementById(canvasId);
+        if (canvas) {
+            callback();
+            obs.disconnect();
+        }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// Kiểm tra dữ liệu toàn cầu
+if (typeof timeByDayData === 'undefined') {
+    console.error('Biến timeByDayData không được định nghĩa');
+    timeByDayData = [];
+}
+if (typeof timeByTaskData === 'undefined') {
+    console.error('Biến timeByTaskData không được định nghĩa');
+    timeByTaskData = [];
+}
+
+console.log('Dữ liệu biểu đồ:', {
+    timeByDayData: timeByDayData || [],
+    timeByTaskData: timeByTaskData || []
+});
+
+// Tạo biểu đồ 1
+waitForCanvas('timeByDayChart', () => {
+    try {
+        createProductivityTimelineChart();
+    } catch (e) {
+        console.error('Lỗi khi tạo biểu đồ 1:', e);
+    }
+});
+
+// Tạo biểu đồ 2
+waitForCanvas('timeByTaskChart', () => {
+    try {
+        createTaskTimeEfficiencyChart();
+    } catch (e) {
+        console.error('Lỗi khi tạo biểu đồ 2:', e);
+    }
 });

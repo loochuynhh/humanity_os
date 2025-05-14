@@ -212,59 +212,138 @@ def check_deadline_warnings(task):
 
 
 def calculate_time_by_day(user):
-    today = timezone.now().date()
-    week_start = today - timedelta(days=6)  # 7 ngày gần nhất
-    data = []
-
-    for i in range(7):
-        day = week_start + timedelta(days=i)
-        # Đảm bảo day_start và day_end là offset-aware
-        day_start = timezone.make_aware(timezone.datetime.combine(day, timezone.datetime.min.time()))
-        day_end = day_start + timedelta(days=1)
-        total_time = 0.0
-
-        entries = TimeEntries.objects.filter(
+    """
+    Calculate time spent by day for time tracking charts.
+    Enhanced to provide better data for productivity charts.
+    """
+    from django.utils import timezone
+    from datetime import timedelta
+    from django.db.models import Sum
+    from .models import TimeEntries
+    
+    # Get entries for the last 14 days
+    end_date = timezone.now().date()
+    start_date = end_date - timedelta(days=14)
+    
+    result = []
+    current_date = start_date
+    
+    while current_date <= end_date:
+        # For each day, get all time entries
+        day_entries = TimeEntries.objects.filter(
             user=user,
-            start_time__lte=day_end,
-            end_time__gte=day_start
-        ).exclude(end_time__isnull=True)
-
-        for entry in entries:
-            # Giới hạn thời gian trong ngày
-            start = max(entry.start_time, day_start)
-            end = min(entry.end_time, day_end)  # end_time đã được lọc không null
-            if start < end:
-                duration = (end - start).total_seconds() / 3600
-                total_time += duration
-
-        # Đảm bảo tổng thời gian không vượt quá 24 giờ
-        total_time = min(total_time, 24.0)
-
-        data.append({
-            'day': day.strftime('%d/%m'),
-            'total_time': round(total_time, 2)
-            })
-
-    return data
+            start_time__date=current_date
+        )
+        
+        # Calculate total time
+        total_time = day_entries.aggregate(total=Sum('duration'))['total']
+        # Handle None value safely
+        if total_time is None:
+            total_time = 0
+        else:
+            try:
+                total_time = float(total_time)
+            except (TypeError, ValueError):
+                total_time = 0
+        
+        # Calculate estimated time based on tasks
+        estimated_time = 0
+        for entry in day_entries:
+            try:
+                if hasattr(entry.task, 'estimated_time') and entry.task.estimated_time is not None:
+                    estimated_time += float(entry.task.estimated_time)
+            except (AttributeError, TypeError, ValueError):
+                # Skip this entry if there's an error
+                continue
+        
+        # Add day data to result
+        day_data = {
+            'day': current_date.strftime('%d/%m/%Y'),
+            'total_time': round(total_time, 2),
+            'estimated_time': round(estimated_time, 2) if estimated_time > 0 else 8,  # Default target is 8 hours
+            'date_obj': current_date,  # For sorting
+        }
+        
+        result.append(day_data)
+        current_date += timedelta(days=1)
+    
+    # Sort by date
+    result.sort(key=lambda x: x['date_obj'])
+    
+    # Remove the date_obj which was only used for sorting
+    for item in result:
+        del item['date_obj']
+    
+    return result
 
 
 def calculate_time_by_task(user):
-    data = []
-    tasks = Tasks.objects.filter(
-        task_assignments__user=user
-    )
-    for task in tasks:
-        total_time = TimeEntries.objects.filter(
-            user=user,
-            task=task
-        ).aggregate(total=Sum('duration'))['total'] or 0
-        if total_time > 0:
-            data.append({
+    """
+    Calculate time spent by task for time tracking charts.
+    Enhanced to include task status, estimated time and completion percentage.
+    """
+    from django.db.models import Sum
+    from .models import TimeEntries, Tasks
+    
+    # Get all time entries grouped by task
+    entries = TimeEntries.objects.filter(user=user).values('task').annotate(
+        total_time=Sum('duration')
+    ).order_by('-total_time')
+    
+    result = []
+    
+    for entry in entries:
+        try:
+            task = Tasks.objects.get(id=entry['task'])
+            
+            # Get the assignment for this user to get status
+            task_assignment = task.task_assignments.filter(user=user).first()
+            status = task_assignment.status if task_assignment else task.status
+            
+            # Calculate completion percentage
+            completion_percentage = 0
+            if status == 'Completed':
+                completion_percentage = 100
+            elif status == 'In progress':
+                # Estimate based on time if available
+                if task.estimated_time and task.estimated_time > 0 and entry['total_time'] is not None:
+                    completion_percentage = min(round((entry['total_time'] / task.estimated_time) * 100), 95)
+                else:
+                    completion_percentage = 50  # Default for in-progress
+            
+            # Get estimated time from assignment or task
+            estimated_time = 0
+            if task_assignment and hasattr(task_assignment, 'estimated_time') and task_assignment.estimated_time is not None:
+                estimated_time = task_assignment.estimated_time
+            elif hasattr(task, 'estimated_time') and task.estimated_time is not None:
+                estimated_time = task.estimated_time
+            
+            # Safely handle None values before rounding
+            total_time = 0
+            if entry['total_time'] is not None:
+                total_time = round(float(entry['total_time']), 2)
+                
+            task_data = {
+                'task_id': task.id,
                 'task_title': task.title,
-                'total_time': round(total_time, 2)
-                })
-    return data
-
+                'project_name': task.project.name if task.project else 'No Project',
+                'total_time': total_time,
+                'status': status,
+                'estimated_time': round(float(estimated_time), 2) if estimated_time else 0,
+                'completion_percentage': completion_percentage,
+                'difficulty': task.difficulty
+            }
+            
+            result.append(task_data)
+        except Tasks.DoesNotExist:
+            # Skip if task doesn't exist anymore
+            continue
+        except (TypeError, ValueError) as e:
+            # Log the error and continue with next task
+            print(f"Error processing task {entry['task']}: {str(e)}")
+            continue
+    
+    return result
 
 def get_project_status(project):
     """

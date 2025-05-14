@@ -23,6 +23,7 @@ from .utils import (
     handle_check_in,
     handle_check_out,
     get_project_data,
+    generate_user_report_data,
 )
 
 
@@ -476,3 +477,34 @@ def get_current_work_time(request):
             "message": "Không thể lấy thông tin thời gian làm việc",
             "error": str(e)
         })
+
+
+@login_required
+def generate_user_report(request):
+    """
+    Generate a comprehensive user report as PDF.
+    """
+    period = request.GET.get('period', 'monthly')
+    if period not in ['monthly', 'quarterly']:
+        period = 'monthly'
+    
+    # Generate report data
+    report_data = generate_user_report_data(request.user, period)
+    
+    # Render HTML for PDF
+    from django.template.loader import render_to_string
+    from weasyprint import HTML
+    from django.http import HttpResponse
+    
+    html_string = render_to_string('main/pages/users/user_report_pdf.html', report_data)
+    
+    # Generate PDF
+    html = HTML(string=html_string)
+    pdf = html.write_pdf()
+    
+    # Create HTTP response with PDF
+    response = HttpResponse(pdf, content_type='application/pdf')
+    filename = f"performance_report_{request.user.username}_{period}_{timezone.now().strftime('%Y%m%d')}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    return response
