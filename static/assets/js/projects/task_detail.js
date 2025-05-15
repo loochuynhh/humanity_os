@@ -1,8 +1,6 @@
 $(document).ready(function() {
     // Toggle edit mode
-    debugger
     $('#editTaskBtn').click(function() {
-        debugger
         $('#taskInfoView').addClass('d-none');
         $('#taskUpdateForm').removeClass('d-none');
         $(this).addClass('d-none');

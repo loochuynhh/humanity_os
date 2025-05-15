@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Users, UserFaceImage, CheckInCheckOut
+from .models import Users, UserFaceImage, CheckInCheckOut, AIChatMessage
 from django.utils.html import format_html
 
 
@@ -182,7 +182,24 @@ class CheckInCheckOutAdmin(admin.ModelAdmin):
 
     view_checkout_image.short_description = 'Ảnh check-out'
 
+class AIChatMessageAdmin(admin.ModelAdmin):
+    list_display = ('user', 'role', 'content_preview', 'timestamp')
+    list_filter = ('role', 'timestamp', 'user__department')
+    search_fields = ('user__username', 'user__email', 'content')
+    date_hierarchy = 'timestamp'
+    ordering = ('-timestamp',)
 
+    def content_preview(self, obj):
+        """Hiển thị bản xem trước nội dung tin nhắn, giới hạn 50 ký tự."""
+        return obj.content[:50] + ('...' if len(obj.content) > 50 else '')
+
+    content_preview.short_description = 'Nội dung'
+
+    def get_readonly_fields(self, request, obj=None):
+        """Đặt các trường chỉ đọc để tránh chỉnh sửa trực tiếp."""
+        return ('user', 'role', 'content', 'timestamp')
+    
 admin.site.register(Users, CustomUserAdmin)
 admin.site.register(UserFaceImage, UserFaceImageAdmin)
 admin.site.register(CheckInCheckOut, CheckInCheckOutAdmin)
+admin.site.register(AIChatMessage, AIChatMessageAdmin)

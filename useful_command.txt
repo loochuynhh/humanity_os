@@ -1,4 +1,4 @@
-➜  humanity_os git:(main) find . -mindepth 1 -maxdepth 4 \( -path "./.git" -o -path "./.venv" \) -prune -o -print
+➜  humanity_os git:(main) find . -mindepth 1 -maxdepth 4 \( -path "./.git" -o -path "./.venv" -o -path "./staticfiles" -o -path "./media" \) -prune -o -print
 
 find . -path "./.venv" -prune -o -type f -name "urls.py" -exec echo "===== {} =====" \; -exec cat {} \;
 

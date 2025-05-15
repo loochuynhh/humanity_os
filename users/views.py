@@ -11,7 +11,10 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.decorators.http import require_POST
-from .models import Users, UserFaceImage, CheckInCheckOut
+from .models import Users, UserFaceImage, CheckInCheckOut, AIChatMessage
+from projects.models import Tasks
+import google.generativeai as genai
+from django.conf import settings
 from .utils import (
     get_task_counts,
     get_task_stats,
@@ -24,6 +27,7 @@ from .utils import (
     handle_check_out,
     get_project_data,
     generate_user_report_data,
+    build_gemini_prompt,
 )
 
 
@@ -255,12 +259,13 @@ def check_out(request):
 @login_required
 def index(request):
     user = request.user
-
+    chat_messages = AIChatMessage.objects.filter(user=request.user).order_by('timestamp')[:10]
     # Lấy thông tin cơ bản về người dùng
     context = {
         "first_name": user.first_name,
         "last_name": user.last_name,
         "avatar_url": user.avatar_url,
+        "chat_messages": chat_messages,
     }
 
     try:
@@ -277,6 +282,7 @@ def index(request):
             "recent_tasks": get_recent_tasks(user.id),
             "project_time_allocation": get_project_time_allocation(user.id, as_json=True),
             "task_stats": get_task_stats(user),
+            "chat_messages": chat_messages,
         })
     except Exception as e:
         # Nếu có lỗi, chỉ hiển thị thông tin cơ bản
@@ -508,3 +514,38 @@ def generate_user_report(request):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     
     return response
+
+@login_required
+def ai_chat(request):
+    if request.method == 'POST':
+        user_message = request.POST.get('message')
+        user = request.user
+
+        # Lấy lịch sử trò chuyện
+        history = AIChatMessage.objects.filter(user=user).order_by('timestamp')[:10]
+        contents = []
+        for msg in history:
+            contents.append({
+                "role": msg.role,
+                "parts": [{"text": msg.content}]
+            })
+
+        # Xây dựng prompt với thông tin chi tiết
+        prompt = build_gemini_prompt(user, user_message)
+        contents.append({
+            "role": "user",
+            "parts": [{"text": prompt}]
+        })
+
+        # Cấu hình Gemini
+        genai.configure(api_key=settings.GEMINI_API_KEY)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(contents)
+        ai_response = response.text
+
+        # Lưu tin nhắn
+        AIChatMessage.objects.create(user=user, role='user', content=user_message)
+        AIChatMessage.objects.create(user=user, role='model', content=ai_response)
+
+        return JsonResponse({'response': ai_response})
+    return JsonResponse({'error': 'Yêu cầu không hợp lệ'}, status=400)

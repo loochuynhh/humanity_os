@@ -71,3 +71,16 @@ class CheckInCheckOut(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.date}"
+
+class AIChatMessage(models.Model):
+    user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    role = models.CharField(max_length=10, choices=[('user', 'User'), ('model', 'Model')])
+    content = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('timestamp',)
+        db_table = "ai_chat_messages"
+
+    def __str__(self):
+        return f"{self.role}: {self.content[:50]}"
