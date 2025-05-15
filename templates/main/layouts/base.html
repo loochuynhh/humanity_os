@@ -8,6 +8,8 @@
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    
+    <link rel="stylesheet" href="{% static 'assets/bootstrap-icons/bootstrap-icons.css' %}">
 
     <!-- Font Awesome CSS -->
     <link rel="stylesheet" href="{% static 'assets/fonts/all.min.css' %}">
@@ -18,191 +20,9 @@
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
-
+    
     <!-- Chatbot CSS -->
-    <style>
-        :root {
-            --chatbot-bg: #f9fafb;
-            --chatbot-primary: #2563eb;
-            --chatbot-hover: #1d4ed8;
-            --chatbot-text: #1f2937;
-            --chatbot-border: #e5e7eb;
-        }
-
-        .chatbot-icon {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            background: linear-gradient(145deg, var(--chatbot-primary), var(--chatbot-hover));
-            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1);
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease, opacity 0.3s ease;
-            border: 2px solid #ffffff;
-            opacity: 1;
-        }
-
-        .chatbot-icon.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .chatbot-icon:hover {
-            transform: scale(1.08) rotate(5deg);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-            background: linear-gradient(145deg, var(--chatbot-hover), var(--chatbot-primary));
-        }
-
-        .chatbot-icon i {
-            font-size: 2rem;
-            color: #ffffff;
-            filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
-        }
-
-        .modal-dialog-end {
-            margin-left: auto;
-            margin-right: 16px;
-            max-width: 450px;
-            height: calc(100vh - 80px);
-            margin-top: 40px;
-            margin-bottom: 40px;
-        }
-
-        .chatbot-modal {
-            background: var(--chatbot-bg);
-            border-radius: 16px;
-            overflow: hidden;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            border: 1px solid var(--chatbot-border);
-        }
-
-        .modal-header {
-            background: linear-gradient(90deg, var(--chatbot-primary), var(--chatbot-hover));
-            border-bottom: none;
-            padding: 1rem 1.5rem;
-            flex-shrink: 0;
-        }
-
-        .modal-body {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 0;
-            overflow: hidden;
-        }
-
-        .chat-messages {
-            flex-grow: 1;
-            min-height: 0; /* Ngăn flexbox mở rộng quá mức */
-            overflow-y: auto;
-            padding: 1.5rem;
-            background: var(--chatbot-bg);
-        }
-
-        .user-message .message-content {
-            background: #dbeafe;
-            color: var(--chatbot-text);
-            margin-left: 2.5rem;
-            border-radius: 16px 16px 4px 16px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-        }
-
-        .ai-message .message-content {
-            background: #ffffff;
-            color: var(--chatbot-text);
-            margin-right: 2.5rem;
-            border-radius: 16px 16px 16px 4px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-        }
-
-        .message-content {
-            position: relative;
-            max-width: 85%;
-            padding: 1rem 1.25rem;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            word-wrap: break-word;
-        }
-
-        .message-content p {
-            margin: 0;
-        }
-
-        .chat-messages::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .chat-messages::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.15);
-            border-radius: 4px;
-        }
-
-        .chat-messages::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .chat-input-container {
-            padding: 1rem 1.5rem;
-            background: var(--chatbot-bg);
-            border-top: 1px solid var(--chatbot-border);
-            position: sticky;
-            bottom: 0;
-            z-index: 10;
-            flex-shrink: 0;
-        }
-
-        .input-group {
-            margin: 0;
-        }
-
-        .form-control {
-            border: 1px solid var(--chatbot-border);
-            border-radius: 8px 0 0 8px;
-            font-size: 0.95rem;
-            padding: 0.75rem;
-        }
-
-        .btn-primary {
-            border-radius: 0 8px 8px 0;
-            padding: 0.75rem 1.25rem;
-            font-size: 0.95rem;
-            background: var(--chatbot-primary);
-            border: none;
-        }
-
-        .btn-primary:hover {
-            background: var(--chatbot-hover);
-        }
-
-        @media (max-width: 576px) {
-            .modal-dialog-end {
-                max-width: 100%;
-                margin: 0;
-                height: 100vh;
-                border-radius: 0;
-            }
-            .chatbot-modal {
-                border-radius: 0;
-            }
-            .chatbot-icon {
-                bottom: 16px;
-                right: 16px;
-                width: 56px;
-                height: 56px;
-            }
-            .chatbot-icon i {
-                font-size: 1.8rem;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'assets/css/chatbot.css' %}">
 
     <!-- Block for additional CSS -->
     {% block extra_css %}{% endblock %}
@@ -213,16 +33,16 @@
 
     <!-- Chatbot Icon -->
     <button class="chatbot-icon btn rounded-circle shadow-lg" data-bs-toggle="modal" data-bs-target="#aiChatModal">
-        <i class="bi bi-robot"></i>
+        <i class="bi bi-chat-dots-fill"></i>
     </button>
 
     <!-- AI Chat Modal -->
     <div class="modal fade" id="aiChatModal" tabindex="-1" aria-labelledby="aiChatModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-end">
             <div class="modal-content chatbot-modal shadow-lg">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title fw-bold" id="aiChatModalLabel">
-                        <i class="bi bi-robot me-2"></i>Trợ Lý AI Humanity OS
+                <div class="modal-header chatbot-header">
+                    <h5 class="modal-title chatbot-title" id="aiChatModalLabel">
+                        <i class="bi bi-robot"></i>Trợ Lý AI Humanity OS
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -231,23 +51,23 @@
                         {% for message in chat_messages %}
                             <div class="message mb-3 {% if message.role == 'user' %}user-message{% else %}ai-message{% endif %}">
                                 <div class="message-content p-3 rounded-3 shadow-sm" data-content="{{ message.content|escape }}">
-                                    <small class="text-muted d-block mb-1">{{ message.timestamp|date:"H:i d/m/Y" }}</small>
-                                    <strong>{{ message.role|capfirst }}:</strong>
+                                    <small class="message-timestamp">{{ message.timestamp|date:"H:i d/m/Y" }}</small>
+                                    <div class="message-sender">{% if message.role == 'user' %}Bạn{% else %}AI{% endif %}</div>
                                     <div class="message-text"></div>
                                 </div>
                             </div>
                         {% endfor %}
                     </div>
                     <div class="chat-input-container">
-                        <form id="aiChatForm">
+                        <form id="aiChatForm" class="chat-input-form">
                             {% csrf_token %}
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="chatInput" name="message" placeholder="Hỏi tôi về Humanity OS..." required>
-                                <button type="submit" class="btn btn-primary" id="sendChatBtn">
-                                    <i class="bi bi-send"></i>
+                            <div class="chat-input-group">
+                                <input type="text" class="chat-input" id="chatInput" name="message" placeholder="Hỏi tôi về Humanity OS..." required>
+                                <button type="submit" class="chat-send-btn" id="sendChatBtn">
+                                    <i class="bi bi-send-fill"></i>
                                 </button>
                             </div>
-                            <div id="chatError" class="alert alert-danger d-none mt-2" role="alert"></div>
+                            <div id="chatError" class="chat-error" role="alert"></div>
                         </form>
                     </div>
                 </div>
@@ -265,123 +85,168 @@
     <!-- Marked.js for Markdown rendering -->
     <script src="https://cdn.jsdelivr.net/npm/marked@4.0.18/marked.min.js"></script>
 
-    <!-- Chatbot JavaScript -->
+    <!-- Script cho chatbot -->
     <script>
-        $(document).ready(function() {
-            // Cấu hình marked.js
-            marked.setOptions({
-                breaks: true, // Hỗ trợ xuống dòng
-                gfm: true // Hỗ trợ GitHub Flavored Markdown
-            });
+    $(document).ready(function() {
+        // Cấu hình marked.js
+        marked.setOptions({
+            breaks: true,
+            gfm: true
+        });
 
-            // Render Markdown cho các tin nhắn tĩnh
-            function renderMessages() {
-                $('.message').each(function() {
-                    const messageText = $(this).find('.message-text');
-                    const content = $(this).find('.message-content').data('content') || '';
-                    messageText.html(marked.parse(content));
-                });
-                $('#chatMessages').scrollTop($('#chatMessages')[0].scrollHeight);
+        // Hàm cuộn xuống tin nhắn cuối cùng
+        function scrollToBottom() {
+            const chatMessages = document.getElementById('chatMessages');
+            if (chatMessages) {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
             }
-            renderMessages();
+        }
 
-            // Xử lý gửi tin nhắn
-            $('#aiChatForm').submit(function(e) {
-                e.preventDefault();
-                const message = $('#chatInput').val().trim();
-                if (!message) return;
+        // Render Markdown cho các tin nhắn tĩnh
+        function renderMessages() {
+            $('.message').each(function() {
+                const messageText = $(this).find('.message-text');
+                const content = $(this).find('.message-content').data('content') || '';
+                messageText.html(marked.parse(content));
+            });
+            // Đợi DOM cập nhật hoàn toàn
+            setTimeout(scrollToBottom, 100);
+        }
 
-                const sendBtn = $('#sendChatBtn');
-                sendBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span>');
+        // Gọi renderMessages khi trang tải
+        renderMessages();
 
-                // Thêm tin nhắn người dùng
-                const userMessage = $('<div>').addClass('message user-message mb-3').html(
-                    '<div class="message-content p-3 rounded-3 shadow-sm" data-content="' + message.replace(/"/g, '"') + '">' +
-                    '<small class="text-muted d-block mb-1">' + new Date().toLocaleString('vi-VN') + '</small>' +
-                    '<strong>Bạn:</strong><div class="message-text">' + marked.parse(message) + '</div>' +
-                    '</div>'
-                ).hide();
-                $('#chatMessages').append(userMessage);
-                userMessage.fadeIn(300);
-                $('#chatInput').val('');
-                $('#chatMessages').scrollTop($('#chatMessages')[0].scrollHeight);
-
-                $.ajax({
-                    url: '{% url "users:ai_chat" %}',
-                    type: 'POST',
-                    data: { message: message, csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val() },
-                    success: function(data) {
-                        // Render Markdown cho phản hồi AI
-                        const renderedResponse = marked.parse(data.response);
-                        const aiMessage = $('<div>').addClass('message ai-message mb-3').html(
-                            '<div class="message-content p-3 rounded-3 shadow-sm" data-content="' + data.response.replace(/"/g, '"') + '">' +
-                            '<small class="text-muted d-block mb-1">' + new Date().toLocaleString('vi-VN') + '</small>' +
-                            '<strong>AI:</strong><div class="message-text">' + renderedResponse + '</div>' +
-                            '</div>'
-                        ).hide();
-                        $('#chatMessages').append(aiMessage);
-                        aiMessage.fadeIn(300);
-                        $('#chatMessages').scrollTop($('#chatMessages')[0].scrollHeight);
-                        sendBtn.prop('disabled', false).html('<i class="bi bi-send"></i>');
-                    },
-                    error: function(xhr) {
-                        const errorMsg = xhr.responseJSON?.error || 'Đã xảy ra lỗi. Vui lòng thử lại.';
-                        $('#chatError').text(errorMsg).removeClass('d-none');
-                        setTimeout(() => $('#chatError').addClass('d-none'), 5000);
-                        sendBtn.prop('disabled', false).html('<i class="bi bi-send"></i>');
+        // Tải tin nhắn cũ qua AJAX khi mở modal
+        $('#aiChatModal').on('shown.bs.modal', function() {
+            $.ajax({
+                url: "{% url 'users:get_chat_messages' %}",
+                method: 'GET',
+                success: function(data) {
+                    if (data.success) {
+                        $('#chatMessages').empty();
+                        data.messages.forEach(function(msg) {
+                            const messageClass = msg.role === 'user' ? 'user-message' : 'ai-message';
+                            const sender = msg.role === 'user' ? 'Bạn' : 'AI';
+                            const messageHtml = `
+                                <div class="message mb-3 ${messageClass}">
+                                    <div class="message-content p-3 rounded-3 shadow-sm" data-content="${msg.content.replace(/"/g, '&quot;')}">
+                                        <small class="message-timestamp">${new Date(msg.timestamp).toLocaleString('vi-VN')}</small>
+                                        <div class="message-sender">${sender}</div>
+                                        <div class="message-text">${marked.parse(msg.content)}</div>
+                                    </div>
+                                </div>`;
+                            $('#chatMessages').append(messageHtml);
+                        });
+                        setTimeout(scrollToBottom, 100);
+                    } else {
+                        console.warn('Không thể tải tin nhắn:', data.error);
                     }
-                });
+                },
+                error: function(xhr) {
+                    console.error('Lỗi tải tin nhắn:', xhr);
+                }
             });
+            $('.chatbot-icon').addClass('hidden');
+        });
 
-            // Cuộn xuống cuối khi mở modal và ẩn icon chatbot
-            $('#aiChatModal').on('shown.bs.modal', function() {
-                $('#chatMessages').scrollTop($('#chatMessages')[0].scrollHeight);
-                $('.chatbot-icon').addClass('hidden');
-            });
+        // Xử lý gửi tin nhắn
+        $('#aiChatForm').submit(function(e) {
+            e.preventDefault();
+            const message = $('#chatInput').val().trim();
+            if (!message) return;
 
-            // Hiện icon chatbot khi đóng modal
-            $('#aiChatModal').on('hidden.bs.modal', function() {
-                $('.chatbot-icon').removeClass('hidden');
+            const sendBtn = $('#sendChatBtn');
+            sendBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span>');
+
+            // Thêm tin nhắn người dùng
+            const userMessage = $('<div>').addClass('message mb-3 user-message').html(
+                '<div class="message-content p-3 rounded-3 shadow-sm" data-content="' + message.replace(/"/g, '&quot;') + '">' +
+                '<small class="message-timestamp">' + new Date().toLocaleString('vi-VN') + '</small>' +
+                '<div class="message-sender">Bạn</div>' +
+                '<div class="message-text">' + marked.parse(message) + '</div>' +
+                '</div>'
+            ).hide();
+            $('#chatMessages').append(userMessage);
+            userMessage.fadeIn(300, scrollToBottom);
+            $('#chatInput').val('');
+
+            $.ajax({
+                url: "{% url 'users:ai_chat' %}",
+                type: 'POST',
+                data: { 
+                    message: message, 
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val() 
+                },
+                success: function(data) {
+                    const renderedResponse = marked.parse(data.response);
+                    const aiMessage = $('<div>').addClass('message mb-3 ai-message').html(
+                        '<div class="message-content p-3 rounded-3 shadow-sm" data-content="' + data.response.replace(/"/g, '&quot;') + '">' +
+                        '<small class="message-timestamp">' + new Date().toLocaleString('vi-VN') + '</small>' +
+                        '<div class="message-sender">AI</div>' +
+                        '<div class="message-text">' + renderedResponse + '</div>' +
+                        '</div>'
+                    ).hide();
+                    $('#chatMessages').append(aiMessage);
+                    aiMessage.fadeIn(300, scrollToBottom);
+                    sendBtn.prop('disabled', false).html('<i class="bi bi-send-fill"></i>');
+                },
+                error: function(xhr) {
+                    const errorMsg = xhr.responseJSON?.error || 'Đã xảy ra lỗi. Vui lòng thử lại.';
+                    $('#chatError').text(errorMsg).show();
+                    setTimeout(() => $('#chatError').hide(), 5000);
+                    sendBtn.prop('disabled', false).html('<i class="bi bi-send-fill"></i>');
+                }
             });
         });
+
+        // Hiện icon chatbot khi đóng modal
+        $('#aiChatModal').on('hidden.bs.modal', function() {
+            $('.chatbot-icon').removeClass('hidden');
+        });
+
+        // Xử lý resize để đảm bảo cuộn đúng
+        $(window).resize(function() {
+            setTimeout(scrollToBottom, 100);
+        });
+    });
     </script>
 
     <!-- Script khởi tạo DataTables -->
     <script>
-        $(document).ready(function() {
-            $.extend(true, $.fn.dataTable.defaults, {
-                "language": {
-                    "url": "{% static 'assets/js/plugin/datatables/i18n/Vietnamese.json' %}"
-                },
-                "dom": "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
-                       "<'row'<'col-sm-12'tr>>" +
-                       "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
-                "pageLength": 10,
-                "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "Tất cả"]]
-            });
+    $(document).ready(function() {
+        $.extend(true, $.fn.dataTable.defaults, {
+            "language": {
+                "url": "{% static 'assets/js/plugin/datatables/i18n/Vietnamese.json' %}"
+            },
+            "dom": "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                   "<'row'<'col-sm-12'tr>>" +
+                   "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            "pageLength": 10,
+            "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "Tất cả"]]
         });
+    });
     </script>
 
     <!-- Script xử lý thông báo bằng SweetAlert2 -->
     <script>
-        $(document).ready(function() {
-            {% for message in messages %}
-                Swal.fire({
-                    icon: "{{ message.tags }}",
-                    title: "{{ message.tags|capfirst }}",
-                    text: "{{ message }}",
-                    confirmButtonText: "OK",
-                    confirmButtonColor: "#007bff",
-                    timer: {% if message.tags == 'success' %}3000{% else %}null{% endif %},
-                    timerProgressBar: true,
-                    customClass: {
-                        popup: 'swal-popup',
-                        title: 'swal-title',
-                        content: 'swal-content'
-                    }
-                });
-            {% endfor %}
+    $(document).ready(function() {
+        {% for message in messages %}
+        Swal.fire({
+            icon: "{{ message.tags }}",
+            title: "{{ message.tags|capfirst }}",
+            text: "{{ message }}",
+            confirmButtonText: "OK",
+            confirmButtonColor: "#007bff",
+            timer: {% if message.tags == 'success' %}3000{% else %}null{% endif %},
+            timerProgressBar: true,
+            customClass: {
+                popup: 'swal-popup',
+                title: 'swal-title',
+                content: 'swal-content'
+            }
         });
+        {% endfor %}
+    });
     </script>
 
     {% block extra_js %}{% endblock %}

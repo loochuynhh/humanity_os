@@ -28,6 +28,7 @@ from .utils import (
     get_project_data,
     generate_user_report_data,
     build_gemini_prompt,
+    get_chat_messages,
 )
 
 
@@ -259,13 +260,12 @@ def check_out(request):
 @login_required
 def index(request):
     user = request.user
-    chat_messages = AIChatMessage.objects.filter(user=request.user).order_by('timestamp')[:10]
+    
     # Lấy thông tin cơ bản về người dùng
     context = {
         "first_name": user.first_name,
         "last_name": user.last_name,
         "avatar_url": user.avatar_url,
-        "chat_messages": chat_messages,
     }
 
     try:
@@ -282,7 +282,6 @@ def index(request):
             "recent_tasks": get_recent_tasks(user.id),
             "project_time_allocation": get_project_time_allocation(user.id, as_json=True),
             "task_stats": get_task_stats(user),
-            "chat_messages": chat_messages,
         })
     except Exception as e:
         # Nếu có lỗi, chỉ hiển thị thông tin cơ bản
@@ -409,7 +408,7 @@ def attendance(request):
     Hiển thị lịch sử điểm danh của người dùng trong 45 ngày gần nhất.
     """
     user = request.user
-
+    
     # Lấy lịch sử check-in/check-out (45 ngày gần nhất)
     end_date = timezone.now().date()
     start_date = end_date - timezone.timedelta(days=45)
@@ -521,7 +520,7 @@ def ai_chat(request):
         user_message = request.POST.get('message')
         user = request.user
 
-        # Lấy lịch sử trò chuyện
+        # Lấy lịch sử trò chuyện (10 tin nhắn gần nhất)
         history = AIChatMessage.objects.filter(user=user).order_by('timestamp')[:10]
         contents = []
         for msg in history:
@@ -537,15 +536,91 @@ def ai_chat(request):
             "parts": [{"text": prompt}]
         })
 
-        # Cấu hình Gemini
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content(contents)
-        ai_response = response.text
+        try:
+            # Cấu hình Gemini với tham số để có phản hồi tốt hơn
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            
+            # Cấu hình các tham số
+            generation_config = {
+                "temperature": 0.7,  # Kiểm soát sự ngẫu nhiên
+                "top_p": 0.95,      # Lọc theo xác suất
+                "top_k": 40,        # Lọc theo xếp hạng
+                "max_output_tokens": 2048,  # Giới hạn độ dài phản hồi
+            }
+            
+            # Tạo phản hồi
+            response = model.generate_content(
+                contents,
+                generation_config=generation_config,
+                safety_settings=[
+                    {
+                        "category": "HARM_CATEGORY_HARASSMENT",
+                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                    },
+                    {
+                        "category": "HARM_CATEGORY_HATE_SPEECH",
+                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                    },
+                    {
+                        "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                    },
+                    {
+                        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                    }
+                ]
+            )
+            ai_response = response.text
 
-        # Lưu tin nhắn
-        AIChatMessage.objects.create(user=user, role='user', content=user_message)
-        AIChatMessage.objects.create(user=user, role='model', content=ai_response)
+            # Đếm tổng số tin nhắn của người dùng (tính theo cặp user-AI)
+            message_count = AIChatMessage.objects.filter(user=user).count()
+            
+            # Nếu đã vượt quá giới hạn 50 cuộc hội thoại (100 tin nhắn = 50 cặp), xóa các tin nhắn cũ nhất
+            if message_count >= 98:  # 98 tin nhắn = 49 cặp (nếu thêm 2 tin nhắn mới sẽ đủ 50 cặp)
+                # Lấy ID của các tin nhắn cũ nhất (2 tin nhắn cũ nhất = 1 cặp user-AI)
+                oldest_messages = AIChatMessage.objects.filter(user=user).order_by('timestamp')[:2]
+                oldest_ids = [msg.id for msg in oldest_messages]
+                # Xóa các tin nhắn cũ nhất
+                AIChatMessage.objects.filter(id__in=oldest_ids).delete()
 
-        return JsonResponse({'response': ai_response})
+            # Lưu tin nhắn mới của người dùng
+            AIChatMessage.objects.create(user=user, role='user', content=user_message)
+            # Lưu tin nhắn mới của AI
+            AIChatMessage.objects.create(user=user, role='model', content=ai_response)
+
+            return JsonResponse({'response': ai_response})
+            
+        except Exception as e:
+            import traceback
+            error_message = str(e)
+            print(f"Lỗi AI Chat: {error_message}")
+            print(traceback.format_exc())
+            return JsonResponse({'error': f'Có lỗi xảy ra khi xử lý yêu cầu: {error_message}'}, status=500)
+            
     return JsonResponse({'error': 'Yêu cầu không hợp lệ'}, status=400)
+
+@login_required
+def get_chat_messages(request):
+    """
+    API endpoint để lấy tin nhắn chat của người dùng.
+    """
+    try:
+        from .utils import get_chat_messages as get_messages
+        
+        messages = get_messages(request.user, limit=20)
+        messages_data = [
+            {
+                'role': msg.role,
+                'content': msg.content,
+                'timestamp': msg.timestamp.isoformat(),
+            }
+            for msg in messages
+        ]
+        return JsonResponse({'success': True, 'messages': messages_data})
+    except Exception as e:
+        import traceback
+        print(f"Lỗi trong get_chat_messages API: {str(e)}")
+        print(traceback.format_exc())
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

@@ -1096,12 +1096,31 @@ Humanity OS là một nền tảng quản lý nhân sự và công việc toàn 
 {user_message}
 
 ## Hướng dẫn trả lời
-- Trả lời bằng **tiếng Việt**, tối đa **200 từ**, sử dụng ngôn ngữ **thân thiện**, **chuyên nghiệp**, đầy đủ dấu tiếng Việt.
-- Phân tích yêu cầu và sử dụng dữ liệu liên quan để trả lời chính xác, ngắn gọn.
-- Nếu yêu cầu liên quan đến dữ liệu đã cung cấp, sử dụng chúng để trả lời cụ thể.
-- Nếu yêu cầu không rõ ràng hoặc cần thêm thông tin, hỏi lại người dùng một cách lịch sự.
-- Nếu không thể trả lời từ dữ liệu hiện có, hãy giải thích lý do và gợi ý cách tìm thông tin.
-- Sử dụng định dạng rõ ràng (gạch đầu dòng, bôi đậm) cho câu trả lời dễ đọc.
-- Đưa ra gợi ý cải thiện nếu phát hiện vấn đề trong dữ liệu (công việc quá hạn, KPI thấp, v.v.)
+- Trả lời bằng **tiếng Việt**, sử dụng ngôn ngữ **thân thiện** và **chuyên nghiệp**, đầy đủ dấu tiếng Việt.
+- Sử dụng **định dạng rõ ràng** (gạch đầu dòng, bôi đậm) cho câu trả lời dễ đọc.
+- Ưu tiên trả lời ngắn gọn và đi thẳng vào vấn đề người dùng đang hỏi.
+- Nếu phát hiện vấn đề trong dữ liệu (công việc quá hạn, KPI thấp, v.v.), hãy đưa ra gợi ý cải thiện.
+- Thể hiện sự hiểu biết về Humanity OS và các tính năng của nó trong câu trả lời.
+- Khi trả lời về cách sử dụng tính năng, hãy hướng dẫn cụ thể các bước thực hiện.
+- Đưa ra những gợi ý phù hợp với vai trò của người dùng.
 """
     return prompt
+
+# users/utils.py
+def get_chat_messages(user, limit=20):
+    """
+    Hàm tiện ích lấy tin nhắn chat gần nhất của người dùng.
+    """
+    if not user or not user.is_authenticated:
+        return []
+        
+    try:
+        # Import để tránh circular import
+        from .models import AIChatMessage
+        
+        # Đảm bảo truy vấn trên mô hình AIChatMessage với user là đối tượng Users
+        messages = AIChatMessage.objects.filter(user=user).order_by('-timestamp')[:limit]
+        return list(messages)[::-1]  # Đảo ngược danh sách để hiển thị tin nhắn cũ trước
+    except Exception as e:
+        print(f"Lỗi khi lấy chat messages: {str(e)}")
+        return []

@@ -15,7 +15,8 @@ from .views import (
     attendance,
     get_current_work_time,
     generate_user_report,
-    ai_chat
+    ai_chat,
+    get_chat_messages,
 )
 
 urlpatterns = [
@@ -35,4 +36,5 @@ urlpatterns = [
     path('api/current-work-time/', get_current_work_time, name='get_current_work_time'),
     path('report/', generate_user_report, name='generate_user_report'),
     path('api/ai_chat/', ai_chat, name='ai_chat'),
+    path('api/get_chat_messages/', get_chat_messages, name='get_chat_messages'),
 ]
