@@ -39,12 +39,19 @@
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h5 class="section-title mb-0">Thông tin Task</h5>
                                     <div class="d-flex gap-2">
+                                        {% if task.is_tracking %}
+                                        <button id="stopTaskBtn" class="btn btn-warning btn-sm" 
+                                                data-task-id="{{ task.id }}" 
+                                                data-url="{% url 'projects:toggle_time' %}">
+                                            <i class="fas fa-stop me-1"></i>Dừng Task
+                                        </button>
+                                        {% else %}
                                         <button id="startTaskBtn" class="btn btn-success btn-sm" 
                                                 data-task-id="{{ task.id }}" 
-                                                data-url="{% url 'projects:toggle_time' %}" 
-                                                {% if task.is_tracking %}disabled{% endif %}>
+                                                data-url="{% url 'projects:toggle_time' %}">
                                             <i class="fas fa-play me-1"></i>Thực hiện Task
                                         </button>
+                                        {% endif %}
                                         <button id="editTaskBtn" class="btn btn-outline-primary btn-sm">Chỉnh sửa</button>
                                     </div>
                                 </div>
@@ -209,13 +216,14 @@
                                         <span class="avatar avatar-sm rounded-circle bg-gradient-primary me-2" 
                                               data-bs-toggle="tooltip" 
                                               data-bs-placement="top" 
-                                              title="{{ entry.user.get_full_name }}">
-                                            {{ entry.user.first_name|first }}{{ entry.user.last_name|first }}
+                                              title="{{ entry.task_assignment.user.get_full_name }}">
+                                            {{ entry.task_assignment.user.first_name|first }}{{ entry.task_assignment.user.last_name|first }}
                                         </span>
                                         <div class="flex-grow-1">
                                             <p class="mb-0 text-sm">
-                                                <strong>{{ entry.user.get_full_name }}</strong> - 
-                                                {{ entry.task.title }}
+                                                <strong>{{ entry.task_assignment.user.get_full_name }}</strong> - 
+                                                {{ entry.task_assignment.task.title }}
+                                                <span class="badge bg-light text-dark">{{ entry.task_assignment.role }}</span>
                                             </p>
                                             <p class="mb-0 text-muted text-sm">
                                                 Bắt đầu: {{ entry.start_time|date:"d/m/Y H:i" }} | 

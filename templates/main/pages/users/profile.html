@@ -358,46 +358,45 @@
 
 <!-- Modal đổi mật khẩu -->
 <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
-<div class="modal-dialog">
-    <div class="modal-content">
-    <div class="modal-header">
-        <h5 class="modal-title">Đổi mật khẩu</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-    </div>
-    <form id="changePasswordForm" method="POST" action="{% url 'users:change_password' %}">
-        {% csrf_token %}
-        <div class="modal-body">
-        <div class="mb-3">
-            <label class="form-label fw-medium">Mật khẩu hiện tại</label>
-            <div class="input-group">
-            <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
-            <input type="password" name="current_password" class="form-control border-start-0" required placeholder="Nhập mật khẩu hiện tại">
+    <div class="modal-dialog">
+        <div class="modal-content modal-content-custom">
+            <div class="modal-header">
+                <h5 class="modal-title">Đổi mật khẩu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            <form id="changePasswordForm" method="POST" action="{% url 'users:change_password' %}">
+                {% csrf_token %}
+                <div class="modal-body password-form">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Mật khẩu hiện tại</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+                            <input type="password" name="current_password" class="form-control border-start-0" required placeholder="Nhập mật khẩu hiện tại">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Mật khẩu mới</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+                            <input type="password" name="new_password" class="form-control border-start-0" required placeholder="Nhập mật khẩu mới">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Xác nhận mật khẩu mới</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+                            <input type="password" name="confirm_password" class="form-control border-start-0" required placeholder="Xác nhận mật khẩu mới">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger">Cập nhật mật khẩu</button>
+                </div>
+            </form>
         </div>
-        <div class="mb-3">
-            <label class="form-label fw-medium">Mật khẩu mới</label>
-            <div class="input-group">
-            <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
-            <input type="password" name="new_password" class="form-control border-start-0" required placeholder="Nhập mật khẩu mới">
-            </div>
-        </div>
-        <div class="mb-3">
-            <label class="form-label fw-medium">Xác nhận mật khẩu mới</label>
-            <div class="input-group">
-            <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
-            <input type="password" name="confirm_password" class="form-control border-start-0" required placeholder="Xác nhận mật khẩu mới">
-            </div>
-        </div>
-        </div>
-        <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-        <button type="submit" class="btn btn-danger">Cập nhật mật khẩu</button>
-        </div>
-    </form>
     </div>
 </div>
-</div>
-
 {% endblock %}
 
 {% block extra_js %}

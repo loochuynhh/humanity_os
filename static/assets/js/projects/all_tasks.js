@@ -1,7 +1,7 @@
 $(document).ready(function() {
     var table = $('#tasksTable').DataTable({
         "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Vietnamese.json"
+            "url": "/static/assets/js/plugin/datatables/i18n/Vietnamese.json"
         },
         "dom": "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
                "<'row'<'col-sm-12'tr>>" +

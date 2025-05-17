@@ -219,58 +219,133 @@ $(document).ready(function() {
         }
     }
 
-    const startTaskBtn = document.getElementById('startTaskBtn');
-    if (startTaskBtn) {
-        startTaskBtn.addEventListener('click', function() {
-            const taskId = this.getAttribute('data-task-id');
-            const url = this.getAttribute('data-url'); // Lấy URL từ data-url
-            if (!url) {
-                alert('Lỗi: Không tìm thấy URL API!');
-                return;
-            }
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                },
-                body: `task_id=${taskId}&action=start`
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    startTaskBtn.disabled = true;
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Thành công',
-                        text: 'Bắt đầu thực hiện task thành công!',
-                        confirmButtonColor: '#007bff',
-                        timer: 3000,
-                        timerProgressBar: true
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Lỗi',
-                        text: data.error || 'Có lỗi xảy ra!',
-                        confirmButtonColor: '#007bff'
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Lỗi kết nối',
-                    text: 'Không thể kết nối đến server, vui lòng thử lại!',
-                    confirmButtonColor: '#007bff'
+    // Xử lý bắt đầu task
+    $('#startTaskBtn').click(function() {
+        const taskId = $(this).data('task-id');
+        const url = $(this).data('url');
+        
+        Swal.fire({
+            title: 'Xác nhận',
+            text: 'Bạn có chắc muốn bắt đầu theo dõi task này?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Bắt đầu',
+            cancelButtonText: 'Hủy'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: url,
+                    method: 'POST',
+                    data: {
+                        'task_id': taskId,
+                        'action': 'start',
+                        'csrfmiddlewaretoken': getCookie('csrftoken')
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Đã bắt đầu task',
+                                text: 'Thời gian đang được theo dõi.',
+                                confirmButtonColor: '#28a745',
+                                timer: 2000
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Lỗi',
+                                text: response.error,
+                                confirmButtonColor: '#dc3545'
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi',
+                            text: 'Có lỗi xảy ra khi bắt đầu task.',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    }
                 });
-            });
+            }
         });
+    });
+    
+    // Xử lý dừng task
+    $('#stopTaskBtn').click(function() {
+        const taskId = $(this).data('task-id');
+        const url = $(this).data('url');
+        
+        Swal.fire({
+            title: 'Xác nhận',
+            text: 'Bạn có chắc muốn dừng theo dõi task này?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#ffc107',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Dừng',
+            cancelButtonText: 'Hủy'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: url,
+                    method: 'POST',
+                    data: {
+                        'task_id': taskId,
+                        'action': 'stop',
+                        'csrfmiddlewaretoken': getCookie('csrftoken')
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Đã dừng task',
+                                text: `Thời gian đã được ghi nhận: ${response.duration.toFixed(2)} giờ`,
+                                confirmButtonColor: '#28a745',
+                                timer: 2000
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Lỗi',
+                                text: response.error,
+                                confirmButtonColor: '#dc3545'
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi',
+                            text: 'Có lỗi xảy ra khi dừng task.',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    }
+                });
+            }
+        });
+    });
+    
+    // Helper function để lấy CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 });

@@ -3,9 +3,18 @@
  * Expects data: [To_do, In_progress, Completed]
  */
 function initTaskChart(data) {
-  const taskCtx = document.getElementById("taskChart").getContext("2d");
+  const taskCtx = document.getElementById("taskChart");
+  if (!taskCtx) return;
+  
+  // Kiểm tra xem đã có chart nào được tạo cho canvas này chưa
+  const existingChart = Chart.getChart(taskCtx);
+  if (existingChart) {
+    existingChart.destroy();
+  }
+  
+  const ctx = taskCtx.getContext("2d");
   const chartData = Array.isArray(data) && data.length >= 3 ? data.slice(0, 3) : [0, 0, 0];
-  new Chart(taskCtx, {
+  new Chart(ctx, {
       type: "doughnut",
       data: {
           labels: ["To-do", "Đang làm", "Hoàn thành"],
@@ -40,9 +49,18 @@ function initTaskChart(data) {
 * Expects data: [hours for Mon, Tue, Wed, Thu, Fri, Sat, Sun]
 */
 function initTimeChart(data) {
-  const timeCtx = document.getElementById("timeChart").getContext("2d");
+  const timeCtx = document.getElementById("timeChart");
+  if (!timeCtx) return;
+  
+  // Kiểm tra xem đã có chart nào được tạo cho canvas này chưa
+  const existingChart = Chart.getChart(timeCtx);
+  if (existingChart) {
+    existingChart.destroy();
+  }
+  
+  const ctx = timeCtx.getContext("2d");
   const chartData = Array.isArray(data) && data.length === 7 ? data : [0, 0, 0, 0, 0, 0, 0];
-  new Chart(timeCtx, {
+  new Chart(ctx, {
       type: "line",
       data: {
           labels: ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
@@ -87,7 +105,16 @@ function initTimeChart(data) {
 * Expects data: { labels: [project_name, ...], data: [hours, ...] }
 */
 function initProjectTimeChart(data) {
-  const projectTimeCtx = document.getElementById("projectTimeChart").getContext("2d");
+  const projectTimeCtx = document.getElementById("projectTimeChart");
+  if (!projectTimeCtx) return;
+  
+  // Kiểm tra xem đã có chart nào được tạo cho canvas này chưa
+  const existingChart = Chart.getChart(projectTimeCtx);
+  if (existingChart) {
+    existingChart.destroy();
+  }
+  
+  const ctx = projectTimeCtx.getContext("2d");
   const chartData = data && data.labels && data.data ? {
       labels: data.labels.length ? data.labels : ['Không có dự án'],
       data: data.data.length ? data.data : [1]
@@ -95,7 +122,7 @@ function initProjectTimeChart(data) {
       labels: ['Không có dự án'],
       data: [1]
   };
-  new Chart(projectTimeCtx, {
+  new Chart(ctx, {
       type: "pie",
       data: {
           labels: chartData.labels,
@@ -311,9 +338,12 @@ document.addEventListener('DOMContentLoaded', function () {
       }
   }
 
-  initChart('taskChart', initTaskChart, 'array');
-  initChart('timeChart', initTimeChart, 'array');
-  initChart('projectTimeChart', initProjectTimeChart, 'object');
+  // Đảm bảo chỉ khởi tạo các biểu đồ một lần
+  setTimeout(function() {
+    initChart('taskChart', initTaskChart, 'array');
+    initChart('timeChart', initTimeChart, 'array');
+    initChart('projectTimeChart', initProjectTimeChart, 'object');
+  }, 100);
 
   // Initialize webcam and geolocation
   console.log('Setting up webcam and geolocation');
@@ -447,6 +477,7 @@ function handleCheckInClick() {
   const checkInForm = document.getElementById('checkInForm');
   const submitBtn = document.getElementById('checkin_submit');
   const errorDiv = document.getElementById('checkin_error');
+  const errorSpan = errorDiv.querySelector('span');
 
   if (!checkInForm || !submitBtn) {
     console.error('Check-in form or submit button not found');
@@ -474,13 +505,14 @@ function handleCheckInClick() {
   });
 
   if (!imageData || !location) {
-    errorDiv.textContent = 'Vui lòng chụp ảnh và cho phép truy cập vị trí';
+    errorSpan.textContent = 'Vui lòng chụp ảnh và cho phép truy cập vị trí';
     errorDiv.classList.remove('d-none');
     return;
   }
 
   // Disable nút ngay lập tức để ngăn click liên tục
   submitBtn.disabled = true;
+  const originalBtnHtml = submitBtn.innerHTML;
   submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...';
   errorDiv.classList.add('d-none');
 
@@ -511,7 +543,7 @@ function handleCheckInClick() {
   .then(data => {
     console.log('Check-in response data:', data);
     submitBtn.disabled = false;
-    submitBtn.innerHTML = 'Check-in';
+    submitBtn.innerHTML = originalBtnHtml;
 
     // Đóng modal
     const modal = bootstrap.Modal.getInstance(document.getElementById('checkInModal'));
@@ -535,7 +567,7 @@ function handleCheckInClick() {
   .catch(error => {
     console.error('Check-in error:', error);
     submitBtn.disabled = false;
-    submitBtn.innerHTML = 'Check-in';
+    submitBtn.innerHTML = originalBtnHtml;
 
     // Đóng modal
     const modal = bootstrap.Modal.getInstance(document.getElementById('checkInModal'));
@@ -560,6 +592,7 @@ function handleCheckOutClick() {
   const checkOutForm = document.getElementById('checkOutForm');
   const submitBtn = document.getElementById('checkout_submit');
   const errorDiv = document.getElementById('checkout_error');
+  const errorSpan = errorDiv.querySelector('span');
 
   if (!checkOutForm || !submitBtn) {
     console.error('Check-out form or submit button not found');
@@ -587,13 +620,14 @@ function handleCheckOutClick() {
   });
 
   if (!imageData || !location) {
-    errorDiv.textContent = 'Vui lòng chụp ảnh và cho phép truy cập vị trí';
+    errorSpan.textContent = 'Vui lòng chụp ảnh và cho phép truy cập vị trí';
     errorDiv.classList.remove('d-none');
     return;
   }
 
   // Disable nút và hiển thị loading
   submitBtn.disabled = true;
+  const originalBtnHtml = submitBtn.innerHTML;
   submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...';
   errorDiv.classList.add('d-none');
 
@@ -624,7 +658,7 @@ function handleCheckOutClick() {
   .then(data => {
     console.log('Check-out response data:', data);
     submitBtn.disabled = false;
-    submitBtn.innerHTML = 'Check-out';
+    submitBtn.innerHTML = originalBtnHtml;
 
     // Đóng modal
     const modal = bootstrap.Modal.getInstance(document.getElementById('checkOutModal'));
@@ -648,7 +682,7 @@ function handleCheckOutClick() {
   .catch(error => {
     console.error('Check-out error:', error);
     submitBtn.disabled = false;
-    submitBtn.innerHTML = 'Check-out';
+    submitBtn.innerHTML = originalBtnHtml;
 
     // Đóng modal
     const modal = bootstrap.Modal.getInstance(document.getElementById('checkOutModal'));

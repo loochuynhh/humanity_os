@@ -49,41 +49,28 @@
 
       <!-- Biểu đồ -->
       <div class="row mb-4 fade-in-up">
-        <div class="col-md-6">
+        <div class="col-md-7">
           <div class="card shadow-sm">
             <div class="card-header">
-              <h5 class="mb-0">Hiệu suất làm việc theo thời gian</h5>
+              <h5 class="mb-0">Thời gian làm việc theo ngày</h5>
             </div>
             <div class="card-body">
-              <canvas id="timeByDayChart"></canvas>
-            </div>
-            <div class="card-footer bg-white">
-              <small class="text-muted">
-                <i class="bi bi-info-circle me-1"></i>
-                Biểu đồ hiển thị thời gian làm việc và hiệu suất theo thời gian với mục tiêu 8 giờ/ngày. Xu hướng hiệu suất (đường cam) giúp theo dõi sự thay đổi hiệu suất.
-              </small>
+              <canvas id="timeByDayChart" height="300"></canvas>
             </div>
           </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-5">
           <div class="card shadow-sm">
             <div class="card-header">
-              <h5 class="mb-0">Hiệu quả sử dụng thời gian theo công việc</h5>
+              <h5 class="mb-0">Phân bổ thời gian theo task</h5>
             </div>
-            <div class="card-body" style="height: 400px;">
-              <canvas id="timeByTaskChart"></canvas>
-            </div>
-            <div class="card-footer bg-white">
-              <small class="text-muted">
-                <i class="bi bi-info-circle me-1"></i>
-                So sánh thời gian ước tính và thực tế cho mỗi công việc. Hiệu quả càng cao (>100%) nghĩa là hoàn thành nhanh hơn dự kiến.
-              </small>
+            <div class="card-body">
+              <canvas id="timeByTaskChart" height="300"></canvas>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Lịch sử Time Entries -->
       <div class="row fade-in-up">
         <div class="col-12">
           <div class="card shadow-sm">
@@ -96,6 +83,7 @@
                   <thead>
                     <tr>
                       <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Task</th>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Vai trò</th>
                       <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Trạng thái</th>
                       <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Bắt đầu</th>
                       <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Kết thúc</th>
@@ -107,13 +95,22 @@
                     {% for entry in time_entries %}
                     <tr data-entry-id="{{ entry.id }}">
                       <td>
-                        <h6 class="mb-0 text-sm">{{ entry.task.title }}</h6>
+                        <h6 class="mb-0 text-sm">
+                          <a href="{% url 'projects:task_detail' entry.task_assignment.task.id %}">
+                            {{ entry.task_assignment.task.title }}
+                          </a>
+                        </h6>
                       </td>
                       <td>
-                        <select class="form-select form-select-sm status-select" data-task-id="{{ entry.task.id }}">
+                        <span class="badge bg-light text-dark">{{ entry.task_assignment.role }}</span>
+                      </td>
+                      <td>
+                        <select class="form-select form-select-sm status-select" 
+                                data-task-id="{{ entry.task_assignment.task.id }}"
+                                data-original-status="{{ entry.task_assignment.status }}">
                           {% for status, status_label in status_choices %}
                           <option value="{{ status }}"
-                                  {% if entry.task.task_assignments.get.user == request.user and entry.task.task_assignments.get.status == status %}selected{% endif %}>
+                                  {% if entry.task_assignment.status == status %}selected{% endif %}>
                             {{ status_label }}
                           </option>
                           {% endfor %}
@@ -138,7 +135,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                      <td colspan="6" class="text-center py-4">
+                      <td colspan="7" class="text-center py-4">
                         <i class="bi bi-clock fa-2x text-muted mb-3"></i>
                         <h6 class="text-muted">Chưa có lịch sử theo dõi</h6>
                       </td>
@@ -158,49 +155,10 @@
 
 {% block extra_js %}
 <script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
-<script src="{% static 'assets/js/projects/time_tracking.js' %}"></script>
 <script>
-  // Dữ liệu cho biểu đồ 
-  var timeByDayData = [];
-  var timeByTaskData = [];
-  
-  {% if time_by_day %}
-    timeByDayData = {{ time_by_day|safe }};
-  {% endif %}
-  
-  {% if time_by_task %}
-    timeByTaskData = {{ time_by_task|safe }};
-  {% endif %}
-  
-  // Kiểm tra dữ liệu trước khi truyền vào biểu đồ
-  console.log('Dữ liệu thời gian theo ngày:', timeByDayData);
-  console.log('Dữ liệu thời gian theo công việc:', timeByTaskData);
-  
-  // Kiểm tra xem dữ liệu có hợp lệ không
-  if (Array.isArray(timeByDayData)) {
-    timeByDayData.forEach(function(item, index) {
-      if (!item || typeof item !== 'object') {
-        console.error('Dữ liệu timeByDayData[' + index + '] không hợp lệ:', item);
-      } else if (item.total_time === null || item.total_time === undefined) {
-        console.error('timeByDayData[' + index + '].total_time null hoặc undefined:', item);
-      }
-    });
-  } else {
-    console.error('timeByDayData không phải là mảng:', timeByDayData);
-  }
-  
-  if (Array.isArray(timeByTaskData)) {
-    timeByTaskData.forEach(function(item, index) {
-      if (!item || typeof item !== 'object') {
-        console.error('Dữ liệu timeByTaskData[' + index + '] không hợp lệ:', item);
-      } else if (item.total_time === null || item.total_time === undefined) {
-        console.error('timeByTaskData[' + index + '].total_time null hoặc undefined:', item);
-      } else if (item.estimated_time === null || item.estimated_time === undefined) {
-        console.error('timeByTaskData[' + index + '].estimated_time null hoặc undefined:', item);
-      }
-    });
-  } else {
-    console.error('timeByTaskData không phải là mảng:', timeByTaskData);
-  }
+  // Truyền dữ liệu từ Python sang JavaScript
+  var timeByDayData = {{ time_by_day|safe }} || [];
+  var timeByTaskData = {{ time_by_task|safe }} || [];
 </script>
+<script src="{% static 'assets/js/projects/time_tracking.js' %}"></script>
 {% endblock %}

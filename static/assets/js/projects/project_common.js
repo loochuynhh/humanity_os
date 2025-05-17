@@ -84,7 +84,7 @@ function getStatusBadgeClass(status) {
 function createDataTable(tableId, options = {}) {
   const defaultOptions = {
     language: {
-      url: "//cdn.datatables.net/plug-ins/1.10.25/i18n/Vietnamese.json"
+      url: "/static/assets/js/plugin/datatables/i18n/Vietnamese.json"
     },
     pageLength: 10,
     lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "Tất cả"]],

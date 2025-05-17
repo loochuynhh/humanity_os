@@ -255,7 +255,7 @@ function initProjectTable() {
   if ($('#projectsTable').length > 0) {
     $('#projectsTable').DataTable({
       "language": {
-        "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Vietnamese.json"
+        "url": "/static/assets/js/plugin/datatables/i18n/Vietnamese.json"
       },
       "order": [[3, "desc"]], // Sắp xếp theo tiến độ giảm dần
       "pageLength": 5,

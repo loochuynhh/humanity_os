@@ -39,10 +39,10 @@ from django.contrib import messages
 import time
 
 def get_task_counts(user_id, as_json=False):
-    task_counts = TaskAssignments.objects.filter(user_id=user_id).values('task__status').annotate(count=Count('task__id'))
+    task_counts = TaskAssignments.objects.filter(user_id=user_id).values('status').annotate(count=Count('id'))
     task_status = {'To_do': 0, 'In_progress': 0, 'Completed': 0}
     for item in task_counts:
-        status = item['task__status'].replace(' ', '_').replace('-', '_')
+        status = item['status'].replace(' ', '_').replace('-', '_')
         if status in task_status:
             task_status[status] = item['count']
     if as_json:
@@ -143,13 +143,21 @@ def get_recent_tasks(user_id):
     return Tasks.objects.filter(task_assignments__user_id=user_id).select_related('project').order_by('-deadline')[:5]
 
 def get_project_time_allocation(user_id, as_json=False):
-    entries = TimeEntries.objects.filter(user_id=user_id).select_related('task__project')
+    # Lấy tất cả task_assignments của user
+    assignments = TaskAssignments.objects.filter(user_id=user_id)
+    
+    # Lấy time_entries thông qua task_assignment
+    entries = TimeEntries.objects.filter(
+        task_assignment__in=assignments
+    ).select_related('task_assignment__task__project')
+    
     project_times = {}
     for entry in entries:
-        if entry.task and entry.task.project:
-            project_name = entry.task.project.name.strip()
+        if entry.task_assignment and entry.task_assignment.task and entry.task_assignment.task.project:
+            project_name = entry.task_assignment.task.project.name.strip()
             duration = entry.duration or 0
             project_times[project_name] = project_times.get(project_name, 0) + duration
+    
     # Làm tròn tất cả giá trị thời gian đến 2 chữ số thập phân
     project_times = {k: round(v, 2) for k, v in project_times.items()}
     data = {
@@ -477,16 +485,6 @@ def get_today_work_hours(user):
     return f"{hours:.2f} giờ"
 
 def generate_user_report_data(user, period='monthly'):
-    """
-    Generate comprehensive user report data for PDF generation.
-    
-    Args:
-        user: The user object
-        period: 'monthly' or 'quarterly'
-        
-    Returns:
-        Dict with all report data
-    """
     today = timezone.now()
     
     # Set date range based on period
@@ -501,13 +499,13 @@ def generate_user_report_data(user, period='monthly'):
         quarter = (today.month - 1) // 3
         start_month = quarter * 3 + 1
         start_date = today.replace(month=start_month, day=1, hour=0, minute=0, second=0, microsecond=0)
-        if start_month > 9:  # Q4 spans to next year
+        if start_month > 9:
             end_date = timezone.datetime(start_date.year + 1, 1, 1) - timezone.timedelta(seconds=1)
         else:
             end_date = timezone.datetime(start_date.year, start_month + 3, 1) - timezone.timedelta(seconds=1)
         quarter_names = {0: "I", 1: "II", 2: "III", 3: "IV"}
         period_display = f"Quý {quarter_names[quarter]} năm {start_date.year}"
-    
+
     # Get basic user info
     user_info = {
         'full_name': user.get_full_name(),
@@ -546,10 +544,6 @@ def generate_user_report_data(user, period='monthly'):
     }
     
     # Get tasks data
-    from projects.models import Tasks, TimeEntries, Projects
-    from django.db.models import Sum, Count, Q
-    
-    # Get tasks in the period
     tasks = Tasks.objects.filter(
         task_assignments__user=user,
         deadline__range=[start_date, end_date]
@@ -561,14 +555,13 @@ def generate_user_report_data(user, period='monthly'):
     todo_tasks = tasks.filter(status='To-do').count()
     late_tasks = tasks.filter(status='Late').count()
     
-    # Calculate completion rate
     completion_rate = round(completed_tasks / tasks.count() * 100, 2) if tasks.count() > 0 else 0
     
     # Time tracking data
     time_entries = TimeEntries.objects.filter(
-        user=user,
+        task_assignment__user=user,
         start_time__range=[start_date, end_date]
-    ).select_related('task')
+    ).select_related('task_assignment__task')  # Sửa từ 'task' thành 'task_assignment__task'
     
     total_hours = time_entries.aggregate(total=Sum('duration'))['total'] or 0
     
@@ -576,30 +569,29 @@ def generate_user_report_data(user, period='monthly'):
     time_by_day = {}
     current_date = start_date.date()
     while current_date <= end_date.date():
-        day_entries = time_entries.filter(
-            start_time__date=current_date
-        )
+        day_entries = time_entries.filter(start_time__date=current_date)
         day_total = day_entries.aggregate(total=Sum('duration'))['total'] or 0
         time_by_day[current_date.strftime('%d/%m/%Y')] = round(day_total, 2)
         current_date += timezone.timedelta(days=1)
     
     # Time by project
-    projects = Projects.objects.filter(tasks__time_entries__user=user).distinct()
+    task_assignments = TaskAssignments.objects.filter(user=user)
+    tasks = Tasks.objects.filter(task_assignments__in=task_assignments)
+    projects = Projects.objects.filter(tasks__in=tasks).distinct()
+    
     time_by_project = {}
     for project in projects:
         project_time = time_entries.filter(
-            task__project=project
+            task_assignment__task__project=project  # Sửa từ task__project thành task_assignment__task__project
         ).aggregate(total=Sum('duration'))['total'] or 0
-        if project_time > 0:  # Only include projects with time entries
+        if project_time > 0:
             time_by_project[project.name] = round(project_time, 2)
     
     # Calculate productivity metrics
     working_days = len([d for d in time_by_day if time_by_day[d] > 0])
     avg_daily_hours = round(total_hours / working_days, 2) if working_days > 0 else 0
-    
-    # Expected 8-hour workday
     expected_hours = working_days * 8
-    productivity_rate = round((total_hours / expected_hours) * 100, 2) if expected_hours > 0 else 0
+    productivity_rate = round((total_hours / expected_hours * 100), 2) if expected_hours > 0 else 0
     
     # Get KPI data if available
     from kpis.models import EmployeeKPIs
@@ -609,11 +601,9 @@ def generate_user_report_data(user, period='monthly'):
         end_date__gte=start_date
     ).select_related('kpi', 'kpi__project')
     
-    # Update KPIs from project data
     for kpi in kpis:
         kpi.update_from_project()
     
-    # Calculate KPI metrics
     total_kpis = kpis.count()
     achieved_kpis = kpis.filter(evaluation__in=['Achieved', 'Exceeded']).count()
     completion_kpi_rate = round(achieved_kpis / total_kpis * 100, 2) if total_kpis > 0 else 0
@@ -678,6 +668,7 @@ def generate_user_report_data(user, period='monthly'):
     }
     
     return report_data
+
 
 def summarize_chat(user_msg, max_length=250):
     """
@@ -865,9 +856,10 @@ def build_gemini_prompt(user, user_message):
         team_size = p.team_members.count()
         
         # Get time spent on this project
+        # Get time spent on this project
         time_entries = TimeEntries.objects.filter(
-            user=user,
-            task__project=p
+            task_assignment__user=user,
+            task_assignment__task__project=p
         )
         total_time = time_entries.aggregate(Sum('duration'))['duration__sum'] or 0
         
@@ -886,10 +878,18 @@ def build_gemini_prompt(user, user_message):
 
     # KPI data with more detailed metrics
     kpis = EmployeeKPIs.objects.filter(user=user).order_by('-end_date')[:5]
-    kpi_list = [
-        {
+    kpi_list = []
+    for k in kpis:
+        project_name = 'Không có dự án'
+        if k.kpi:
+            try:
+                project_name = k.kpi.project.name if k.kpi.project else 'Không có dự án'
+            except Projects.DoesNotExist:
+                project_name = 'Dự án không tồn tại'
+
+        kpi_list.append({
             'title': k.kpi.name if k.kpi else 'Không có tiêu đề',
-            'project': k.kpi.project.name if k.kpi and k.kpi.project else 'Không có dự án',
+            'project': project_name,
             'evaluation': k.evaluation or 'Chưa đánh giá',
             'score': f"{k.achieved_percentage:.2f}%" if k.achieved_percentage is not None else 'Chưa đánh giá',
             'target_value': k.target_value,
@@ -899,9 +899,7 @@ def build_gemini_prompt(user, user_message):
             'start_date': k.start_date.strftime('%d/%m/%Y') if k.start_date else 'N/A',
             'end_date': k.end_date.strftime('%d/%m/%Y') if k.end_date else 'N/A',
             'time_period': k.time_period,
-        }
-        for k in kpis
-    ]
+        })
 
     # Evaluation data
     try:

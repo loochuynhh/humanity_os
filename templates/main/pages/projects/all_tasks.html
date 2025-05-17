@@ -134,67 +134,67 @@
 {% for task in tasks %}
 <!-- Modal chi tiết -->
 <div class="modal fade" id="taskModal{{ task.id }}" tabindex="-1" role="dialog" aria-labelledby="taskModalLabel{{ task.id }}" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="taskModalLabel{{ task.id }}">{{ task.title }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="mb-3">
-          <h6 class="text-sm text-muted mb-1">Mô tả</h6>
-          <p>{{ task.description }}</p>
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content modal-content-custom">
+            <div class="modal-header">
+                <h5 class="modal-title" id="taskModalLabel{{ task.id }}">{{ task.title }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body task-detail">
+                <div class="mb-4">
+                    <h6 class="text-sm text-muted mb-2">Mô tả</h6>
+                    <p class="bg-light p-3 rounded">{{ task.description }}</p>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-sm text-muted mb-2">Dự án</h6>
+                        <p>{{ task.project.name }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-sm text-muted mb-2">Deadline</h6>
+                        <p class="{% if task.deadline < now and task.status != 'Completed' %}text-danger{% endif %}">
+                            {{ task.deadline|date:"d/m/Y" }}
+                        </p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-sm text-muted mb-2">Trạng thái</h6>
+                        <span class="badge {% if task.status == 'Completed' %}bg-success{% elif task.status == 'Late' %}bg-danger{% elif task.status == 'In progress' %}bg-warning{% else %}bg-primary{% endif %}">
+                            {{ task.status }}
+                        </span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-sm text-muted mb-2">Độ khó</h6>
+                        <p>{{ task.difficulty|default:"Chưa xác định" }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-sm text-muted mb-2">Thời gian ước lượng</h6>
+                        <p>{{ task.estimated_time|default:"Chưa có" }} giờ</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-sm text-muted mb-2">GitHub</h6>
+                        {% if task.github_link %}
+                        <a href="{{ task.github_link }}" target="_blank" class="text-primary">Xem trên GitHub</a>
+                        {% else %}
+                        <p>Không có</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <h6 class="text-sm text-muted mb-2">Người phụ trách</h6>
+                    <div class="avatar-group d-flex">
+                        {% for assignment in task.task_assignments.all %}
+                        <span class="avatar avatar-sm rounded-circle bg-gradient-primary me-1" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ assignment.user.get_full_name }}">
+                            {{ assignment.user.first_name|first }}{{ assignment.user.last_name|first }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
         </div>
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <h6 class="text-sm text-muted mb-1">Dự án</h6>
-            <p>{{ task.project.name }}</p>
-          </div>
-          <div class="col-md-6 mb-3">
-            <h6 class="text-sm text-muted mb-1">Deadline</h6>
-            <p class="{% if task.deadline < now and task.status != 'Completed' %}text-danger{% endif %}">
-              {{ task.deadline|date:"d/m/Y" }}
-            </p>
-          </div>
-          <div class="col-md-6 mb-3">
-            <h6 class="text-sm text-muted mb-1">Trạng thái</h6>
-            <span class="badge {% if task.status == 'Completed' %}bg-success{% elif task.status == 'Late' %}bg-danger{% elif task.status == 'In progress' %}bg-warning{% else %}bg-primary{% endif %}">
-              {{ task.status }}
-            </span>
-          </div>
-          <div class="col-md-6 mb-3">
-            <h6 class="text-sm text-muted mb-1">Độ khó</h6>
-            <p>{{ task.difficulty|default:"Chưa xác định" }}</p>
-          </div>
-          <div class="col-md-6 mb-3">
-            <h6 class="text-sm text-muted mb-1">Thời gian ước lượng</h6>
-            <p>{{ task.estimated_time|default:"Chưa có" }} giờ</p>
-          </div>
-          <div class="col-md-6 mb-3">
-            <h6 class="text-sm text-muted mb-1">GitHub</h6>
-            {% if task.github_link %}
-            <a href="{{ task.github_link }}" target="_blank" class="text-primary">Xem trên GitHub</a>
-            {% else %}
-            <p>Không có</p>
-            {% endif %}
-          </div>
-        </div>
-        <div class="mb-3">
-          <h6 class="text-sm text-muted mb-1">Người phụ trách</h6>
-          <div class="avatar-group d-flex">
-            {% for assignment in task.task_assignments.all %}
-            <span class="avatar avatar-sm rounded-circle bg-gradient-primary me-1" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ assignment.user.get_full_name }}">
-              {{ assignment.user.first_name|first }}{{ assignment.user.last_name|first }}
-            </span>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-      </div>
     </div>
-  </div>
 </div>
 {% endfor %}
 

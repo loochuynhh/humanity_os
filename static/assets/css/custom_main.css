@@ -472,3 +472,122 @@ body {
 }
 
 /* Những CSS liên quan đến chatbot đã được di chuyển sang file chatbot.css */
+
+
+/* --------------------------------------
+   Modal Styles for Change Password
+   -------------------------------------- */
+   .modal-content-custom {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    animation: slideIn 0.3s ease;
+    background: #ffffff;
+  }
+  
+  @keyframes slideIn {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  
+  #changePasswordModal .modal-header {
+    background: linear-gradient(to right, #dc3545, #c82333);
+    color: #ffffff;
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+    padding: 1.5rem;
+  }
+  
+  #changePasswordModal .modal-header .modal-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+  }
+  
+  #changePasswordModal .modal-header .btn-close {
+    filter: invert(1);
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+  }
+  
+  #changePasswordModal .modal-header .btn-close:hover {
+    opacity: 1;
+  }
+  
+  #changePasswordModal .modal-body.password-form {
+    padding: 2rem;
+  }
+  
+  #changePasswordModal .form-label {
+    font-weight: 500;
+    color: #343a40;
+    margin-bottom: 0.75rem;
+  }
+  
+  #changePasswordModal .input-group {
+    transition: box-shadow 0.3s ease;
+  }
+  
+  #changePasswordModal .input-group:hover {
+    box-shadow: 0 0 0 0.1rem rgba(0, 123, 255, 0.1);
+  }
+  
+  #changePasswordModal .input-group-text {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #6c757d;
+    border-radius: 0.5rem 0 0 0.5rem;
+  }
+  
+  #changePasswordModal .form-control {
+    border-color: #dee2e6;
+    border-radius: 0 0.5rem 0.5rem 0;
+    padding: 0.75rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  #changePasswordModal .form-control:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+  }
+  
+  #changePasswordModal .modal-footer {
+    padding: 1rem 2rem;
+    border-top: none;
+  }
+  
+  #changePasswordModal .btn-secondary {
+    border-radius: 0.5rem;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  #changePasswordModal .btn-secondary:hover {
+    background-color: #5a6268;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+  }
+  
+  #changePasswordModal .btn-danger {
+    background: linear-gradient(to right, #dc3545, #c82333);
+    border: none;
+    border-radius: 0.5rem;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  #changePasswordModal .btn-danger:hover {
+    background: linear-gradient(to right, #c82333, #dc3545);
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Responsive Adjustments */
+  @media (max-width: 576px) {
+    #changePasswordModal .modal-body.password-form {
+      padding: 1.5rem;
+    }
+  
+    #changePasswordModal .modal-header {
+      padding: 1rem;
+    }
+  
+    #changePasswordModal .modal-footer {
+      padding: 0.75rem 1.5rem;
+    }
+  }

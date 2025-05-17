@@ -117,3 +117,122 @@
     justify-content: center;
   }
 }
+
+/* --------------------------------------
+   Modal Styles for Tasks
+   -------------------------------------- */
+   .modal-content-custom {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    animation: slideIn 0.3s ease;
+    background: #ffffff;
+  }
+  
+  @keyframes slideIn {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  
+  .modal-header {
+    background: linear-gradient(to right, #007bff, #17a2b8);
+    color: #ffffff;
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+    padding: 1.5rem;
+  }
+  
+  .modal-header .modal-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+  }
+  
+  .modal-header .btn-close {
+    filter: invert(1);
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+  }
+  
+  .modal-header .btn-close:hover {
+    opacity: 1;
+  }
+  
+  .modal-body.task-detail {
+    padding: 2rem;
+  }
+  
+  .task-detail h6 {
+    font-weight: 500;
+    color: #6c757d;
+    margin-bottom: 0.75rem;
+  }
+  
+  .task-detail p {
+    color: #343a40;
+    margin-bottom: 0;
+  }
+  
+  .task-detail .bg-light {
+    border-radius: 0.5rem;
+    border-left: 4px solid #007bff;
+    transition: background 0.3s ease;
+  }
+  
+  .task-detail .bg-light:hover {
+    background-color: #e9ecef;
+  }
+  
+  .task-detail .badge {
+    font-size: 0.75rem;
+    padding: 0.5em 1em;
+    border-radius: 0.5rem;
+  }
+  
+  .task-detail .text-primary {
+    transition: color 0.3s ease;
+  }
+  
+  .task-detail .text-primary:hover {
+    color: #0056b3;
+  }
+  
+  /* Avatar Group */
+  .task-detail .avatar-group .avatar {
+    transition: transform 0.3s ease;
+  }
+  
+  .task-detail .avatar-group .avatar:hover {
+    transform: scale(1.1);
+    z-index: 1;
+  }
+  
+  /* Modal Footer */
+  .modal-footer {
+    padding: 1rem 2rem;
+    border-top: none;
+  }
+  
+  .modal-footer .btn-secondary {
+    border-radius: 0.5rem;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .modal-footer .btn-secondary:hover {
+    background-color: #5a6268;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Responsive Adjustments */
+  @media (max-width: 576px) {
+    .modal-body.task-detail {
+      padding: 1.5rem;
+    }
+  
+    .modal-header {
+      padding: 1rem;
+    }
+  
+    .modal-footer {
+      padding: 0.75rem 1.5rem;
+    }
+  }

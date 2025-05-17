@@ -69,11 +69,13 @@ def performance_dashboard(request):
         deadline__gte=start_date,
         deadline__lte=end_date
     )
+    
     tasks_with_time = Tasks.objects.filter(
-        time_entries__start_time__gte=start_date,
-        time_entries__start_time__lte=end_date,
-        time_entries__user=request.user
+        task_assignments__time_entries__start_time__gte=start_date,
+        task_assignments__time_entries__start_time__lte=end_date,
+        task_assignments__user=request.user
     )
+    
     all_tasks = (tasks_in_period | tasks_with_time).distinct()
     num_tasks = all_tasks.count()
     
@@ -82,7 +84,7 @@ def performance_dashboard(request):
     delayed_tasks = all_tasks.filter(deadline__lt=end_date).exclude(status='Completed').count()
     
     total_time = TimeEntries.objects.filter(
-        user=request.user,
+        task_assignment__user=request.user,
         start_time__gte=start_date,
         start_time__lte=end_date
     ).aggregate(Sum('duration'))['duration__sum'] or 0.0
@@ -145,11 +147,13 @@ def generate_pdf(request):
         deadline__gte=start_date,
         deadline__lte=end_date
     )
+    
     tasks_with_time = Tasks.objects.filter(
-        time_entries__start_time__gte=start_date,
-        time_entries__start_time__lte=end_date,
-        time_entries__user=request.user
+        task_assignments__time_entries__start_time__gte=start_date,
+        task_assignments__time_entries__start_time__lte=end_date,
+        task_assignments__user=request.user
     )
+    
     all_tasks = (tasks_in_period | tasks_with_time).distinct()
     num_tasks = all_tasks.count()
     
@@ -158,7 +162,7 @@ def generate_pdf(request):
     delayed_tasks = all_tasks.filter(deadline__lt=end_date).exclude(status='Completed').count()
     
     total_time = TimeEntries.objects.filter(
-        user=request.user,
+        task_assignment__user=request.user,
         start_time__gte=start_date,
         start_time__lte=end_date
     ).aggregate(Sum('duration'))['duration__sum'] or 0.0

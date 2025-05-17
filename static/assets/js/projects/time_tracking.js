@@ -24,15 +24,21 @@ $(document).ready(function() {
     });
 
     // Khởi tạo DataTable cho lịch sử time entries
-    $('#timeEntriesTable').DataTable({
-        "language": {
-            "url": "/static/assets/js/plugin/datatables/i18n/Vietnamese.json"
-        },
-        "order": [[2, "desc"]],
-        "columnDefs": [
-            { "orderable": false, "targets": [1, 5] } // Không sắp xếp cột Trạng thái, Hành động
-        ]
-    });
+    try {
+        $('#timeEntriesTable').DataTable({
+            "language": {
+                "url": "/static/assets/js/plugin/datatables/i18n/Vietnamese.json"
+            },
+            "order": [[3, "desc"]],
+            "columnDefs": [
+                { "orderable": false, "targets": [1, 2, 6] } // Không sắp xếp cột Vai trò, Trạng thái, Hành động
+            ],
+            "responsive": true,
+            "autoWidth": false
+        });
+    } catch (error) {
+        console.error("Lỗi khi khởi tạo DataTable:", error);
+    }
 
     // Xử lý thay đổi trạng thái
     $('.status-select').change(function() {
@@ -52,7 +58,7 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: '/projects/tasks/update-assignment-status/',
+                    url: '/projects/update-assignment-status/',
                     method: 'POST',
                     data: {
                         'task_id': taskId,
@@ -138,7 +144,7 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: '/projects/time-entries/update/',
+                    url: '/projects/update-time-entry/',
                     method: 'POST',
                     data: {
                         'entry_id': entryId,
@@ -579,22 +585,15 @@ $(document).ready(function() {
 
     // Gọi hàm tạo biểu đồ có kiểm tra
     try {
-        // Kiểm tra dữ liệu toàn cầu
-        if (typeof timeByDayData === 'undefined') {
-            console.error('Biến timeByDayData không được định nghĩa');
-            timeByDayData = [];
-        }
-        
-        if (typeof timeByTaskData === 'undefined') {
-            console.error('Biến timeByTaskData không được định nghĩa');
-            timeByTaskData = [];
-        }
-        
+        // Đảm bảo dữ liệu là mảng
+        timeByDayData = Array.isArray(timeByDayData) ? timeByDayData : [];
+        timeByTaskData = Array.isArray(timeByTaskData) ? timeByTaskData : [];
+
         console.log('Dữ liệu biểu đồ:', {
-            timeByDayData: timeByDayData || [], 
-            timeByTaskData: timeByTaskData || []
+            timeByDayData,
+            timeByTaskData
         });
-        
+
         // Tạo biểu đồ 1 nếu có canvas
         if (document.getElementById('timeByDayChart')) {
             setTimeout(() => {
@@ -605,7 +604,7 @@ $(document).ready(function() {
                 }
             }, 100);
         }
-        
+
         // Tạo biểu đồ 2 nếu có canvas
         if (document.getElementById('timeByTaskChart')) {
             setTimeout(() => {
@@ -617,7 +616,7 @@ $(document).ready(function() {
             }, 200);
         }
     } catch (error) {
-        console.error('Lỗi khi tạo biểu đồ:', error);
+        console.error('Lỗi khi khởi tạo biểu đồ:', error);
     }
 
     // Xuất PDF - Cập nhật chức năng để sử dụng báo cáo mới
@@ -655,36 +654,3 @@ function waitForCanvas(canvasId, callback) {
     });
     observer.observe(document.body, { childList: true, subtree: true });
 }
-
-// Kiểm tra dữ liệu toàn cầu
-if (typeof timeByDayData === 'undefined') {
-    console.error('Biến timeByDayData không được định nghĩa');
-    timeByDayData = [];
-}
-if (typeof timeByTaskData === 'undefined') {
-    console.error('Biến timeByTaskData không được định nghĩa');
-    timeByTaskData = [];
-}
-
-console.log('Dữ liệu biểu đồ:', {
-    timeByDayData: timeByDayData || [],
-    timeByTaskData: timeByTaskData || []
-});
-
-// Tạo biểu đồ 1
-waitForCanvas('timeByDayChart', () => {
-    try {
-        createProductivityTimelineChart();
-    } catch (e) {
-        console.error('Lỗi khi tạo biểu đồ 1:', e);
-    }
-});
-
-// Tạo biểu đồ 2
-waitForCanvas('timeByTaskChart', () => {
-    try {
-        createTaskTimeEfficiencyChart();
-    } catch (e) {
-        console.error('Lỗi khi tạo biểu đồ 2:', e);
-    }
-});

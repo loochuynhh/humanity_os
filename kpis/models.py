@@ -97,17 +97,25 @@ class EmployeeKPIs(models.Model):
     def update_from_project(self):
         """Update actual_value based on project data."""
         if self.kpi.project and self.kpi.kpi_type == "Quantitative":
+            # Lấy tất cả task_assignments của user trong project
+            task_assignments = self.user.task_assignments.filter(
+                task__project=self.kpi.project
+            )
+            
+            # Lọc time_entries thông qua task_assignment
             time_entries = TimeEntries.objects.filter(
-                user=self.user,
-                task__project=self.kpi.project,
+                task_assignment__in=task_assignments,
                 start_time__gte=self.start_date,
                 start_time__lte=self.end_date
             )
+            
+            # Lấy các task được gán cho user trong khoảng thời gian
             tasks = self.kpi.project.tasks.filter(
                 task_assignments__user=self.user,
                 deadline__gte=self.start_date,
                 deadline__lte=self.end_date
-            )
+            ).distinct()
+            
             if self.kpi.name.lower().find("time spent") != -1:
                 self.actual_value = time_entries.aggregate(total=Sum('duration'))['total'] or 0.0
             elif self.kpi.name.lower().find("task completion") != -1:
@@ -116,6 +124,8 @@ class EmployeeKPIs(models.Model):
                 self.actual_value = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0.0
             elif self.kpi.name.lower().find("bug rate") != -1:
                 self.actual_value = time_entries.aggregate(total=Sum('duration'))['total'] or 0.0
+            
             self.calculate_achieved_percentage()
             self.update_evaluation()
+        
         self.save()

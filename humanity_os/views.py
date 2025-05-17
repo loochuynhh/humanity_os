@@ -7,7 +7,4 @@ def index(request):
 
 
 def home(request):
-    if request.user.is_authenticated:
-        return redirect("users:index")
-    else:
-        return redirect("users:login")
+    return render(request, "main/index.html")
