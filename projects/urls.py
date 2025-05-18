@@ -19,7 +19,10 @@ from .views import (
     project_statistics,
     project_statistics_data,
     project_progress,
-    project_progress_data
+    project_progress_data,
+    create_time_entry,
+    update_time_entry,
+    update_assignment_status,
 )
 
 urlpatterns = [
@@ -39,7 +42,7 @@ urlpatterns = [
     # Các route task
     path("tasks/", all_tasks, name="all_tasks"),
     path("my-tasks/", my_tasks, name="my_tasks"),
-    path("tasks/<int:task_id>/", task_detail, name="task_detail"),
+    path("task/<int:task_id>/", task_detail, name="task_detail"),
     path("update-status/", update_status, name="update_status"),
     path("toggle-time/", toggle_time, name="toggle_time"),
     path("update-task-details/", update_task_details, name="update_task_details"),
@@ -50,4 +53,7 @@ urlpatterns = [
     path("time-tracking/", time_tracking, name="time_tracking"),
     path("update-time-entry/", update_time_entry, name="update_time_entry"),
     path("update-assignment-status/", update_assignment_status, name="update_assignment_status"),
+    path('create_time_entry/', create_time_entry, name='create_time_entry'),
+    path('update_time_entry/', update_time_entry, name='update_time_entry'),
+    path('update_assignment_status/', update_assignment_status, name='update_assignment_status'),
 ]

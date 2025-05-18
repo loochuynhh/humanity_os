@@ -17,6 +17,47 @@
         <h1 class="h2 fw-bold">
           <i class="bi bi-clock me-2"></i>Time Tracking
         </h1>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createTimeEntryModal">
+          <i class="fas fa-plus me-1"></i>Thêm Time Entry
+        </button>
+      </div>
+
+      <!-- Modal tạo Time Entry -->
+      <div class="modal fade" id="createTimeEntryModal" tabindex="-1" aria-labelledby="createTimeEntryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="createTimeEntryModalLabel">Thêm Time Entry</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createTimeEntryForm" method="POST" data-create-url="{% url 'projects:create_time_entry' %}">
+              {% csrf_token %}
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label for="taskAssignment" class="form-label">Task</label>
+                  <select class="form-select" id="taskAssignment" name="task_assignment" required>
+                    <option value="">Chọn task</option>
+                    {% for assignment in assignments %}
+                      <option value="{{ assignment.id }}">{{ assignment.task.title }} ({{ assignment.role }})</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="startTime" class="form-label">Thời gian bắt đầu</label>
+                  <input type="datetime-local" class="form-control" id="startTime" name="start_time" required>
+                </div>
+                <div class="mb-3">
+                  <label for="endTime" class="form-label">Thời gian kết thúc</label>
+                  <input type="datetime-local" class="form-control" id="endTime" name="end_time">
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-primary">Lưu</button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
 
       <!-- Tổng hợp thời gian -->
@@ -156,7 +197,6 @@
 {% block extra_js %}
 <script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
 <script>
-  // Truyền dữ liệu từ Python sang JavaScript
   var timeByDayData = {{ time_by_day|safe }} || [];
   var timeByTaskData = {{ time_by_task|safe }} || [];
 </script>

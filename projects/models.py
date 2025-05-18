@@ -106,16 +106,21 @@ class Tasks(models.Model):
         assignments = TaskAssignments.objects.filter(task=self)
         
         if not assignments.exists():
+            self.status = "To-do"
+            self.completed_date = None
+            self.save(update_fields=['status', 'completed_date'])
             return
             
         if all(assignment.status == "Completed" for assignment in assignments):
             self.status = "Completed"
             if not self.completed_date:
                 self.completed_date = timezone.now()
-        elif any(assignment.status == "Late" for assignment in assignments) and self.deadline.date() < timezone.now().date():
+        elif self.is_overdue:
             self.status = "Late"
         elif any(assignment.status == "In progress" for assignment in assignments):
             self.status = "In progress"
+        else:
+            self.status = "To-do"
         
         self.save(update_fields=['status', 'completed_date'])
 

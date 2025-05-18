@@ -39,18 +39,20 @@
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h5 class="section-title mb-0">Thông tin Task</h5>
                                     <div class="d-flex gap-2">
-                                        {% if task.is_tracking %}
-                                        <button id="stopTaskBtn" class="btn btn-warning btn-sm" 
-                                                data-task-id="{{ task.id }}" 
-                                                data-url="{% url 'projects:toggle_time' %}">
-                                            <i class="fas fa-stop me-1"></i>Dừng Task
-                                        </button>
-                                        {% else %}
-                                        <button id="startTaskBtn" class="btn btn-success btn-sm" 
-                                                data-task-id="{{ task.id }}" 
-                                                data-url="{% url 'projects:toggle_time' %}">
-                                            <i class="fas fa-play me-1"></i>Thực hiện Task
-                                        </button>
+                                        {% if request.user == task.project.manager or request.user.is_superuser %}
+                                            {% if task.is_tracking %}
+                                            <button id="stopTaskBtn" class="btn btn-warning btn-sm" 
+                                                    data-task-id="{{ task.id }}" 
+                                                    data-url="{% url 'projects:toggle_time' %}">
+                                                <i class="fas fa-stop me-1"></i>Dừng Task
+                                            </button>
+                                            {% else %}
+                                            <button id="startTaskBtn" class="btn btn-success btn-sm" 
+                                                    data-task-id="{{ task.id }}" 
+                                                    data-url="{% url 'projects:toggle_time' %}">
+                                                <i class="fas fa-play me-1"></i>Thực hiện Task
+                                            </button>
+                                            {% endif %}
                                         {% endif %}
                                         <button id="editTaskBtn" class="btn btn-outline-primary btn-sm">Chỉnh sửa</button>
                                     </div>
@@ -156,51 +158,57 @@
                                 <!-- Form chỉnh sửa -->
                                 <form id="taskUpdateForm" method="POST" data-update-url="{% url 'projects:update_task_details' %}" data-task-id="{{ task.id }}" class="d-none">
                                     {% csrf_token %}
-                                    <div class="mb-3">
-                                        <label for="taskTitle" class="form-label">Tiêu đề</label>
-                                        <input type="text" class="form-control" id="taskTitle" name="title" value="{{ task.title }}" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="taskDescription" class="form-label">Mô tả</label>
-                                        <textarea class="form-control" id="taskDescription" name="description" rows="3">{{ task.description }}</textarea>
-                                    </div>
-                                    <div class="row mb-3">
-                                        <div class="col-md-6">
-                                            <label for="taskDifficulty" class="form-label">Độ khó</label>
-                                            <select class="form-select" id="taskDifficulty" name="difficulty">
-                                                {% for choice in difficulty_choices %}
-                                                <option value="{{ choice.0 }}" {% if task.difficulty == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
-                                                {% endfor %}
-                                            </select>
+                                    {% if request.user == task.project.manager or request.user.is_superuser %}
+                                        <div class="mb-3">
+                                            <label for="taskTitle" class="form-label">Tiêu đề</label>
+                                            <input type="text" class="form-control" id="taskTitle" name="title" value="{{ task.title }}" required>
                                         </div>
-                                        <div class="col-md-6">
-                                            {% for assignment in task_assignments %}
-                                                {% if assignment.user == request.user %}
-                                                <label for="taskEstimatedTimeUser{{ assignment.user.id }}" class="form-label">Thời gian ước lượng của bạn (giờ)</label>
-                                                <input type="number" class="form-control" id="taskEstimatedTimeUser{{ assignment.user.id }}" 
-                                                    name="estimated_time_{{ assignment.user.id }}" value="{{ assignment.estimated_time|default_if_none:'' }}" step="0.1">
-                                                {% endif %}
-                                            {% endfor %}
+                                        <div class="mb-3">
+                                            <label for="taskDescription" class="form-label">Mô tả</label>
+                                            <textarea class="form-control" id="taskDescription" name="description" rows="3">{{ task.description }}</textarea>
                                         </div>
-                                    </div>
-                                    <div class="row mb-3">
-                                        <div class="col-md-6">
-                                            <label for="taskStatus" class="form-label">Trạng thái của bạn</label>
-                                            <select class="form-select" id="taskStatus" name="status">
-                                                {% for choice in status_choices %}
-                                                <option value="{{ choice.0 }}" {% if task.task_assignments.get.user == request.user and task.task_assignments.get.status == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
-                                                {% endfor %}
-                                            </select>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="taskDifficulty" class="form-label">Độ khó</label>
+                                                <select class="form-select" id="taskDifficulty" name="difficulty">
+                                                    {% for choice in difficulty_choices %}
+                                                    <option value="{{ choice.0 }}" {% if task.difficulty == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="taskDeadline" class="form-label">Deadline</label>
+                                                <input type="datetime-local" class="form-control" id="taskDeadline" name="deadline" value="{{ task.deadline|date:'Y-m-d\TH:i' }}" required>
+                                            </div>
                                         </div>
-                                        <div class="col-md-6">
-                                            <label for="taskGithubLink" class="form-label">GitHub Link</label>
-                                            <input type="url" class="form-control" id="taskGithubLink" name="github_link" value="{{ task.github_link|default_if_none:'' }}">
-                                        </div>
-                                    </div>
+                                    {% endif %}
                                     <div class="mb-3">
                                         <label for="taskNotes" class="form-label">Ghi chú</label>
                                         <textarea class="form-control" id="taskNotes" name="notes" rows="3">{{ task.notes|default_if_none:'' }}</textarea>
                                     </div>
+                                    <div class="mb-3">
+                                        <label for="taskGithubLink" class="form-label">GitHub Link</label>
+                                        <input type="url" class="form-control" id="taskGithubLink" name="github_link" value="{{ task.github_link|default_if_none:'' }}">
+                                    </div>
+                                    {% for assignment in task_assignments %}
+                                        {% if assignment.user == request.user %}
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="taskEstimatedTimeUser{{ assignment.user.id }}" class="form-label">Thời gian ước lượng của bạn (giờ)</label>
+                                                <input type="number" class="form-control" id="taskEstimatedTimeUser{{ assignment.user.id }}" 
+                                                    name="estimated_time_{{ assignment.user.id }}" value="{{ assignment.estimated_time|default_if_none:'' }}" step="0.1">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="taskStatusUser{{ assignment.user.id }}" class="form-label">Trạng thái của bạn</label>
+                                                <select class="form-select" id="taskStatusUser{{ assignment.user.id }}" name="status_{{ assignment.user.id }}">
+                                                    {% for choice in status_choices %}
+                                                    <option value="{{ choice.0 }}" {% if assignment.status == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
                                     <div class="d-flex gap-2">
                                         <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
                                         <button type="button" id="cancelEditBtn" class="btn btn-secondary">Hủy</button>
@@ -238,7 +246,7 @@
                                 </div>
                             </div>
 
-                            <!-- Tab Yêu cầu gia hạn (giữ nguyên) -->
+                            <!-- Tab Yêu cầu gia hạn -->
                             <div class="tab-pane fade" id="extension" role="tabpanel" aria-labelledby="extension-tab">
                                 <h5 class="section-title">Yêu cầu gia hạn Deadline</h5>
                                 <form id="extensionRequestForm" method="POST" data-extension-url="{% url 'projects:request_deadline_extension' %}">

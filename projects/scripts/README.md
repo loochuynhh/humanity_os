@@ -90,7 +90,7 @@ SELECT * FROM time_entries LIMIT 5;
 Truy cập các trang sau để kiểm tra tính năng:
 - http://localhost:8000/projects/projects/
 - http://localhost:8000/projects/my-tasks/
-- http://localhost:8000/projects/tasks/1/
+- http://localhost:8000/projects/task/1/
 
 ## Lưu ý
 

@@ -155,3 +155,107 @@
   border-color: var(--warning);
   color: var(--dark);
     }
+
+/* --------------------------------------
+   Modal Styles for Time Entry
+   -------------------------------------- */
+#createTimeEntryModal .modal-content {
+  border: none;
+  border-radius: 1rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease;
+  background: #ffffff;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+#createTimeEntryModal .modal-header {
+  background: linear-gradient(to right, #007bff, #17a2b8);
+  color: #ffffff;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  padding: 1.5rem;
+}
+
+#createTimeEntryModal .modal-title {
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+#createTimeEntryModal .btn-close {
+  filter: invert(1);
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+#createTimeEntryModal .btn-close:hover {
+  opacity: 1;
+}
+
+#createTimeEntryModal .modal-body {
+  padding: 2rem;
+}
+
+#createTimeEntryModal .form-label {
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+  color: #343a40;
+}
+
+#createTimeEntryModal .form-control,
+#createTimeEntryModal .form-select {
+  margin-bottom: 1.5rem;
+  border-radius: 0.5rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#createTimeEntryModal .form-control:focus,
+#createTimeEntryModal .form-select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+#createTimeEntryModal .modal-footer {
+  padding: 1rem 2rem;
+  border-top: none;
+}
+
+#createTimeEntryModal .btn-primary {
+  background: linear-gradient(to right, #007bff, #17a2b8);
+  border: none;
+  border-radius: 0.5rem;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+#createTimeEntryModal .btn-primary:hover {
+  background: linear-gradient(to right, #17a2b8, #007bff);
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+#createTimeEntryModal .btn-secondary {
+  border-radius: 0.5rem;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+#createTimeEntryModal .btn-secondary:hover {
+  background-color: #5a6268;
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  #createTimeEntryModal .modal-body {
+    padding: 1.5rem;
+  }
+
+  #createTimeEntryModal .modal-header {
+    padding: 1rem;
+  }
+
+  #createTimeEntryModal .modal-footer {
+    padding: 0.75rem 1.5rem;
+  }
+}

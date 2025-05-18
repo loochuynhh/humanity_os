@@ -452,6 +452,7 @@ def time_tracking(request):
         'time_by_day': json.dumps(time_by_day),  # Serialize to JSON string
         'time_by_task': json.dumps(time_by_task),  # Serialize to JSON string
         'status_choices': Tasks.STATUS_CHOICES,
+        'assignments': assignments
     }
     return render(request, 'main/pages/projects/time_tracking.html', context)
 
@@ -537,55 +538,43 @@ def project_calendar_events(request):
     if project_id:
         projects = projects.filter(id=project_id)
 
-    tasks = Tasks.objects.filter(project__in=projects, deadline__range=(start_date, end_date))
     events = []
-    for task in tasks:
+
+    time_entries = TimeEntries.objects.filter(
+        task_assignment__user=request.user,
+        task_assignment__task__project__in=projects,
+        start_time__range=(start_date, end_date)
+    ).select_related('task_assignment__task', 'task_assignment__user')
+
+
+    for entry in time_entries:
+        task = entry.task_assignment.task
+        user = entry.task_assignment.user
+        local_tz = timezone.get_current_timezone()
+        
+        start_time = entry.start_time.astimezone(local_tz)
+        end_time = entry.end_time.astimezone(local_tz) if entry.end_time else None
+
         events.append({
-            'id': f'task_{task.id}',
-            'title': f'Deadline: {task.title}',
-            'start': task.deadline.isoformat(),
-            'end': task.deadline.isoformat(),
-            'backgroundColor': '#dc3545',
-            'borderColor': '#dc3545',
-            'textColor': '#ffffff',
-            'url': f'/projects/tasks/{task.id}/',
+            'id': f'time_entry_{entry.id}',
+            'title': task.title,
+            'start': start_time.isoformat(),
+            'end': end_time.isoformat() if end_time else None,
+            'backgroundColor': 'rgba(13, 110, 253, 0.2)',
+            'borderColor': '#0d6efd',
+            'textColor': '#0d6efd',
             'extendedProps': {
-                'type': 'task',
+                'type': 'time_entry',
                 'project': task.project.name,
-                'description': task.description[:100] + '...' if len(task.description) > 100 else task.description,
-                'status': task.status
+                'task_id': task.id,
+                'task_title': task.title,
+                'user': f'{user.first_name} {user.last_name}',
+                'duration': entry.duration or 0,
+                'start_time_formatted': start_time.strftime('%H:%M'),
+                'end_time_formatted': end_time.strftime('%H:%M') if end_time else 'Đang thực hiện',
+                'role': entry.task_assignment.role
             }
         })
-
-    for project in projects:
-        if project.start_date:
-            events.append({
-                'id': f'project_start_{project.id}',
-                'title': f'Bắt đầu: {project.name}',
-                'start': project.start_date.isoformat(),
-                'backgroundColor': '#28a745',
-                'borderColor': '#28a745',
-                'textColor': '#ffffff',
-                'extendedProps': {
-                    'type': 'project',
-                    'project': project.name,
-                    'description': f'Ngày bắt đầu dự án {project.name}'
-                }
-            })
-        if project.end_date:
-            events.append({
-                'id': f'project_end_{project.id}',
-                'title': f'Kết thúc: {project.name}',
-                'start': project.end_date.isoformat(),
-                'backgroundColor': '#ffc107',
-                'borderColor': '#ffc107',
-                'textColor': '#000000',
-                'extendedProps': {
-                    'type': 'project',
-                    'project': project.name,
-                    'description': f'Ngày kết thúc dự án {project.name}'
-                }
-            })
 
     return JsonResponse({'events': events}, safe=False)
 
@@ -671,3 +660,41 @@ def project_statistics_data(request):
         return JsonResponse({'success': False, 'error': 'Dự án không tồn tại'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    
+
+@login_required
+def create_time_entry(request):
+    if request.method == 'POST':
+        task_assignment_id = request.POST.get('task_assignment')
+        start_time_str = request.POST.get('start_time')
+        end_time_str = request.POST.get('end_time')
+
+        try:
+            task_assignment = TaskAssignments.objects.get(id=task_assignment_id, user=request.user)
+        except TaskAssignments.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Task không hợp lệ hoặc bạn không có quyền!'}, status=403)
+
+        try:
+            start_time = datetime.strptime(start_time_str, '%Y-%m-%dT%H:%M')
+            start_time = timezone.make_aware(start_time)
+        except ValueError:
+            return JsonResponse({'success': False, 'error': 'Thời gian bắt đầu không hợp lệ!'})
+
+        end_time = None
+        if end_time_str:
+            try:
+                end_time = datetime.strptime(end_time_str, '%Y-%m-%dT%H:%M')
+                end_time = timezone.make_aware(end_time)
+                if end_time <= start_time:
+                    return JsonResponse({'success': False, 'error': 'Thời gian kết thúc phải sau thời gian bắt đầu!'})
+            except ValueError:
+                return JsonResponse({'success': False, 'error': 'Thời gian kết thúc không hợp lệ!'})
+
+        time_entry = TimeEntries.objects.create(
+            task_assignment=task_assignment,
+            start_time=start_time,
+            end_time=end_time
+        )
+
+        return JsonResponse({'success': True, 'id': time_entry.id})
+    return JsonResponse({'success': False, 'error': 'Yêu cầu không hợp lệ!'}, status=400)

@@ -1,4 +1,28 @@
 $(document).ready(function() {
+    // Lấy CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+            }
+        }
+    });
+
     // Toggle edit mode
     $('#editTaskBtn').click(function() {
         $('#taskInfoView').addClass('d-none');
@@ -12,14 +36,15 @@ $(document).ready(function() {
         $('#editTaskBtn').removeClass('d-none');
     });
 
-    // Validate and handle task update form
+    // Xử lý form cập nhật task
     $('#taskUpdateForm').submit(function(e) {
         e.preventDefault();
         const taskId = $(this).data('task-id');
         const estimatedTimeUser = $('input[name^="estimated_time_"]').val();
         const githubLink = $('#taskGithubLink').val();
-        const status = $('#taskStatus').val();
-    
+        const statusSelect = $('select[name^="status_"]');
+        const status = statusSelect.length ? statusSelect.val() : null;
+
         // Client-side validation
         if (!taskId || isNaN(taskId)) {
             Swal.fire({
@@ -30,18 +55,18 @@ $(document).ready(function() {
             });
             return;
         }
-    
+
         if (estimatedTimeUser && (isNaN(estimatedTimeUser) || estimatedTimeUser < 0)) {
             Swal.fire({
                 icon: 'error',
                 title: 'Lỗi',
-                text: 'Thời gian ước lượng của bạn không hợp lệ!',
+                text: 'Thời gian ước lượng không hợp lệ!',
                 confirmButtonColor: '#007bff'
             });
             return;
         }
-    
-        if (githubLink && !isValidUrl(githubLink)) {
+
+        if (githubLink && !/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(githubLink)) {
             Swal.fire({
                 icon: 'error',
                 title: 'Lỗi',
@@ -50,8 +75,8 @@ $(document).ready(function() {
             });
             return;
         }
-    
-        if (!status) {
+
+        if (statusSelect.length && !status) {
             Swal.fire({
                 icon: 'error',
                 title: 'Lỗi',
@@ -60,7 +85,7 @@ $(document).ready(function() {
             });
             return;
         }
-    
+
         Swal.fire({
             title: 'Xác nhận',
             text: 'Bạn có chắc muốn lưu thay đổi?',
@@ -84,8 +109,7 @@ $(document).ready(function() {
                                 title: 'Thành công',
                                 text: 'Cập nhật task thành công!',
                                 confirmButtonColor: '#007bff',
-                                timer: 3000,
-                                timerProgressBar: true
+                                timer: 3000
                             }).then(() => {
                                 location.reload();
                             });
@@ -99,20 +123,25 @@ $(document).ready(function() {
                         }
                     },
                     error: function(xhr) {
-                        handleAjaxError(xhr);
+                        let errorMsg = xhr.status === 403 ? 'Không có quyền thực hiện hành động này!' : 'Có lỗi xảy ra, vui lòng thử lại!';
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi',
+                            text: errorMsg,
+                            confirmButtonColor: '#007bff'
+                        });
                     }
                 });
             }
         });
     });
 
-    // Validate and handle extension request form
+    // Xử lý form yêu cầu gia hạn
     $('#extensionRequestForm').submit(function(e) {
         e.preventDefault();
         const requestedDeadline = $('#requestDeadline').val();
         const reason = $('#requestReason').val().trim();
 
-        // Client-side validation
         if (!requestedDeadline) {
             Swal.fire({
                 icon: 'error',
@@ -151,7 +180,7 @@ $(document).ready(function() {
                         task_id: $('#taskUpdateForm').data('task-id'),
                         requested_deadline: requestedDeadline,
                         reason: reason,
-                        csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').val()
+                        csrfmiddlewaretoken: getCookie('csrftoken')
                     },
                     success: function(response) {
                         if (response.success) {
@@ -160,8 +189,7 @@ $(document).ready(function() {
                                 title: 'Thành công',
                                 text: 'Yêu cầu gia hạn đã được gửi!',
                                 confirmButtonColor: '#007bff',
-                                timer: 3000,
-                                timerProgressBar: true
+                                timer: 3000
                             }).then(() => {
                                 $('#requestDeadline').val('');
                                 $('#requestReason').val('');
@@ -176,54 +204,23 @@ $(document).ready(function() {
                         }
                     },
                     error: function(xhr) {
-                        handleAjaxError(xhr);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi',
+                            text: xhr.status === 403 ? 'Không có quyền thực hiện hành động này!' : 'Có lỗi xảy ra, vui lòng thử lại!',
+                            confirmButtonColor: '#007bff'
+                        });
                     }
                 });
             }
         });
     });
 
-    // Initialize tooltips
-    $('[data-bs-toggle="tooltip"]').tooltip();
-
-    // Helper function to validate URL
-    function isValidUrl(string) {
-        try {
-            new URL(string);
-            return true;
-        } catch (_) {
-            return false;
-        }
-    }
-
-    // Helper function to handle AJAX errors
-    function handleAjaxError(xhr) {
-        let errorMsg = 'Không thể kết nối đến server, vui lòng thử lại!';
-        if (xhr.status === 403) {
-            errorMsg = 'Phiên đăng nhập hết hạn hoặc lỗi xác thực. Vui lòng đăng nhập lại!';
-            Swal.fire({
-                icon: 'error',
-                title: 'Lỗi',
-                text: errorMsg,
-                confirmButtonColor: '#007bff'
-            }).then(() => {
-                window.location.href = '/users/login/?next=' + window.location.pathname;
-            });
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Lỗi kết nối',
-                text: errorMsg,
-                confirmButtonColor: '#007bff'
-            });
-        }
-    }
-
     // Xử lý bắt đầu task
     $('#startTaskBtn').click(function() {
         const taskId = $(this).data('task-id');
         const url = $(this).data('url');
-        
+
         Swal.fire({
             title: 'Xác nhận',
             text: 'Bạn có chắc muốn bắt đầu theo dõi task này?',
@@ -239,9 +236,9 @@ $(document).ready(function() {
                     url: url,
                     method: 'POST',
                     data: {
-                        'task_id': taskId,
-                        'action': 'start',
-                        'csrfmiddlewaretoken': getCookie('csrftoken')
+                        task_id: taskId,
+                        action: 'start',
+                        csrfmiddlewaretoken: getCookie('csrftoken')
                     },
                     success: function(response) {
                         if (response.success) {
@@ -275,12 +272,12 @@ $(document).ready(function() {
             }
         });
     });
-    
+
     // Xử lý dừng task
     $('#stopTaskBtn').click(function() {
         const taskId = $(this).data('task-id');
         const url = $(this).data('url');
-        
+
         Swal.fire({
             title: 'Xác nhận',
             text: 'Bạn có chắc muốn dừng theo dõi task này?',
@@ -296,9 +293,9 @@ $(document).ready(function() {
                     url: url,
                     method: 'POST',
                     data: {
-                        'task_id': taskId,
-                        'action': 'stop',
-                        'csrfmiddlewaretoken': getCookie('csrftoken')
+                        task_id: taskId,
+                        action: 'stop',
+                        csrfmiddlewaretoken: getCookie('csrftoken')
                     },
                     success: function(response) {
                         if (response.success) {
@@ -332,20 +329,7 @@ $(document).ready(function() {
             }
         });
     });
-    
-    // Helper function để lấy CSRF token
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
+
+    // Khởi tạo tooltips
+    $('[data-bs-toggle="tooltip"]').tooltip();
 });

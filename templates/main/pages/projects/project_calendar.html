@@ -1,12 +1,11 @@
 {% extends 'main/layouts/base.html' %}
 {% load static %}
-{% block title %}Lịch dự án - Humanity OS{% endblock %}
+
+{% block title %}Lịch Dự Án - Humanity OS{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
-<link rel="stylesheet" href="{% static 'assets/css/projects/tasks.css' %}">
-<link rel="stylesheet" href="{% static 'assets/css/projects/project_calendar.css' %}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
+<link rel="stylesheet" href="{% static 'assets/css/projects/project_calendar.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -17,79 +16,162 @@
     <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
       <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom fade-in-down">
         <h1 class="h2 fw-bold">
-          <i class="fas fa-calendar me-2"></i>Lịch dự án
+          <i class="bi bi-calendar-event me-2"></i>Lịch Dự Án
         </h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-          <select id="projectFilter" class="form-select me-2">
-            <option value="">Tất cả dự án</option>
-            {% for project in projects %}
-            <option value="{{ project.id }}">{{ project.name }}</option>
-            {% endfor %}
-          </select>
+      </div>
+
+      <!-- Bộ lọc và công cụ -->
+      <div class="row mb-4 fade-in-up">
+        <div class="col-md-12">
+          <div class="card shadow-sm">
+            <div class="card-body py-3">
+              <div class="row align-items-center">
+                <div class="col-md-4 mb-2 mb-md-0">
+                  <select id="projectFilter" class="form-select">
+                    <option value="">Tất cả dự án</option>
+                    {% for project in projects %}
+                      <option value="{{ project.id }}">{{ project.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-4 mb-2 mb-md-0 text-md-center">
+                  <div id="calendarTitle" class="fw-bold fs-5"></div>
+                </div>
+                <div class="col-md-4 mb-2 mb-md-0">
+                  <div class="btn-group float-md-end" role="group">
+                    <button type="button" id="viewMonth" class="btn btn-outline-primary active">
+                      <i class="bi bi-calendar3 me-1"></i>Tháng
+                    </button>
+                    <button type="button" id="viewWeek" class="btn btn-outline-primary">
+                      <i class="bi bi-calendar3-week me-1"></i>Tuần
+                    </button>
+                    <button type="button" id="viewList" class="btn btn-outline-primary">
+                      <i class="bi bi-list-ul me-1"></i>Danh sách
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="row mb-4">
+      <!-- Lịch -->
+      <div class="row fade-in-up">
         <div class="col-12">
           <div class="card shadow-sm">
-            <div class="card-body">
+            <div class="card-body p-0 p-md-3">
               <div id="calendar"></div>
             </div>
           </div>
         </div>
       </div>
+    </main>
+  </div>
+</div>
 
-      <!-- Modal chi tiết sự kiện -->
-      <div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="eventModalLabel">Chi tiết sự kiện</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Modal xem chi tiết time entry -->
+<div class="modal fade" id="timeEntryDetailModal" tabindex="-1" aria-labelledby="timeEntryDetailModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="timeEntryDetailModalLabel">
+          <i class="bi bi-clock me-2"></i>Chi tiết Time Entry
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="card mb-3 border-0">
+          <div class="card-body p-0">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="card-title mb-0 time-entry-task-title fw-bold"></h5>
+              <span class="badge bg-primary time-entry-project"></span>
             </div>
-            <div class="modal-body">
-              <div class="mb-3">
-                <h6 class="text-sm text-muted mb-1">Tiêu đề</h6>
-                <p id="eventTitle" class="fw-bold"></p>
-              </div>
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <h6 class="text-sm text-muted mb-1">Ngày bắt đầu</h6>
-                  <p id="eventStart"></p>
+            <div class="d-flex align-items-center text-muted mb-3">
+              <i class="bi bi-person me-2"></i>
+              <span class="time-entry-user"></span>
+            </div>
+            <hr>
+            <div class="row g-3 mb-2">
+              <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                  <div class="icon-box bg-light rounded-circle p-2 me-3">
+                    <i class="bi bi-calendar-check text-primary"></i>
+                  </div>
+                  <div>
+                    <div class="text-muted small">Thời gian bắt đầu</div>
+                    <div class="fw-medium time-entry-start-time"></div>
+                  </div>
                 </div>
-                <div class="col-md-6 mb-3">
-                  <h6 class="text-sm text-muted mb-1">Ngày kết thúc</h6>
-                  <p id="eventEnd"></p>
-                </div>
               </div>
-              <div class="mb-3">
-                <h6 class="text-sm text-muted mb-1">Dự án</h6>
-                <p id="eventProject"></p>
-              </div>
-              <div class="mb-3">
-                <h6 class="text-sm text-muted mb-1">Mô tả</h6>
-                <p id="eventDescription"></p>
-              </div>
-              <div id="taskDetails" class="d-none">
-                <hr>
-                <div class="mb-3">
-                  <h6 class="text-sm text-muted mb-1">Trạng thái</h6>
-                  <p id="eventStatus"></p>
-                </div>
-                <div class="mb-3">
-                  <h6 class="text-sm text-muted mb-1">Người phụ trách</h6>
-                  <p id="eventAssignees"></p>
+              <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                  <div class="icon-box bg-light rounded-circle p-2 me-3">
+                    <i class="bi bi-calendar-x text-primary"></i>
+                  </div>
+                  <div>
+                    <div class="text-muted small">Thời gian kết thúc</div>
+                    <div class="fw-medium time-entry-end-time"></div>
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-              <a id="eventLink" href="#" class="btn btn-primary d-none">Xem chi tiết</a>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                  <div class="icon-box bg-light rounded-circle p-2 me-3">
+                    <i class="bi bi-stopwatch text-primary"></i>
+                  </div>
+                  <div>
+                    <div class="text-muted small">Thời lượng</div>
+                    <div class="fw-medium time-entry-duration"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                  <div class="icon-box bg-light rounded-circle p-2 me-3">
+                    <i class="bi bi-person-badge text-primary"></i>
+                  </div>
+                  <div>
+                    <div class="text-muted small">Vai trò</div>
+                    <div class="fw-medium time-entry-role"></div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </main>
+      <div class="modal-footer">
+        <a href="#" class="btn btn-primary view-task-btn">
+          <i class="bi bi-eye me-1"></i>Xem Task
+        </a>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-lg me-1"></i>Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal xem danh sách time entry trong ngày -->
+<div class="modal fade" id="dayEntriesModal" tabindex="-1" aria-labelledby="dayEntriesModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="dayEntriesModalLabel">Time Entries Ngày <span class="day-entries-date"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="list-group list-group-flush day-entries-list">
+          <!-- Danh sách time entries sẽ được thêm bằng JavaScript -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
@@ -98,123 +180,9 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales-all.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  // Khởi tạo lịch
-  const calendarEl = document.getElementById('calendar');
-  const calendar = new FullCalendar.Calendar(calendarEl, {
-    initialView: 'dayGridMonth',
-    locale: 'vi',
-    headerToolbar: {
-      left: 'prev,next today',
-      center: 'title',
-      right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
-    },
-    buttonText: {
-      today: 'Hôm nay',
-      month: 'Tháng',
-      week: 'Tuần',
-      day: 'Ngày',
-      list: 'Danh sách'
-    },
-    eventClick: function(info) {
-      // Hiển thị thông tin chi tiết sự kiện trong modal
-      showEventDetails(info.event);
-    },
-    events: function(info, successCallback, failureCallback) {
-      // Lấy sự kiện từ API
-      const projectId = document.getElementById('projectFilter').value;
-      
-      // Sử dụng API endpoint đã được định nghĩa trong URLs
-      fetch('{% url "projects:project_calendar_events" %}?project_id=' + projectId + '&start=' + info.startStr + '&end=' + info.endStr)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
-        .then(data => {
-          // Kiểm tra dữ liệu trả về có dạng { events: [...] } không
-          const events = data.events || data;
-          successCallback(events);
-        })
-        .catch(error => {
-          console.error('Error loading events:', error);
-          failureCallback(error);
-        });
-    }
-  });
-
-  calendar.render();
-
-  // Cập nhật lịch khi thay đổi dự án
-  document.getElementById('projectFilter').addEventListener('change', function() {
-    calendar.refetchEvents();
-  });
-
-  // Hiển thị thông tin chi tiết sự kiện trong modal
-  function showEventDetails(event) {
-    const modal = document.getElementById('eventModal');
-    
-    // Cập nhật thông tin sự kiện
-    document.getElementById('eventTitle').textContent = event.title;
-    document.getElementById('eventStart').textContent = formatDate(event.start);
-    document.getElementById('eventEnd').textContent = event.end ? formatDate(event.end) : formatDate(event.start);
-    document.getElementById('eventProject').textContent = event.extendedProps.project || 'Không có';
-    document.getElementById('eventDescription').textContent = event.extendedProps.description || 'Không có mô tả';
-
-    // Kiểm tra có phải task không
-    if (event.extendedProps.type === 'task') {
-      document.getElementById('taskDetails').classList.remove('d-none');
-      
-      // Hiển thị trạng thái task
-      const statusElement = document.getElementById('eventStatus'); 
-      statusElement.textContent = event.extendedProps.status || 'Không có';
-      statusElement.className = getStatusClass(event.extendedProps.status);
-      
-      // Hiển thị người phụ trách
-      document.getElementById('eventAssignees').textContent = event.extendedProps.assignees || 'Không có';
-
-      // Hiển thị nút xem chi tiết nếu có link
-      const eventLink = document.getElementById('eventLink');
-      if (event.url) {
-        eventLink.href = event.url;
-        eventLink.classList.remove('d-none');
-      } else {
-        eventLink.classList.add('d-none');
-      }
-    } else {
-      document.getElementById('taskDetails').classList.add('d-none');
-      document.getElementById('eventLink').classList.add('d-none');
-    }
-
-    // Tạo mới instance của Modal với bootstrap 5
-    const bsModal = new bootstrap.Modal(modal);
-    bsModal.show();
-  }
-
-  // Định dạng ngày tháng
-  function formatDate(date) {
-    if (!date) return '';
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-    return new Date(date).toLocaleDateString('vi-VN', options);
-  }
-
-  // Lấy class tương ứng với trạng thái
-  function getStatusClass(status) {
-    if (!status) return '';
-
-    status = status.toLowerCase();
-    if (status.includes('completed') || status.includes('hoàn thành'))
-      return 'badge bg-success';
-    else if (status.includes('progress') || status.includes('đang'))
-      return 'badge bg-warning';
-    else if (status.includes('late') || status.includes('trễ'))
-      return 'badge bg-danger';
-    else if (status.includes('todo') || status.includes('chưa'))
-      return 'badge bg-secondary';
-    else
-      return 'badge bg-primary';
-  }
-});
+  // Đường dẫn API và CSRF token
+  const calendarEventsUrl = "{% url 'projects:project_calendar_events' %}";
+  const csrfToken = "{{ csrf_token }}";
 </script>
-{% endblock %}
+<script src="{% static 'assets/js/projects/project_calendar.js' %}"></script>
+{% endblock %} 
