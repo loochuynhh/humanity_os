@@ -1,15 +1,18 @@
-{% load i18n static admin_urls %}
-{% block extrastyle %}
-    <link rel="stylesheet" type="text/css" href="{% static "assets/css/forms.css" %}">
-{% endblock %}
-{% block object-tools-items %}
+{% load i18n admin_urls %}
+
+<div class="d-flex gap-2">
+  {% if change %}
+    {% if not is_popup %}
     {% url opts|admin_urlname:'history' original.pk|admin_urlquote as history_url %}
-    <a href="{% add_preserved_filters history_url %}" class="btn btn-outline-gray-600 d-inline-flex align-items-center">
-        <i class="fa fa-book"></i> &nbsp; {% trans "History" %}
+      <a href="{% add_preserved_filters history_url %}" class="btn btn-sm btn-info">
+        <i class="fas fa-history me-1"></i> {% trans "History" %}
     </a>
+    {% endif %}
+  {% endif %}
 
     {% if has_absolute_url %}
-        <a href="{{ absolute_url }}"
-           class="btn btn-outline-gray-600 d-inline-flex align-items-center">{% trans "View on site" %}</a>
+    <a href="{{ absolute_url }}" class="btn btn-sm btn-secondary">
+      <i class="fas fa-eye me-1"></i> {% trans "View on site" %}
+    </a>
     {% endif %}
-{% endblock %}
+</div>

@@ -2,6 +2,7 @@
 
 
 <!--   Core JS Files   -->
+<script src="{% static "assets/js/core/jquery-3.7.1.min.js" %}"></script>
 <script src="{% static "assets/js/core/popper.min.js" %}"></script>
 <script src="{% static "assets/js/core/bootstrap.min.js" %}"></script>
 <script src="{% static "assets/js/plugins/perfect-scrollbar.min.js" %}"></script>
@@ -20,3 +21,27 @@
 <script async defer src="https://buttons.github.io/buttons.js"></script>
 <!-- Control Center for Soft Dashboard: parallax effects, scripts for the example pages etc -->
 <script src="{% static "assets/js/soft-ui-dashboard.min.js" %}?v=1.1.0"></script>
+
+<!-- Plugin JS Files -->
+<script src="{% static "assets/js/plugin/sweetalert/sweetalert2.all.min.js" %}"></script>
+<script src="{% static "assets/js/plugin/chart.js/chart.min.js" %}"></script>
+<script src="{% static "assets/js/plugin/datatables/datatables.min.js" %}"></script>
+
+<!-- DataTables Initialization -->
+<script>
+$(document).ready(function() {
+  // Initialize DataTables if present
+  if ($.fn.DataTable && $('.datatable').length > 0) {
+    $('.datatable').DataTable({
+      "language": {
+        "url": "{% static 'assets/js/plugin/datatables/i18n/Vietnamese.json' %}"
+      },
+      "pageLength": 10,
+      "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "Tất cả"]]
+    });
+  }
+  
+  // Add DataTable class to admin tables for styling
+  $('#changelist table').addClass('table table-hover');
+});
+</script>

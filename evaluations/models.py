@@ -22,6 +22,8 @@ class Forms(models.Model):
 
     class Meta:
         db_table = "forms"
+        verbose_name = "Form"
+        verbose_name_plural = "Forms"
 
     def __str__(self):
         return self.name
@@ -38,6 +40,8 @@ class FormQuestions(models.Model):
 
     class Meta:
         db_table = "form_questions"
+        verbose_name = "Form Question"
+        verbose_name_plural = "Form Questions"
 
     def __str__(self):
         return self.question_text[:50]
@@ -61,6 +65,8 @@ class FormResponses(models.Model):
 
     class Meta:
         db_table = "form_responses"
+        verbose_name = "Form Response"
+        verbose_name_plural = "Form Responses"
 
     def __str__(self):
         return f"{self.user.username} -> {self.target_user.username} ({self.form.name})"

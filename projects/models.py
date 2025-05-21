@@ -225,8 +225,8 @@ class DeadlineExtensionRequest(models.Model):
 
     class Meta:
         db_table = "deadline_extension_requests"
-        verbose_name = "Deadline Extension Request"
-        verbose_name_plural = "Deadline Extension Requests"
+        verbose_name = "Deadline Request"
+        verbose_name_plural = "Deadline Requests"
         indexes = [
             models.Index(fields=['task', 'status']),
             models.Index(fields=['requested_by', 'status']),

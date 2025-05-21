@@ -1,17 +1,17 @@
-{% load static i18n %}
+{% load i18n %}
 
-{% block extrastyle %}
-    <link rel="stylesheet" type="text/css" href="{% static "assets/css/forms.css" %}">
-{% endblock %}
-
-<div class="filter_panel">
-    <div class="mb-3">
-        <span class="h6">{% blocktrans with filter_title=title %} By {{ filter_title }} {% endblocktrans %}</span>
-    </div>
-    <ul>
+<div class="mb-3">
+    <h6 class="text-uppercase text-body text-xs font-weight-bolder mb-2">{{ title }}</h6>
+    <ul class="list-group">
         {% for choice in choices %}
-            <li{% if choice.selected %} class="text-success selected"{% endif %}>
-                <a href="{{ choice.query_string|iriencode }}" title="{{ choice.display }}">{{ choice.display }}</a>
+            <li class="list-group-item border-0 px-0">
+                <div class="form-check">
+                    {% if choice.selected %}
+                        <a href="{{ choice.query_string|iriencode }}" class="text-primary font-weight-bold">{{ choice.display }}</a>
+                    {% else %}
+                        <a href="{{ choice.query_string|iriencode }}" class="text-dark">{{ choice.display }}</a>
+                    {% endif %}
+                </div>
             </li>
         {% endfor %}
     </ul>

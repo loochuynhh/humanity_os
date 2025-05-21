@@ -11,6 +11,14 @@
     <link rel="stylesheet" type="text/css" href="{% static "assets/css/forms.css" %}">
 {% endblock %}
 
+{% block title %}
+    {% if add %}
+        {% blocktrans with name=opts.verbose_name %}Add {{ name }}{% endblocktrans %}
+    {% else %}
+        {{ original|truncatewords:"18" }}
+    {% endif %}
+{% endblock %}
+
 {% if not is_popup %}
     {% block breadcrumbs %}
         <div class="page-header">
@@ -69,7 +77,7 @@
                         <div>
                             {% block field_sets %}
                                 {% for fieldset in adminform %}
-                                    {% if forloop.counter > 1 %}<hr>{% endif %}
+                                    {% if forloop.counter > 1 %}<hr class="horizontal dark my-3">{% endif %}
                                     {% include "admin/includes/fieldset.html" %}
                                 {% endfor %}
                             {% endblock %}

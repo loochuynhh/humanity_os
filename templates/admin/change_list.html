@@ -25,6 +25,8 @@
     {{ media.js }}
 {% endblock %}
 
+{% block title %}{{ cl.opts.verbose_name_plural|capfirst }}{% endblock %}
+
 {% if not is_popup %}
     {% block breadcrumbs %}
         <div class="page-header">

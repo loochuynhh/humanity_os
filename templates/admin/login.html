@@ -3,7 +3,7 @@
 
 {% block content %}
 
-  <main class="main-content  mt-0">
+  <main class="main-content mt-0">
     <section>
       <div class="page-header min-vh-75">
         <div class="container">
@@ -11,14 +11,14 @@
             <div class="col-xl-4 col-lg-5 col-md-6 d-flex flex-column mx-auto">
               <div class="card card-plain mt-8">
                 <div class="card-header pb-0 text-left bg-transparent">
-                  <h3 class="font-weight-bolder text-info text-gradient">Welcome back</h3>
-                  <p class="mb-0">Enter your email and password to sign in</p>
+                  <h3 class="font-weight-bolder text-primary">Humanity OS</h3>
+                  <p class="mb-0">Đăng nhập vào trang quản trị</p>
                 </div>
                 <div class="card-body">
                   <form role="form" method="post">
                     {% csrf_token %}
 
-                    <label>Username</label>
+                    <label>Tên đăng nhập</label>
                     <div class="mb-3">
                       <input 
                         type="text" 
@@ -29,7 +29,7 @@
                       >
                     </div>
 
-                    <label>Password</label>
+                    <label>Mật khẩu</label>
                     <div class="mb-3">
                       <input 
                         type="password" 
@@ -41,7 +41,7 @@
                     </div>
 
                     <div class="text-center">
-                      <button type="submit" class="btn bg-gradient-info w-100 mt-4 mb-0">Sign in</button>
+                      <button type="submit" class="btn bg-gradient-primary w-100 mt-4 mb-0">Đăng nhập</button>
                     </div>
                   </form>
                 </div>
@@ -73,7 +73,7 @@
 
   {% if user.is_authenticated %}
       var msg = "You are authenticated as {{ username }}, but are not authorized to " +
-          "access this page.Would you like to login to a different account ?"
+          "access this page. Would you like to login to a different account?";
       notification.warning(msg, 'top', 'right');
   {% endif %}
 

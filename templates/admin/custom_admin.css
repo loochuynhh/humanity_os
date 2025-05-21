@@ -1,0 +1,327 @@
+/* Custom Admin Styles */
+:root {
+  --sidebar-bg: linear-gradient(180deg, #1a2a44 0%, #2c3e50 100%);
+  --sidebar-width: 250px;
+  --primary-color: #0d6efd;
+  --active-bg: rgba(255, 255, 255, 0.1);
+  --hover-bg: rgba(255, 255, 255, 0.05);
+}
+
+/* Sidebar styling */
+.sidenav {
+  background: var(--sidebar-bg) !important;
+  min-height: 100vh;
+  width: var(--sidebar-width);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.sidenav .navbar-nav .nav-link {
+  color: #e9ecef !important;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  margin: 0.25rem 1rem;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+}
+
+.sidenav .navbar-nav .nav-link:hover {
+  background: var(--hover-bg);
+  color: #ffffff !important;
+  transform: translateX(5px);
+}
+
+.sidenav .navbar-nav .nav-link.active {
+  background: var(--active-bg);
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+.sidenav .navbar-nav .nav-item .collapse .nav .nav-item .nav-link {
+  font-size: 0.9rem;
+  padding: 0.5rem 1.5rem 0.5rem 2.5rem;
+  color: #adb5bd !important;
+}
+
+.sidenav .navbar-nav .nav-item .collapse .nav .nav-item .nav-link:hover,
+.sidenav .navbar-nav .nav-item .collapse .nav .nav-item .nav-link.active {
+  color: #ffffff !important;
+  background: var(--hover-bg);
+}
+
+.sidenav-header .navbar-brand {
+  color: #fff !important;
+}
+
+/* Card styling */
+.card {
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: none;
+  overflow: hidden;
+}
+
+.card-header {
+  background-color: transparent;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 1rem 1.5rem;
+}
+
+/* Table styling */
+.table {
+  margin-bottom: 0;
+}
+
+.table thead th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Button styling */
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+  background-color: #0b5ed7;
+  border-color: #0b5ed7;
+}
+
+/* Form styling */
+.form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Pagination styling */
+.pagination .page-item.active .page-link {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.pagination .page-link {
+  color: var(--primary-color);
+}
+
+.pagination .page-link:hover {
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+  color: #0b5ed7;
+}
+
+/* Filter styling */
+.filter_card_header {
+  background-color: #f8f9fa;
+}
+
+/* Breadcrumbs styling */
+.breadcrumb {
+  background-color: transparent;
+  margin-bottom: 0;
+}
+
+.breadcrumb-item a {
+  color: var(--primary-color);
+}
+
+/* Login form styling */
+.login-form {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+  .sidenav {
+    position: fixed;
+    transform: translateX(-100%);
+  }
+  .sidenav.show {
+    transform: translateX(0);
+  }
+}
+
+/* Icon styling */
+.icon-shape {
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+}
+
+.icon-shape i {
+  font-size: 1rem;
+  color: #fff;
+}
+
+/* Submit button styling */
+.submit-row {
+  padding: 12px 0;
+  margin-top: 15px;
+  border-top: 1px solid #e9ecef;
+}
+
+.submit-row .btn {
+  margin-left: 5px;
+}
+
+/* Sidebar Styling */
+#sidebar {
+  background: var(--sidebar-bg);
+}
+
+.module h2, .module caption, .inline-group h2 {
+  background: var(--sidebar-bg);
+}
+
+#header {
+  background: var(--sidebar-bg);
+  color: #fff;
+}
+
+#user-tools a:focus, #user-tools a:hover {
+  border-bottom-color: var(--primary-color);
+  color: #fff;
+}
+
+.button, input[type=submit], input[type=button], .submit-row input, a.button {
+  background: var(--primary-color);
+  color: #fff;
+  border-radius: 4px;
+}
+
+.button:hover, input[type=submit]:hover, input[type=button]:hover {
+  background: #0b5ed7;
+}
+
+.button.default, input[type=submit].default, .submit-row input.default {
+  background: #198754;
+}
+
+.button.default:hover, input[type=submit].default:hover {
+  background: #157347;
+}
+
+/* Card Styling */
+.dashboard .module {
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: none;
+  overflow: hidden;
+}
+
+.dashboard .module table th {
+  background-color: #f8f9fa;
+}
+
+/* Table Styling */
+#changelist table {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+#changelist table thead th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+#changelist .paginator {
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  padding: 10px;
+  margin-top: 15px;
+}
+
+/* Form Styling */
+.form-row {
+  padding: 10px 0;
+}
+
+.aligned label {
+  font-weight: 500;
+}
+
+/* Filter Styling */
+#changelist-filter {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+#changelist-filter h2 {
+  background-color: var(--primary-color);
+  border-radius: 8px 8px 0 0;
+}
+
+/* Breadcrumbs */
+div.breadcrumbs {
+  background: #f8f9fa;
+  color: #333;
+  border-bottom: 1px solid #e9ecef;
+}
+
+div.breadcrumbs a {
+  color: var(--primary-color);
+}
+
+/* App Index */
+.app-index {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Messages */
+.messagelist {
+  margin-bottom: 15px;
+}
+
+.messagelist li {
+  border-radius: 4px;
+}
+
+/* Login Form */
+.login #container {
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  background: #fff;
+}
+
+.login .form-row {
+  padding: 8px 0;
+}
+
+.login .submit-row {
+  padding: 15px 0 0 0;
+  text-align: center;
+}
+
+.login .submit-row input {
+  display: block;
+  width: 100%;
+  padding: 10px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 767px) {
+  #changelist-filter {
+    width: 100%;
+    margin-top: 15px;
+  }
+} 

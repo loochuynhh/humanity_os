@@ -28,6 +28,8 @@ class KPIs(models.Model):
 
     class Meta:
         db_table = "kpis"
+        verbose_name = "KPI"
+        verbose_name_plural = "KPIs"
 
     def __str__(self):
         return self.name
@@ -65,6 +67,8 @@ class EmployeeKPIs(models.Model):
 
     class Meta:
         db_table = "employee_kpis"
+        verbose_name = "Employee KPI"
+        verbose_name_plural = "Employee KPIs"
         indexes = [
             models.Index(fields=['user', 'start_date']),
             models.Index(fields=['kpi', 'time_period']),

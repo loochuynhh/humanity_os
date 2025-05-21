@@ -22,6 +22,8 @@ class Users(AbstractUser):
 
     class Meta:
         db_table = "users"
+        verbose_name = "User"
+        verbose_name_plural = "Users"
 
     def __str__(self):
         return self.username
@@ -40,6 +42,8 @@ class UserFaceImage(models.Model):
 
     class Meta:
         db_table = "user_face_images"
+        verbose_name = "User Face Image"
+        verbose_name_plural = "User Face Images"
 
     def __str__(self):
         return f"Face image for {self.user.username}"
@@ -81,6 +85,8 @@ class AIChatMessage(models.Model):
     class Meta:
         ordering = ('timestamp',)
         db_table = "ai_chat_messages"
+        verbose_name = "AI Chat Message"
+        verbose_name_plural = "AI Chat Messages"
 
     def __str__(self):
         return f"{self.role}: {self.content[:50]}"
