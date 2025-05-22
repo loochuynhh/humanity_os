@@ -15,20 +15,22 @@ from custom_admin.forms import (
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
-from custom_admin.utils import superuser_required
+from custom_admin.utils import superuser_required, get_app_list
 from django.contrib import messages
 from django.apps import apps
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Q
 from django.contrib.auth import get_user_model
 from django.contrib.admin.models import LogEntry
+from django.urls import reverse
 
 
 @superuser_required
 def index(request):
     return render(request, "pages/index.html", {"segment": "dashboard"})
 
-# Authenticatio
+
+# Authentication
 def logout_view(request):
     logout(request)
     return redirect("/admin/")
@@ -105,53 +107,121 @@ def index(request):
     
     return render(request, 'admin/index.html', context)
 
+
 @staff_member_required
 def search(request):
     """
-    Global search functionality across all models
+    Global search functionality across permitted models with enhanced logic
     """
-    query = request.GET.get('q', '')
+    query = request.GET.get('q', '').strip()
     results = []
+    max_results_per_model = 5
+    total_max_results = 50
     
     if query:
-        # Get all models
-        all_models = apps.get_models()
+        # Get permitted models from get_app_list
+        app_list = get_app_list({'request': request, 'user': request.user})
+        result_count = 0
         
-        for model in all_models:
-            # Skip some built-in models
-            if model._meta.app_label in ['admin', 'contenttypes', 'sessions']:
-                continue
-            
-            # Skip auth models we don't want to show
-            if model._meta.app_label == 'auth' and model._meta.model_name in ['permission', 'group']:
-                continue
-            
-            # Get searchable fields (text fields)
-            search_fields = []
-            for field in model._meta.fields:
-                if field.get_internal_type() in ['CharField', 'TextField', 'EmailField', 'SlugField']:
-                    search_fields.append(field.name)
-            
-            if search_fields:
-                # Build Q objects for each search field
-                q_objects = Q()
-                for field in search_fields:
-                    q_objects |= Q(**{f"{field}__icontains": query})
+        for app in app_list:
+            for model_dict in app['models']:
+                model = apps.get_model(app['app_label'], model_dict['model_name'])
+                model_admin = admin.site._registry.get(model)
                 
-                # Get matching objects
-                matching_objects = model.objects.filter(q_objects)[:10]
+                if not model_admin:
+                    continue
                 
-                if matching_objects:
-                    results.append({
-                        'model_name': model._meta.verbose_name,
-                        'model_name_plural': model._meta.verbose_name_plural,
-                        'app_label': model._meta.app_label,
-                        'model': model._meta.model_name,
-                        'objects': matching_objects,
-                    })
+                # Check permissions
+                if not model_admin.has_module_permission(request):
+                    continue
+                
+                perms = model_admin.get_model_perms(request)
+                if not (perms.get('change', False) or perms.get('view', False)):
+                    continue
+                
+                # Get searchable fields (prioritize 'name', 'title', 'description')
+                search_fields = []
+                priority_fields = ['name', 'title', 'description']
+                other_fields = []
+                
+                for field in model._meta.fields:
+                    field_type = field.get_internal_type()
+                    if field_type in ['CharField', 'TextField', 'EmailField', 'SlugField']:
+                        if field.name in priority_fields:
+                            search_fields.append(field.name)
+                        else:
+                            other_fields.append(field.name)
+                
+                # Combine fields: priority first, then others
+                search_fields.extend(other_fields)
+                
+                if search_fields:
+                    try:
+                        # Build Q objects for search
+                        q_objects = Q()
+                        for field in search_fields:
+                            q_objects |= Q(**{f"{field}__icontains": query})
+                        
+                        # Get matching objects
+                        queryset = model_admin.get_queryset(request).filter(q_objects)
+                        
+                        # Handle related fields (e.g., project name in Task)
+                        if model._meta.model_name == 'task':
+                            try:
+                                queryset |= model_admin.get_queryset(request).filter(
+                                    project__name__icontains=query
+                                )
+                            except:
+                                pass
+                        
+                        # Limit results and remove duplicates
+                        matching_objects = queryset.distinct()[:max_results_per_model]
+                        
+                        if matching_objects and result_count < total_max_results:
+                            objects = []
+                            for obj in matching_objects:
+                                # Get admin change URL
+                                try:
+                                    url = reverse(
+                                        f'admin:{model._meta.app_label}_{model._meta.model_name}_change',
+                                        args=[obj.pk]
+                                    )
+                                except:
+                                    url = None
+                                
+                                # Get matched field value (for display)
+                                matched_value = None
+                                for field in search_fields:
+                                    value = getattr(obj, field, None)
+                                    if value and query.lower() in str(value).lower():
+                                        matched_value = str(value)[:100]
+                                        break
+                                
+                                objects.append({
+                                    'id': obj.pk,
+                                    'name': str(obj),
+                                    'url': url,
+                                    'matched_value': matched_value,
+                                })
+                            
+                            results.append({
+                                'model_name': model._meta.verbose_name,
+                                'model_name_plural': model._meta.verbose_name_plural,
+                                'app_label': model._meta.app_label,
+                                'model': model._meta.model_name,
+                                'objects': objects,
+                            })
+                            result_count += len(objects)
+                            
+                            if result_count >= total_max_results:
+                                break
+                    except Exception as e:
+                        messages.error(request, f"Lỗi khi tìm kiếm trong {model._meta.verbose_name_plural}: {str(e)}")
+                
+                if result_count >= total_max_results:
+                    break
     
     return render(request, 'admin/search_results.html', {
         'query': query,
         'results': results,
     })
-

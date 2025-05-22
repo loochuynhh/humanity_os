@@ -9,13 +9,30 @@
 <head>
   {% include "includes/head.html" %}
   
-  <!-- Bootstrap Icons -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  
   <!-- Custom Admin CSS -->
-  <link rel="stylesheet" href="{% static "admin/custom_admin.css" %}">
-  
-  {% block extrastyle %}{% endblock extrastyle %}
+  <link rel="stylesheet" href="{% static 'assets/css/custom_admin.css' %}">
+
+  {% block extrastyle %}
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+
+    <link rel="stylesheet" href="{% static 'assets/bootstrap-icons/bootstrap-icons.css' %}">
+
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="{% static 'assets/fonts/all.min.css' %}">
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="{% static 'assets/css/jquery.dataTables.min.css' %}">
+
+    <link rel="stylesheet" href="{% static 'assets/css/components/datatables.css' %}">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
+
+    <!-- Chatbot CSS -->
+    <link rel="stylesheet" href="{% static 'assets/css/chatbot.css' %}">
+
+  {% endblock extrastyle %}
   {% block extrahead %}{% endblock extrahead %}
 </head>
 
@@ -28,27 +45,195 @@
         {% include "includes/navigation.html" %}
     {% endblock navigation %}
     
-    {% block content %}{% endblock content %}
-    
-    <footer class="footer pt-3">
-      <div class="container-fluid">
-        <div class="row align-items-center justify-content-lg-between">
-          <div class="col-lg-6 mb-lg-0 mb-4">
-            <div class="copyright text-center text-sm text-muted text-lg-start">
-              © <script>document.write(new Date().getFullYear())</script> Humanity OS
-            </div>
-          </div>
-        </div>
-      </div>
-    </footer>
-  </main>
+    {% block content %}
 
-  {% block configurator %}
-    {% include "includes/configurator.html" %}
-  {% endblock configurator %}
+    {% endblock content %}
+
+    <!-- Chatbot Icon -->
+    <button class="chatbot-icon btn rounded-circle shadow-lg" data-bs-toggle="modal" data-bs-target="#aiChatModal">
+        <i class="bi bi-chat-dots-fill"></i>
+    </button>
+
+    <!-- AI Chat Modal -->
+    <div class="modal fade" id="aiChatModal" tabindex="-1" aria-labelledby="aiChatModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-end">
+            <div class="modal-content chatbot-modal shadow-lg">
+                <div class="modal-header chatbot-header">
+                    <h5 class="modal-title chatbot-title" id="aiChatModalLabel">
+                        <i class="bi bi-robot"></i>Trợ Lý AI Humanity OS
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="chatMessages" class="chat-messages">
+                        {% for message in chat_messages %}
+                            <div class="message mb-3 {% if message.role == 'user' %}user-message{% else %}ai-message{% endif %}">
+                                <div class="message-content p-3 rounded-3 shadow-sm" data-content="{{ message.content|escape }}">
+                                    <small class="message-timestamp">{{ message.timestamp|date:"H:i d/m/Y" }}</small>
+                                    <div class="message-sender">{% if message.role == 'user' %}Bạn{% else %}AI{% endif %}</div>
+                                    <div class="message-text"></div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="chat-input-container">
+                        <form id="aiChatForm" class="chat-input-form">
+                            {% csrf_token %}
+                            <div class="chat-input-group">
+                                <input type="text" class="chat-input" id="chatInput" name="message" placeholder="Hỏi tôi về Humanity OS..." required>
+                                <button type="submit" class="chat-send-btn" id="sendChatBtn">
+                                    <i class="bi bi-send-fill"></i>
+                                </button>
+                            </div>
+                            <div id="chatError" class="chat-error" role="alert"></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% include 'includes/footer.html' %}
+  </main>
   
   {% include "includes/scripts.html" %}
-  {% block extra_js %}{% endblock extra_js %}
+
+  <script src="{% static 'assets/js/core/jquery-3.7.1.min.js' %}"></script>
+  <script src="{% static 'assets/js/core/popper.min.js' %}"></script>
+  <script src="{% static 'assets/js/core/bootstrap.min.js' %}"></script>
+  <script src="{% static 'assets/js/plugin/sweetalert/sweetalert2.all.min.js' %}"></script>
+  <script src="{% static 'assets/js/plugin/chart.js/chart.min.js' %}"></script>
+  <script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
+  <!-- Marked.js for Markdown rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@4.0.18/marked.min.js"></script>
+
+  <!-- Script cho chatbot -->
+  <script>
+  $(document).ready(function() {
+      // Cấu hình marked.js
+      marked.setOptions({
+          breaks: true,
+          gfm: true
+      });
+
+      // Hàm cuộn xuống tin nhắn cuối cùng
+      function scrollToBottom() {
+          const chatMessages = document.getElementById('chatMessages');
+          if (chatMessages) {
+              chatMessages.scrollTop = chatMessages.scrollHeight;
+          }
+      }
+
+      // Render Markdown cho các tin nhắn tĩnh
+      function renderMessages() {
+          $('.message').each(function() {
+              const messageText = $(this).find('.message-text');
+              const content = $(this).find('.message-content').data('content') || '';
+              messageText.html(marked.parse(content));
+          });
+          // Đợi DOM cập nhật hoàn toàn
+          setTimeout(scrollToBottom, 100);
+      }
+
+      // Gọi renderMessages khi trang tải
+      renderMessages();
+
+      // Tải tin nhắn cũ qua AJAX khi mở modal
+      $('#aiChatModal').on('shown.bs.modal', function() {
+          $.ajax({
+              url: "{% url 'users:get_chat_messages' %}",
+              method: 'GET',
+              success: function(data) {
+                  if (data.success) {
+                      $('#chatMessages').empty();
+                      data.messages.forEach(function(msg) {
+                          const messageClass = msg.role === 'user' ? 'user-message' : 'ai-message';
+                          const sender = msg.role === 'user' ? 'Bạn' : 'AI';
+                          const messageHtml = `
+                              <div class="message mb-3 ${messageClass}">
+                                  <div class="message-content p-3 rounded-3 shadow-sm" data-content="${msg.content.replace(/"/g, '&quot;')}">
+                                      <small class="message-timestamp">${new Date(msg.timestamp).toLocaleString('vi-VN')}</small>
+                                      <div class="message-sender">${sender}</div>
+                                      <div class="message-text">${marked.parse(msg.content)}</div>
+                                  </div>
+                              </div>`;
+                          $('#chatMessages').append(messageHtml);
+                      });
+                      setTimeout(scrollToBottom, 100);
+                  } else {
+                      console.warn('Không thể tải tin nhắn:', data.error);
+                  }
+              },
+              error: function(xhr) {
+                  console.error('Lỗi tải tin nhắn:', xhr);
+              }
+          });
+          $('.chatbot-icon').addClass('hidden');
+      });
+
+      // Xử lý gửi tin nhắn
+      $('#aiChatForm').submit(function(e) {
+          e.preventDefault();
+          const message = $('#chatInput').val().trim();
+          if (!message) return;
+
+          const sendBtn = $('#sendChatBtn');
+          sendBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span>');
+
+          // Thêm tin nhắn người dùng
+          const userMessage = $('<div>').addClass('message mb-3 user-message').html(
+              '<div class="message-content p-3 rounded-3 shadow-sm" data-content="' + message.replace(/"/g, '&quot;') + '">' +
+              '<small class="message-timestamp">' + new Date().toLocaleString('vi-VN') + '</small>' +
+              '<div class="message-sender">Bạn</div>' +
+              '<div class="message-text">' + marked.parse(message) + '</div>' +
+              '</div>'
+          ).hide();
+          $('#chatMessages').append(userMessage);
+          userMessage.fadeIn(300, scrollToBottom);
+          $('#chatInput').val('');
+
+          $.ajax({
+              url: "{% url 'users:ai_chat' %}",
+              type: 'POST',
+              data: { 
+                  message: message, 
+                  csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val() 
+              },
+              success: function(data) {
+                  const renderedResponse = marked.parse(data.response);
+                  const aiMessage = $('<div>').addClass('message mb-3 ai-message').html(
+                      '<div class="message-content p-3 rounded-3 shadow-sm" data-content="' + data.response.replace(/"/g, '&quot;') + '">' +
+                      '<small class="message-timestamp">' + new Date().toLocaleString('vi-VN') + '</small>' +
+                      '<div class="message-sender">AI</div>' +
+                      '<div class="message-text">' + renderedResponse + '</div>' +
+                      '</div>'
+                  ).hide();
+                  $('#chatMessages').append(aiMessage);
+                  aiMessage.fadeIn(300, scrollToBottom);
+                  sendBtn.prop('disabled', false).html('<i class="bi bi-send-fill"></i>');
+              },
+              error: function(xhr) {
+                  const errorMsg = xhr.responseJSON?.error || 'Đã xảy ra lỗi. Vui lòng thử lại.';
+                  $('#chatError').text(errorMsg).show();
+                  setTimeout(() => $('#chatError').hide(), 5000);
+                  sendBtn.prop('disabled', false).html('<i class="bi bi-send-fill"></i>');
+              }
+          });
+      });
+
+      // Hiện icon chatbot khi đóng modal
+      $('#aiChatModal').on('hidden.bs.modal', function() {
+          $('.chatbot-icon').removeClass('hidden');
+      });
+
+      // Xử lý resize để đảm bảo cuộn đúng
+      $(window).resize(function() {
+          setTimeout(scrollToBottom, 100);
+      });
+  });
+  </script>
+  
+  {% block extra_js %}
+  {% endblock extra_js %}
 </body>
 
 </html>

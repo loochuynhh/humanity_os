@@ -11,10 +11,9 @@
   
   <hr class="horizontal dark mt-0">
   
-  <div class="h-100 w-auto" id="sidenav-collapse-main">
+  <div class="h-100 w-auto">
     <ul class="navbar-nav">
     {% if request.user.is_superuser %}   
-
       {% admin_get_menu as app_list %}
       {% if app_list %}
         {% for app in app_list %}
@@ -47,81 +46,9 @@
           {% endif %}
         {% endfor %}
       {% endif %}
-
-    <!-- superuser guard -->  
-    {% else %}
-
-      <li class="nav-item">
-        <a class="nav-link {% if segment == 'dashboard' %}active{% endif %}" href="{% url "custom_admin:index" %}">
-          <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-            <i class="bi bi-speedometer2 text-dark"></i>
-          </div>
-          <span class="nav-link-text ms-1">Dashboard</span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link {% if segment == 'tables' %}active{% endif %}" href="{% url "custom_admin:tables" %}">
-          <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-            <i class="bi bi-table text-dark"></i>
-          </div>
-          <span class="nav-link-text ms-1">Tables</span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link {% if segment == 'billing' %}active{% endif %}" href="{% url "custom_admin:billing" %}">
-          <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-            <i class="bi bi-credit-card text-dark"></i>
-          </div>
-          <span class="nav-link-text ms-1">Billing</span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link {% if segment == 'virtual_reality' %}active{% endif %}" href="{% url "custom_admin:vr" %}">
-          <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-            <i class="bi bi-box text-dark"></i>
-          </div>
-          <span class="nav-link-text ms-1">Virtual Reality</span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link {% if segment == 'rtl' %}active{% endif %}" href="{% url "custom_admin:rtl" %}">
-          <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-            <i class="bi bi-gear text-dark"></i>
-          </div>
-          <span class="nav-link-text ms-1">RTL</span>
-        </a>
-      </li>
-      <li class="nav-item mt-3">
-        <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Account pages</h6>
-      </li>
-      {% if request.user.is_authenticated %}
-      <li class="nav-item">
-        <a class="nav-link {% if segment == 'profile' %}active{% endif %}" href="{% url "custom_admin:profile" %}">
-          <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-            <i class="bi bi-person text-dark"></i>
-          </div>
-          <span class="nav-link-text ms-1">Profile</span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{% url "custom_admin:logout" %}">
-          <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-            <i class="bi bi-box-arrow-right text-danger"></i>
-          </div>
-          <span class="nav-link-text ms-1 text-danger">Logout</span>
-        </a>
-      </li>
-      {% else %}
-      <li class="nav-item">
-        <a class="nav-link" href="{% url "custom_admin:index" %}">
-          <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-            <i class="bi bi-file-text text-dark"></i>
-          </div>
-          <span class="nav-link-text ms-1">Sign In</span>
-        </a>
-      </li>
-      {% endif %}
-    
+      <li class="nav-item mb-5">
+        
+      </li>    
     {% endif %}  
     </ul>
   </div>
@@ -130,17 +57,62 @@
 <style>
 :root {
   --sidebar-bg: linear-gradient(180deg, #1a2a44 0%, #2c3e50 100%);
+  --primary-color: #0d6efd;
+  --active-bg: rgba(255, 255, 255, 0.1);
+  --hover-bg: rgba(255, 255, 255, 0.05);
 }
 
 .sidenav {
   background: var(--sidebar-bg);
-  height: 100vh; /* Giới hạn chiều cao bằng viewport */
-  overflow-y: hidden !important; /* Ẩn thanh cuộn dọc */
+  min-height: 100vh;
+  width: 250px;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  overflow-y: hidden; /* Prevent scrollbar on sidenav itself */
+}
+
+#sidenav-collapse-main {
+  height: 100%; /* Occupy full height of parent */
+  overflow-y: auto; /* Enable vertical scroll if content overflows */
+  scrollbar-width: thin; /* Firefox: Thin scrollbar */
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent; /* Firefox: Scrollbar color */
+}
+
+#sidenav-collapse-main::-webkit-scrollbar {
+  width: 6px; /* Chrome, Safari: Scrollbar width */
+}
+
+#sidenav-collapse-main::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+#sidenav-collapse-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Hide scrollbar when content fits within viewport */
+#sidenav-collapse-main:not(:hover)::-webkit-scrollbar {
+  width: 0; /* Hide scrollbar when not hovering */
 }
 
 .navbar-vertical .navbar-nav .nav-link {
   padding: 0.75rem 1.5rem;
   font-size: 0.95rem;
+  color: #e9ecef !important;
+  transition: all 0.2s ease;
+}
+
+.navbar-vertical .navbar-nav .nav-link:hover {
+  color: #ffffff !important;
+  background: var(--hover-bg);
+  transform: translateX(5px);
+}
+
+.navbar-vertical .navbar-nav .nav-link.active {
+  background: var(--active-bg);
+  color: #ffffff !important;
+  font-weight: 600;
 }
 
 .navbar-vertical .navbar-nav .nav-item .collapse .nav .nav-item .nav-link {
@@ -150,22 +122,6 @@
 
 .sidenav-header .navbar-brand {
   color: #fff;
-}
-
-.navbar-vertical .navbar-nav .nav-link {
-  color: #e9ecef !important;
-}
-
-.navbar-vertical .navbar-nav .nav-link.active {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff !important;
-  font-weight: 600;
-}
-
-.navbar-vertical .navbar-nav .nav-link:hover {
-  color: #ffffff !important;
-  transform: translateX(5px);
-  transition: all 0.2s ease;
 }
 
 .navbar-vertical .navbar-nav h6 {
@@ -181,16 +137,23 @@
   font-size: 1rem;
 }
 
-/* Ẩn thanh cuộn trong sidenav-collapse-main */
-#sidenav-collapse-main {
-  overflow-y: hidden !important;
-}
-
-/* Đảm bảo nội dung hiển thị đầy đủ */
 .sidenav .nav-link-text {
   max-width: 200px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+@media (max-width: 767.98px) {
+  .sidenav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    transform: translateX(-100%);
+  }
+  .sidenav.show {
+    transform: translateX(0);
+  }
 }
 </style>

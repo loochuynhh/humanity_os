@@ -1,23 +1,55 @@
-<footer class="footer pt-3">
-    <div class="container-fluid">
-      <div class="row align-items-center justify-content-lg-between">
-        <div class="col-lg-6 mb-lg-0 mb-4">
-          <div class="copyright text-center text-sm text-muted text-lg-start">
-            © <script>
-              document.write(new Date().getFullYear())
-            </script> Humanity OS
-          </div>
-        </div>
-        <div class="col-lg-6">
-          <ul class="nav nav-footer justify-content-center justify-content-lg-end">
-            <li class="nav-item">
-              <a href="#" class="nav-link text-muted">Documentation</a>
-            </li>
-            <li class="nav-item">
-              <a href="#" class="nav-link text-muted">Support</a>
-            </li>
-          </ul>
-        </div>
-      </div>
+<footer class="footer-admin w-100">
+  <div class="container-xxl py-3 d-flex flex-column flex-md-row align-items-center justify-content-between">
+    <div class="footer-left d-flex align-items-center gap-2 mb-2 mb-md-0">
+      <span class="footer-icon">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path fill="#0d6efd" d="M12 2l7 4v6c0 5.25-3.5 10-7 10S5 17.25 5 12V6l7-4z"/></svg>
+      </span>
+      <span class="footer-title fw-semibold">Humanity OS Admin</span>
+
     </div>
+    <div class="footer-right text-muted small text-center text-md-end">
+      <span class="footer-slogan">Nền tảng quản trị hiện đại &amp; bảo mật</span>
+    </div>
+  </div>
 </footer>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var yearSpan = document.getElementById('footer-year');
+    if (yearSpan) yearSpan.textContent = new Date().getFullYear();
+  });
+</script>
+
+<style>
+.footer-admin {
+  background: #f4f6fa;
+  border-top: 1px solid #e0e3e7;
+  box-shadow: 0 -1px 8px rgba(0,0,0,0.03);
+  margin-top: auto;
+  font-size: 0.95rem;
+}
+.footer-admin .footer-title {
+  color: #0d6efd;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+}
+.footer-admin .footer-icon {
+  display: flex;
+  align-items: center;
+}
+.footer-admin .footer-slogan {
+  font-style: italic;
+  color: #6c757d;
+}
+@media (max-width: 767.98px) {
+  .footer-admin .container-xxl {
+    flex-direction: column !important;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  .footer-admin .footer-left, .footer-admin .footer-right {
+    justify-content: center !important;
+    text-align: center !important;
+  }
+}
+</style>

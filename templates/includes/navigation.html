@@ -17,28 +17,18 @@
       <h6 class="font-weight-bolder mb-0">{% block title %}Admin Dashboard{% endblock %}</h6>
     </nav>
     
-    <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
-      <div class="ms-md-auto pe-md-3 d-flex align-items-center">
-        <form action="{% url 'admin:index' %}" method="GET" class="input-group">
-          <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
-          <input type="text" class="form-control" name="q" placeholder="Search..." value="{{ request.GET.q }}">
-        </form>
-      </div>
-      <ul class="navbar-nav justify-content-end">
-        <li class="nav-item d-flex align-items-center">
-          <span class="nav-link text-body font-weight-bold px-0">
-            <i class="fa fa-user me-sm-1"></i>
+    <div class="collapse navbar-collapse mt-sm-0 mt-2" id="navbar">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item d-flex align-items-center" style="position: relative;">
+          <a href="#" class="nav-link font-weight-bold" style="padding: 0.25rem 0.75rem; color: #535353;" onclick="var menu = this.nextElementSibling; menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; return false;">
+            <i class="fa fa-user me-1"></i>
             <span class="d-sm-inline d-none">{{ request.user.username }}</span>
-          </span>
-        </li>
-        <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
-          <a href="javascript:;" class="nav-link text-body p-0" id="iconNavbarSidenav">
-            <div class="sidenav-toggler-inner">
-              <i class="sidenav-toggler-line"></i>
-              <i class="sidenav-toggler-line"></i>
-              <i class="sidenav-toggler-line"></i>
-            </div>
           </a>
+          <div class="mt-2 ml-2" style="display: none; position: absolute; top: 100%; left: 0; width: max-content; background: linear-gradient(180deg, #dddddd 0%, #b3b3b3 100%); border-radius: 0.25rem; box-shadow: 0 2px 4px rgba(221, 220, 220, 0.2); z-index: 1000; padding: 0.125rem 0; font-size: 0.875rem;">
+            <a href="{% url 'custom_admin:logout' %}" style="display: block; padding: 0.25rem 0.75rem; color: #dc3545; text-decoration: none; white-space: nowrap; line-height: 1.2;">
+              <i class="bi bi-box-arrow-right me-2"></i>Logout
+            </a>
+          </div>
         </li>
       </ul>
     </div>

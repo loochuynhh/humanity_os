@@ -3,35 +3,35 @@
     <link rel="stylesheet" type="text/css" href="{% static "assets/css/forms.css" %}">
 {% endblock %}
 
-<div class="actions form-group">
-    {% block actions %}
-        {% block actions-form %}
-            {% for field in action_form %}
-                {% if field.label %}<label>
-                    {# {{ field.label }} #}
+<div class="card card-body border-0 shadow-sm p-3 mb-3">
+    <div class="actions d-flex align-items-center gap-2 flex-wrap">
+        {% block actions %}
+            {% block actions-form %}
+                {% for field in action_form %}
+                    {% if field.label %}<label class="me-2 fw-semibold">{# {{ field.label }} #}{% endif %}
+                    {{ field }}
+                    {% if field.label %}</label>{% endif %}
+                {% endfor %}
+            {% endblock %}
+            {% block actions-submit %}
+                <button type="submit" class="btn btn-primary btn-sm px-3" title="{% trans "Run the selected action" %}" name="index" value="{{ action_index|default:0 }}">
+                    <i class="bi bi-play-fill me-1"></i>{% trans "Go" %}
+                </button>
+            {% endblock %}
+            {% block actions-counter %}
+                {% if actions_selection_counter %}
+                    <span class="action-counter ms-2 small text-muted" data-actions-icnt="{{ cl.result_list|length }}">{{ selection_note }}</span>
+                    {% if cl.result_count != cl.result_list|length %}
+                        <span class="all ms-2 small text-muted">{{ selection_note_all }}</span>
+                        <span class="question ms-2">
+                            <a href="#" class="text-decoration-underline text-primary"
+                               title="{% trans "Click here to select the objects across all pages" %}">{% blocktrans with cl.result_count as total_count %}
+                                Chọn tất cả {{ total_count }} {{ module_name }}{% endblocktrans %}</a>
+                        </span>
+                        <span class="clear ms-2"><a href="#" class="text-danger">{% trans "Clear selection" %}</a></span>
+                    {% endif %}
                 {% endif %}
-                {{ field }}
-                {% if field.label %}</label>{% endif %}
-            {% endfor %}
+            {% endblock %}
         {% endblock %}
-        {% block actions-submit %}
-            <button type="submit" class="btn btn-fill btn-sm btn-primary" title="{% trans "Run the selected action" %}" name="index" value="{{ action_index|default:0 }}">
-                {% trans "Go" %}
-            </button>
-        {% endblock %}
-        {% block actions-counter %}
-            {% if actions_selection_counter %}
-                <span class="action-counter" data-actions-icnt="{{ cl.result_list|length }}">{{ selection_note }}</span>
-                {% if cl.result_count != cl.result_list|length %}
-                    <span class="all">{{ selection_note_all }}</span>
-                    <span class="question">
-                        <a href="#"
-                           title="{% trans "Click here to select the objects across all pages" %}">{% blocktrans with cl.result_count as total_count %}
-                            Select all {{ total_count }} {{ module_name }}{% endblocktrans %}</a>
-                    </span>
-                    <span class="clear"><a href="#">{% trans "Clear selection" %}</a></span>
-                {% endif %}
-            {% endif %}
-        {% endblock %}
-    {% endblock %}
+    </div>
 </div>

@@ -55,9 +55,9 @@
             <div class="col col-md-8 col-lg-3 col-xl-8">
                 {% block search %}{% search_form cl %}{% endblock %}
             </div>
-            <div class="d-block mb-4 mb-md-0 col-4 col-md-2">
-                <div class="btn-toolbar mb-2 mb-md-0">
-                    <div class="btn-group">
+            <div class="col-12 col-md-auto ms-auto text-end">
+                <div class="btn-toolbar mb-2 mb-md-0 justify-content-end d-flex w-100">
+                    <div class="btn-group w-auto">
                         {% block object-tools-items %}
                             {% change_list_object_tools %}
                         {% endblock %}
@@ -80,7 +80,7 @@
                     <div>{{ cl.formset.management_form }}</div>
                 {% endif %}
 
-                <div class="card card-body border-0 shadow table-wrapper table-responsive">
+                <div class="card card-body border-0 shadow table-wrapper table-responsive p-0">
                     {% block result_list %}
                         {% if action_form and actions_on_top and cl.show_admin_actions %}
                             {% admin_actions %}
@@ -100,11 +100,11 @@
         <div class="col-md-2">
             {% if cl.has_filters %}
                 {% block filters %}
-                    <div class="card card-body border-0 shadow table-wrapper table-responsive">
-                        <div class="card-header filter_card_header">
-                            <h5>{% trans 'Filter' %}</h5>
+                    <div class="card card-body border-0 shadow-sm p-3 mb-3">
+                        <div class="card-header filter_card_header bg-white border-bottom">
+                            <h6 class="mb-0">{% trans 'Filter' %}</h6>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body p-0 pt-3">
                             {% for spec in cl.filter_specs %}
                                 {% admin_list_filter cl spec %}
                             {% endfor %}

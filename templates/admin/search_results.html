@@ -1,77 +1,47 @@
-{% extends "layouts/base.html" %}
-{% load i18n static %}
+{% extends 'custom_admin/layouts/base.html' %}
+{% load static %}
 
-{% block title %}Search Results: {{ query }}{% endblock %}
+{% block title %}Kết quả tìm kiếm - Humanity OS Admin{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="card mb-4">
-                <div class="card-header pb-0">
-                    <h6 class="mb-0">Search Results: "{{ query }}"</h6>
-                    <p class="text-sm mb-0">Found results across {{ results|length }} model(s)</p>
-                </div>
-                <div class="card-body px-0 pt-0 pb-2">
-                    {% if results %}
-                        {% for result in results %}
-                            <div class="p-4">
-                                <h6 class="mb-3">{{ result.model_name_plural|capfirst }}</h6>
-                                <div class="table-responsive">
-                                    <table class="table align-items-center mb-0">
-                                        <thead>
-                                            <tr>
-                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Item</th>
-                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Details</th>
-                                                <th class="text-end text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for obj in result.objects %}
-                                                <tr>
-                                                    <td>
-                                                        <div class="d-flex px-2 py-1">
-                                                            <div class="d-flex flex-column justify-content-center">
-                                                                <h6 class="mb-0 text-sm">{{ obj }}</h6>
-                                                                <p class="text-xs text-secondary mb-0">ID: {{ obj.id }}</p>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <p class="text-xs font-weight-bold mb-0">
-                                                            {% for field in obj._meta.fields %}
-                                                                {% if field.name != 'id' and field.get_internal_type in 'CharField,TextField,EmailField' and field.value_from_object|stringformat:"s" in query %}
-                                                                    {{ field.verbose_name }}: {{ field.value_from_object|truncatechars:50 }}<br>
-                                                                {% endif %}
-                                                            {% endfor %}
-                                                        </p>
-                                                    </td>
-                                                    <td class="align-middle text-end">
-                                                        <a href="{% url 'admin:'|add:result.app_label|add:'_'|add:result.model|add:'_change' obj.pk %}" class="btn btn-link text-info px-3 mb-0">
-                                                            <i class="fas fa-edit text-info me-2"></i>Edit
-                                                        </a>
-                                                        <a href="{% url 'admin:'|add:result.app_label|add:'_'|add:result.model|add:'_delete' obj.pk %}" class="btn btn-link text-danger px-3 mb-0">
-                                                            <i class="fas fa-trash text-danger me-2"></i>Delete
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            {% if not forloop.last %}<hr class="horizontal dark my-0">{% endif %}
-                        {% endfor %}
-                    {% else %}
-                        <div class="text-center py-5">
-                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
-                            <h5>No results found for "{{ query }}"</h5>
-                            <p class="text-muted">Try using different keywords or check your spelling</p>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
+  <h1 class="h2 fw-bold mb-4">Kết quả tìm kiếm cho "{{ query }}"</h1>
+  
+  {% if results %}
+    {% for result in results %}
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-gradient-primary text-white">
+          <h5 class="mb-0">{{ result.model_name_plural }}</h5>
         </div>
+        <div class="card-body">
+          <ul class="list-group list-group-flush">
+            {% for obj in result.objects %}
+              <li class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <strong>{{ obj.name }}</strong>
+                    {% if obj.matched_value %}
+                      <p class="text-muted mb-0">Khớp: {{ obj.matched_value }}</p>
+                    {% endif %}
+                  </div>
+                  {% if obj.url %}
+                    <a href="{{ obj.url }}" class="btn btn-sm btn-outline-primary">Xem chi tiết</a>
+                  {% endif %}
+                </div>
+              </li>
+            {% empty %}
+              <li class="list-group-item">Không tìm thấy kết quả</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="alert alert-info">
+      Không tìm thấy kết quả cho "{{ query }}". Vui lòng thử lại với từ khóa khác.
     </div>
+  {% endif %}
+  
+  <a href="{% url 'custom_admin:index' %}" class="btn btn-primary mt-3">Quay lại Dashboard</a>
 </div>
-{% endblock %} 
+{% endblock %}

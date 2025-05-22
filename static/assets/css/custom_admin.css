@@ -12,7 +12,6 @@
   background: var(--sidebar-bg) !important;
   min-height: 100vh;
   width: var(--sidebar-width);
-  transition: all 0.3s ease;
   z-index: 1000;
 }
 
@@ -21,7 +20,6 @@
   padding: 0.75rem 1.25rem;
   border-radius: 8px;
   margin: 0.25rem 1rem;
-  transition: all 0.2s ease;
   font-size: 0.95rem;
   display: flex;
   align-items: center;
@@ -30,7 +28,6 @@
 .sidenav .navbar-nav .nav-link:hover {
   background: var(--hover-bg);
   color: #ffffff !important;
-  transform: translateX(5px);
 }
 
 .sidenav .navbar-nav .nav-link.active {
@@ -146,10 +143,8 @@
 @media (max-width: 767.98px) {
   .sidenav {
     position: fixed;
-    transform: translateX(-100%);
   }
   .sidenav.show {
-    transform: translateX(0);
   }
 }
 
@@ -324,4 +319,101 @@ div.breadcrumbs a {
     width: 100%;
     margin-top: 15px;
   }
+}
+
+.input-group-text {
+    min-height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+.input-group .form-control {
+    min-height: 2.5rem;
+}
+
+.card .filter-group:not(:last-child) {
+    border-bottom: 1px solid #f0f0f0;
+    margin-bottom: 0.5rem;
+}
+.card .filter-group .list-group-item {
+    background: transparent;
+}
+.card .filter-group .list-group-item .link-primary {
+    color: #0d6efd !important;
+    font-weight: 600;
+}
+.card .filter-group .list-group-item .link-dark {
+    color: #495057 !important;
 } 
+.actions .btn {
+    font-size: 0.95rem;
+    border-radius: 6px;
+    box-shadow: none;
+}
+.actions label {
+    font-weight: 500;
+    margin-bottom: 0;
+}
+.actions .action-counter,
+.actions .all,
+.actions .question,
+.actions .clear {
+    font-size: 0.92rem;
+    color: #6c757d !important;
+}
+.actions .clear a {
+    color: #dc3545 !important;
+    .input-group-text {
+    background: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+    min-height: 2.5rem;
+    display: flex;
+    align-items: center;
+    padding: 0 0.75rem;
+}
+.input-group .form-control {
+    min-height: 2.5rem;
+    border-left: 0;
+    font-size: 0.97rem;
+}
+.input-group .btn {
+    min-height: 2.5rem;
+    font-size: 0.97rem;
+    border-radius: 0 6px 6px 0;
+}
+#changelist-search .small.quiet {
+    color: #6c757d;
+    font-size: 0.93rem;
+}
+}
+.input-group-text {
+    background: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+    min-height: 2.5rem;
+    display: flex;
+    align-items: center;
+    padding: 0 0.75rem;
+}
+.input-group .form-control {
+    min-height: 2.5rem;
+    border-left: 0;
+    font-size: 0.97rem;
+}
+.input-group .btn {
+    min-height: 2.5rem;
+    font-size: 0.97rem;
+    border-radius: 0 6px 6px 0;
+}
+#changelist-search .small.quiet {
+    color: #6c757d;
+    font-size: 0.93rem;
+}
+
+#td.action-checkbox {
+    width: 1.5em;
+    text-align: center;
+    margin-left: 10px !important;
+    padding-left: 10px !important;
+}
