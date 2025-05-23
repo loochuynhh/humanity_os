@@ -200,4 +200,4 @@ class AIChatMessageAdmin(admin.ModelAdmin):
 admin.site.register(Users, CustomUserAdmin)
 admin.site.register(UserFaceImage, UserFaceImageAdmin)
 admin.site.register(CheckInCheckOut, CheckInCheckOutAdmin)
-admin.site.register(AIChatMessage, AIChatMessageAdmin)
+# admin.site.register(AIChatMessage, AIChatMessageAdmin)

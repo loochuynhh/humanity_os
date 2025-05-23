@@ -1,6 +1,23 @@
 {% extends "layouts/base.html" %}
 {% load i18n static %}
 
-{% block content %}
+{% block extrastyle %}
     {{ block.super }}
+    {# CSS gốc của Django Admin (nếu bạn muốn theme gốc của Django làm nền) #}
+    {# <link rel="stylesheet" type="text/css" href="{% static 'admin/css/base.css' %}"> #}
+    {# <link rel="stylesheet" type="text/css" href="{% static 'admin/css/changelists.css' %}"> #}
+    {# <link rel="stylesheet" type="text/css" href="{% static 'admin/css/forms.css' %}"> #}
+
+    <!-- DataTables CSS (Nếu chỉ dùng cho admin) -->
+    <link rel="stylesheet" href="{% static 'assets/css/jquery.dataTables.min.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/components/datatables.css' %}">
+
+    <!-- Custom Admin CSS -->
+    <link rel="stylesheet" href="{% static 'assets/css/custom_admin.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-interface">
+    {{ block.super }}
+</div>
 {% endblock %} 

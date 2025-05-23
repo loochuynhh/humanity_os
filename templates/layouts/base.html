@@ -9,8 +9,8 @@
 <head>
   {% include "includes/head.html" %}
   
-  <!-- Custom Admin CSS -->
-  <link rel="stylesheet" href="{% static 'assets/css/custom_admin.css' %}">
+  {# Custom Admin CSS - ĐÃ CHUYỂN SANG admin/base_site.html #}
+  {# <link rel="stylesheet" href="{% static 'assets/css/custom_admin.css' %}"> #}
 
   {% block extrastyle %}
     <!-- Bootstrap CSS -->
@@ -21,12 +21,11 @@
     <!-- Font Awesome CSS -->
     <link rel="stylesheet" href="{% static 'assets/fonts/all.min.css' %}">
 
-    <!-- DataTables CSS -->
-    <link rel="stylesheet" href="{% static 'assets/css/jquery.dataTables.min.css' %}">
+    {# DataTables CSS - ĐÃ CHUYỂN SANG admin/base_site.html NẾU CHỈ DÙNG CHO ADMIN #}
+    {# <link rel="stylesheet" href="{% static 'assets/css/jquery.dataTables.min.css' %}"> #}
+    {# <link rel="stylesheet" href="{% static 'assets/css/components/datatables.css' %}"> #}
 
-    <link rel="stylesheet" href="{% static 'assets/css/components/datatables.css' %}">
-
-    <!-- Custom CSS -->
+    <!-- Custom CSS cho phần USER (nếu có) -->
     <link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
 
     <!-- Chatbot CSS -->

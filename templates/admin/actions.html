@@ -4,34 +4,40 @@
 {% endblock %}
 
 <div class="card card-body border-0 shadow-sm p-3 mb-3">
-    <div class="actions d-flex align-items-center gap-2 flex-wrap">
+    <div class="actions row g-2 align-items-center">
         {% block actions %}
-            {% block actions-form %}
-                {% for field in action_form %}
-                    {% if field.label %}<label class="me-2 fw-semibold">{# {{ field.label }} #}{% endif %}
-                    {{ field }}
-                    {% if field.label %}</label>{% endif %}
-                {% endfor %}
-            {% endblock %}
-            {% block actions-submit %}
-                <button type="submit" class="btn btn-primary btn-sm px-3" title="{% trans "Run the selected action" %}" name="index" value="{{ action_index|default:0 }}">
-                    <i class="bi bi-play-fill me-1"></i>{% trans "Go" %}
-                </button>
-            {% endblock %}
-            {% block actions-counter %}
-                {% if actions_selection_counter %}
-                    <span class="action-counter ms-2 small text-muted" data-actions-icnt="{{ cl.result_list|length }}">{{ selection_note }}</span>
+            <div class="col-auto">
+                {% block actions-form %}
+                    {% for field in action_form %}
+                        {% if field.label %}<label class="form-label me-2">{# {{ field.label }} #}{% endif %}
+                        {{ field }}
+                        {% if field.label %}</label>{% endif %}
+                    {% endfor %}
+                {% endblock %}
+            </div>
+            <div class="col-auto">
+                {% block actions-submit %}
+                    <button type="submit" class="btn btn-primary btn-sm px-3" title="{% trans "Run the selected action" %}" name="index" value="{{ action_index|default:0 }}">
+                        <i class="bi bi-play-fill me-1"></i>{% trans "Go" %}
+                    </button>
+                {% endblock %}
+            </div>
+            {% if actions_selection_counter %}
+            <div class="col-auto ms-md-2">
+                {% block actions-counter %}
+                    <span class="action-counter small text-muted" data-actions-icnt="{{ cl.result_list|length }}">{{ selection_note }}</span>
                     {% if cl.result_count != cl.result_list|length %}
-                        <span class="all ms-2 small text-muted">{{ selection_note_all }}</span>
-                        <span class="question ms-2">
-                            <a href="#" class="text-decoration-underline text-primary"
+                        <span class="all ms-1 small text-muted">{{ selection_note_all }}</span>
+                        <span class="question ms-1">
+                            <a href="#" class="text-decoration-underline text-primary small"
                                title="{% trans "Click here to select the objects across all pages" %}">{% blocktrans with cl.result_count as total_count %}
                                 Chọn tất cả {{ total_count }} {{ module_name }}{% endblocktrans %}</a>
                         </span>
-                        <span class="clear ms-2"><a href="#" class="text-danger">{% trans "Clear selection" %}</a></span>
+                        <span class="clear ms-1"><a href="#" class="text-danger small">{% trans "Clear selection" %}</a></span>
                     {% endif %}
-                {% endif %}
-            {% endblock %}
+                {% endblock %}
+            </div>
+            {% endif %}
         {% endblock %}
     </div>
 </div>

@@ -1,4 +1,4 @@
-{% load i18n static custom_admin %}
+{% load i18n static custom_admin_tags %}
 
 {% block extrastyle %}
     <link rel="stylesheet" type="text/css" href="{% static "assets/css/forms.css" %}">
@@ -16,7 +16,7 @@
             <thead class="table-light">
             <tr>
                 {% for header in result_headers %}
-                    <th class="border-gray-200 align-middle" {{ header.class_attrib }}>
+                    <th class="border-gray-200 align-middle {% if header.class_attrib == ' class="action-checkbox-column"' %}text-center{% endif %}" {{ header.class_attrib }}>
                         {% if header.sortable %}
                             {% if header.sort_priority > 0 %}
                                 <a href="{{ header.url_remove }}" title="{% trans "Remove from sorting" %}"><span class="fa fa-arrows-alt"></span></a>&nbsp;
@@ -31,7 +31,7 @@
                             <a href="{{ header.url_primary }}">{{ header.text|capfirst }}</a>
                         {% else %}
                             {% if header.class_attrib == ' class="action-checkbox-column"' %}
-                                <div class="form-check">
+                                <div class="form-check d-flex justify-content-center align-items-center">
                                     <label class="form-check-label">
                                         {{ header.text|capfirst }}
                                     </label>
@@ -51,7 +51,17 @@
                 {% endif %}
                 <tr>
                     {% for item in result %}
-                        {{ item }}
+                        {% with td_classes=item|get_td_class rendered_content=item|get_rendered_content %}
+                            {% if 'action-checkbox' in td_classes %}
+                                <td class="{{ td_classes }} text-center align-middle">
+                                    <div class="form-check d-flex justify-content-center align-items-center h-100">
+                                        {{ rendered_content|safe }}
+                                    </div>
+                                </td>
+                            {% else %}
+                                {{ item|safe }}
+                            {% endif %}
+                        {% endwith %}
                     {% endfor %}
                 </tr>
             {% endfor %}

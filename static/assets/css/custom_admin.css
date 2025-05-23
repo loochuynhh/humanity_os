@@ -1,5 +1,5 @@
 /* Custom Admin Styles */
-:root {
+.admin-interface :root {
   --sidebar-bg: linear-gradient(180deg, #1a2a44 0%, #2c3e50 100%);
   --sidebar-width: 250px;
   --primary-color: #0d6efd;
@@ -8,14 +8,14 @@
 }
 
 /* Sidebar styling */
-.sidenav {
+.admin-interface .sidenav {
   background: var(--sidebar-bg) !important;
   min-height: 100vh;
   width: var(--sidebar-width);
   z-index: 1000;
 }
 
-.sidenav .navbar-nav .nav-link {
+.admin-interface .sidenav .navbar-nav .nav-link {
   color: #e9ecef !important;
   padding: 0.75rem 1.25rem;
   border-radius: 8px;
@@ -25,53 +25,53 @@
   align-items: center;
 }
 
-.sidenav .navbar-nav .nav-link:hover {
+.admin-interface .sidenav .navbar-nav .nav-link:hover {
   background: var(--hover-bg);
   color: #ffffff !important;
 }
 
-.sidenav .navbar-nav .nav-link.active {
+.admin-interface .sidenav .navbar-nav .nav-link.active {
   background: var(--active-bg);
   color: #ffffff !important;
   font-weight: 600;
 }
 
-.sidenav .navbar-nav .nav-item .collapse .nav .nav-item .nav-link {
+.admin-interface .sidenav .navbar-nav .nav-item .collapse .nav .nav-item .nav-link {
   font-size: 0.9rem;
   padding: 0.5rem 1.5rem 0.5rem 2.5rem;
   color: #adb5bd !important;
 }
 
-.sidenav .navbar-nav .nav-item .collapse .nav .nav-item .nav-link:hover,
-.sidenav .navbar-nav .nav-item .collapse .nav .nav-item .nav-link.active {
+.admin-interface .sidenav .navbar-nav .nav-item .collapse .nav .nav-item .nav-link:hover,
+.admin-interface .sidenav .navbar-nav .nav-item .collapse .nav .nav-item .nav-link.active {
   color: #ffffff !important;
   background: var(--hover-bg);
 }
 
-.sidenav-header .navbar-brand {
+.admin-interface .sidenav-header .navbar-brand {
   color: #fff !important;
 }
 
 /* Card styling */
-.card {
+.admin-interface .card {
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   border: none;
   overflow: hidden;
 }
 
-.card-header {
+.admin-interface .card-header {
   background-color: transparent;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   padding: 1rem 1.5rem;
 }
 
 /* Table styling */
-.table {
+.admin-interface .table {
   margin-bottom: 0;
 }
 
-.table thead th {
+.admin-interface .table thead th {
   background-color: #f8f9fa;
   font-weight: 600;
   font-size: 0.75rem;
@@ -79,77 +79,91 @@
   letter-spacing: 0.05rem;
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #e9ecef;
+  vertical-align: middle;
 }
 
-.table tbody tr:hover {
+.admin-interface .table tbody tr:hover {
   background-color: rgba(0, 0, 0, 0.02);
 }
 
+.admin-interface .table td {
+  vertical-align: middle !important;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
 /* Button styling */
-.btn-primary {
+.admin-interface .btn-primary {
   background-color: var(--primary-color);
   border-color: var(--primary-color);
 }
 
-.btn-primary:hover {
+.admin-interface .btn-primary:hover {
   background-color: #0b5ed7;
   border-color: #0b5ed7;
 }
 
 /* Form styling */
-.form-control:focus {
+.admin-interface .form-control:focus {
   border-color: var(--primary-color);
   box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
 }
 
 /* Pagination styling */
-.pagination .page-item.active .page-link {
+.admin-interface .pagination .page-item.active .page-link {
   background-color: var(--primary-color);
   border-color: var(--primary-color);
 }
 
-.pagination .page-link {
+.admin-interface .pagination .page-link {
   color: var(--primary-color);
 }
 
-.pagination .page-link:hover {
+.admin-interface .pagination .page-link:hover {
   background-color: #e9ecef;
   border-color: #dee2e6;
   color: #0b5ed7;
 }
 
 /* Filter styling */
-.filter_card_header {
+.admin-interface .filter_card_header {
   background-color: #f8f9fa;
 }
 
 /* Breadcrumbs styling */
-.breadcrumb {
+.admin-interface .breadcrumb {
   background-color: transparent;
   margin-bottom: 0;
 }
 
-.breadcrumb-item a {
+.admin-interface .breadcrumb-item a {
   color: var(--primary-color);
 }
 
 /* Login form styling */
-.login-form {
+.admin-interface .login-form {
   max-width: 400px;
   margin: 0 auto;
 }
 
 /* Responsive adjustments */
 @media (max-width: 767.98px) {
-  .sidenav {
+  .admin-interface .sidenav {
     position: fixed;
   }
-  .sidenav.show {
+  .admin-interface .sidenav.show {
+  }
+
+  #changelist-filter {
+    width: 100%;
+    margin-top: 15px;
   }
 }
 
 /* Icon styling */
-.icon-shape {
+.admin-interface .icon-shape {
   width: 32px;
   height: 32px;
   background: rgba(255, 255, 255, 0.1);
@@ -159,28 +173,28 @@
   border-radius: 0.5rem;
 }
 
-.icon-shape i {
+.admin-interface .icon-shape i {
   font-size: 1rem;
   color: #fff;
 }
 
 /* Submit button styling */
-.submit-row {
+.admin-interface .submit-row {
   padding: 12px 0;
   margin-top: 15px;
   border-top: 1px solid #e9ecef;
 }
 
-.submit-row .btn {
+.admin-interface .submit-row .btn {
   margin-left: 5px;
 }
 
 /* Sidebar Styling */
-#sidebar {
+.admin-interface #sidebar {
   background: var(--sidebar-bg);
 }
 
-.module h2, .module caption, .inline-group h2 {
+.admin-interface .module h2, .admin-interface .module caption, .admin-interface .inline-group h2 {
   background: var(--sidebar-bg);
 }
 
@@ -198,6 +212,8 @@
   background: var(--primary-color);
   color: #fff;
   border-radius: 4px;
+  padding: 0.5rem 1rem;
+  border: none;
 }
 
 .button:hover, input[type=submit]:hover, input[type=button]:hover {
@@ -213,19 +229,19 @@
 }
 
 /* Card Styling */
-.dashboard .module {
+.admin-interface .dashboard .module {
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   border: none;
   overflow: hidden;
 }
 
-.dashboard .module table th {
+.admin-interface .dashboard .module table th {
   background-color: #f8f9fa;
 }
 
 /* Table Styling */
-#changelist table {
+.admin-interface #changelist table {
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -244,11 +260,11 @@
 }
 
 /* Form Styling */
-.form-row {
+.admin-interface .form-row {
   padding: 10px 0;
 }
 
-.aligned label {
+.admin-interface .aligned label {
   font-weight: 500;
 }
 
@@ -257,11 +273,15 @@
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  display: none;
 }
 
 #changelist-filter h2 {
   background-color: var(--primary-color);
   border-radius: 8px 8px 0 0;
+  color: #fff;
+  padding: 0.75rem 1.25rem;
+  font-size: 1rem;
 }
 
 /* Breadcrumbs */
@@ -269,6 +289,7 @@ div.breadcrumbs {
   background: #f8f9fa;
   color: #333;
   border-bottom: 1px solid #e9ecef;
+  padding: 0.75rem 1.25rem;
 }
 
 div.breadcrumbs a {
@@ -276,117 +297,91 @@ div.breadcrumbs a {
 }
 
 /* App Index */
-.app-index {
+.admin-interface .app-index {
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* Messages */
-.messagelist {
+.admin-interface .messagelist {
   margin-bottom: 15px;
 }
 
-.messagelist li {
+.admin-interface .messagelist li {
   border-radius: 4px;
+  padding: 0.75rem 1.25rem;
 }
 
 /* Login Form */
-.login #container {
+.admin-interface .login #container {
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   background: #fff;
+  padding: 2rem;
 }
 
-.login .form-row {
+.admin-interface .login .form-row {
   padding: 8px 0;
 }
 
-.login .submit-row {
+.admin-interface .login .submit-row {
   padding: 15px 0 0 0;
   text-align: center;
 }
 
-.login .submit-row input {
+.admin-interface .login .submit-row input {
   display: block;
   width: 100%;
   padding: 10px;
 }
 
-/* Responsive Adjustments */
-@media (max-width: 767px) {
-  #changelist-filter {
-    width: 100%;
-    margin-top: 15px;
-  }
+/* CSS đã chỉnh sửa ở các bước trước, cần thêm .admin-interface */
+.admin-interface .actions.row.g-2.align-items-center {
+  margin-left: 0;
+  margin-right: 0;
 }
-
-.input-group-text {
-    min-height: 2.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
+.admin-interface .actions .col-auto {
+  padding-left: 0;
+  padding-right: 0;
 }
-.input-group .form-control {
-    min-height: 2.5rem;
+.admin-interface .actions label.fw-semibold {
+  margin-bottom: 0;
+  margin-right: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: #333;
 }
-
-.card .filter-group:not(:last-child) {
-    border-bottom: 1px solid #f0f0f0;
-    margin-bottom: 0.5rem;
+.admin-interface .actions select {
+  min-width: 160px;
+  height: calc(1.5em + .75rem + 2px);
+  font-size: 0.9rem;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  padding: 4px 8px;
+  margin-right: 8px;
 }
-.card .filter-group .list-group-item {
-    background: transparent;
+.admin-interface .actions .btn {
+  min-width: 48px;
+  height: calc(1.5em + .75rem + 2px);
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0.375rem 0.75rem;
+  box-shadow: none;
 }
-.card .filter-group .list-group-item .link-primary {
-    color: #0d6efd !important;
-    font-weight: 600;
+.admin-interface .actions .action-counter,
+.admin-interface .actions .all,
+.admin-interface .actions .question,
+.admin-interface .actions .clear {
+  font-size: 0.9rem;
+  color: #6c757d !important;
+  margin-left: 0.5rem;
 }
-.card .filter-group .list-group-item .link-dark {
-    color: #495057 !important;
-} 
-.actions .btn {
-    font-size: 0.95rem;
-    border-radius: 6px;
-    box-shadow: none;
-}
-.actions label {
-    font-weight: 500;
-    margin-bottom: 0;
-}
-.actions .action-counter,
-.actions .all,
-.actions .question,
-.actions .clear {
-    font-size: 0.92rem;
-    color: #6c757d !important;
-}
-.actions .clear a {
-    color: #dc3545 !important;
-    .input-group-text {
-    background: #f8f9fa !important;
-    border: 1px solid #dee2e6 !important;
-    min-height: 2.5rem;
-    display: flex;
-    align-items: center;
-    padding: 0 0.75rem;
-}
-.input-group .form-control {
-    min-height: 2.5rem;
-    border-left: 0;
-    font-size: 0.97rem;
-}
-.input-group .btn {
-    min-height: 2.5rem;
-    font-size: 0.97rem;
-    border-radius: 0 6px 6px 0;
-}
-#changelist-search .small.quiet {
-    color: #6c757d;
-    font-size: 0.93rem;
-}
+.admin-interface .actions .clear a {
+  color: #dc3545 !important;
 }
 .input-group-text {
     background: #f8f9fa !important;
@@ -412,8 +407,367 @@ div.breadcrumbs a {
 }
 
 #td.action-checkbox {
-    width: 1.5em;
+    width: 1em;
     text-align: center;
     margin-left: 10px !important;
     padding-left: 10px !important;
+}
+
+/* CSS đã chỉnh sửa ở các bước trước, cần thêm .admin-interface */
+.admin-interface .actions.row.g-2.align-items-center {
+  margin-left: 0;
+  margin-right: 0;
+}
+.admin-interface .actions .col-auto {
+  padding-left: 0;
+  padding-right: 0;
+}
+.admin-interface .actions label.fw-semibold {
+  margin-bottom: 0;
+  margin-right: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: #333;
+}
+.admin-interface .actions select {
+  min-width: 160px;
+  height: 36px;
+  font-size: 0.95rem;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  padding: 4px 8px;
+  margin-right: 8px;
+}
+.admin-interface .actions .btn {
+  min-width: 48px;
+  height: 36px;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.admin-interface .actions .action-counter {
+  margin-left: 12px;
+  font-size: 0.92rem;
+}
+
+.admin-interface .table th, 
+.admin-interface .table td {
+  vertical-align: middle !important;
+}
+.admin-interface .table th .form-check, 
+.admin-interface .table td.action-checkbox .form-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%; 
+  margin: 0;
+}
+.admin-interface .table td.action-checkbox {
+    padding-top: 0 !important; /* Reset padding that might affect height */
+    padding-bottom: 0 !important; /* Reset padding that might affect height */
+    /* Ensure the cell itself doesn't have extra height compared to others */
+    /* The height of td is usually determined by its content or specific table CSS */
+    /* We rely on align-items: center in the .form-check div and consistent row padding */
+}
+.admin-interface .table th input[type="checkbox"],
+.admin-interface .table td.action-checkbox input[type="checkbox"] {
+  width: 1em; /* Slightly larger for better clickability */
+  height: 1em;
+  margin-top: 0; /* Remove any top margin that might cause misalignment */ 
+  /* vertical-align: middle; */ /* Flex alignment should handle this */
+}
+
+.admin-interface .table th, 
+.admin-interface .table td {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.admin-interface .table th, 
+.admin-interface .table td, 
+.admin-interface .actions label, 
+.admin-interface .actions select, 
+.admin-interface .actions .btn {
+  background: none;
+  color: #222;
+}
+
+/* Các styles mới từ custom_admin.css chưa được tiền tố */
+/* (Cần xem xét và thêm .admin-interface nếu chúng thuộc về admin) */
+
+.admin-interface .input-group-text {
+  background-color: #fff;
+  border-right: 0;
+  padding: 0.5rem 0.75rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.admin-interface .input-group .form-control {
+  border-left: 0;
+  box-shadow: none;
+}
+
+.admin-interface .card .filter-group:not(:last-child) {
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-interface .card .filter-group .list-group-item {
+  padding: 0.3rem 0;
+  border: none;
+}
+.admin-interface .card .filter-group .list-group-item .link-primary {
+  font-weight: 500;
+}
+.admin-interface .card .filter-group .list-group-item .link-dark {
+  color: #555 !important;
+}
+.admin-interface .actions .btn {
+  padding: 0.375rem 0.75rem;
+}
+.admin-interface .actions label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.admin-interface .actions .action-counter,
+.admin-interface .actions .all,
+.admin-interface .actions .question,
+.admin-interface .actions .clear {
+  font-size: 0.8rem;
+}
+.admin-interface .actions .clear a {
+  color: #dc3545;
+}
+/* Additional styles for search form, ensuring alignment and modern look */
+.admin-interface #changelist-search .input-group-text {
+    border-top-left-radius: .375rem;
+    border-bottom-left-radius: .375rem;
+}
+.admin-interface #changelist-search .form-control {
+    height: calc(1.5em + .75rem + 2px); /* Standard Bootstrap input height */
+}
+.admin-interface #changelist-search .btn {
+    border-top-right-radius: .375rem;
+    border-bottom-right-radius: .375rem;
+}
+.admin-interface #changelist-search .small.quiet {
+    font-size: .875em;
+    color: #6c757d;
+    margin-top: .25rem;
+    display: inline-block;
+}
+
+/* Ensuring the icon in search input is vertically centered */
+.admin-interface .input-group-text i.bi-search {
+    line-height: 1; /* Helps in vertical alignment */
+}
+
+/* Styles for action-checkbox to ensure they are well-aligned */
+.admin-interface td.action-checkbox,
+.admin-interface th.action-checkbox-column {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.admin-interface td.action-checkbox input[type="checkbox"],
+.admin-interface th.action-checkbox-column input[type="checkbox"] {
+    margin: 0 auto; /* Center checkbox within the cell */
+    display: block; /* Needed for margin auto to work on inline elements */
+}
+
+/* Date Hierarchy (Toplinks) Styling */
+.admin-interface .date-hierarchy-links a {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  margin-right: 0.35rem;
+  margin-left: 0.35rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+  text-decoration: none;
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  color: #0d6efd;
+  background-color: #e9ecef;
+  border-color: #e9ecef;
+}
+
+.admin-interface .date-hierarchy-links a:hover {
+  color: #fff;
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.admin-interface .date-hierarchy-links a.selected {
+  color: #fff;
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  font-weight: bold;
+}
+
+/* Filter styling improvements */
+.admin-interface .card .list-group-flush .list-group-item {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+.admin-interface .filter-group h6 {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+.admin-interface .filter-group .list-group-item a {
+    font-size: 0.9rem;
+}
+
+/* Ensure search input and button have same height and content is centered */
+.admin-interface #changelist-search .input-group .form-control,
+.admin-interface #changelist-search .input-group .btn,
+.admin-interface #changelist-search .input-group .input-group-text {
+    height: calc(1.5em + .75rem + 2px); /* Standard Bootstrap input height */
+    display: flex;
+    align-items: center; /* Vertically center content */
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.admin-interface #changelist-search .input-group .input-group-text i {
+    line-height: 1; /* Helps align icon better */
+}
+
+.admin-interface #changelist-search .input-group .btn {
+    justify-content: center; /* Center content in button if it's also flex */
+}
+
+/* Centering checkbox in table cells */
+.admin-interface .table td.action-checkbox {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.admin-interface .table th.action-checkbox-column {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.admin-interface .table td.action-checkbox .action-select,
+.admin-interface .table th.action-checkbox-column #action-toggle {
+    margin-left: auto;
+    margin-right: auto;
+    display: block; /* Helps with centering */
+}
+
+/* TOP FILTERS AREA */
+.admin-interface #top-filters-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-interface .filter-select-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-interface .filter-select-group label {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-bottom: 0.25rem;
+}
+
+.admin-interface .filter-select-group select.form-select {
+  min-width: 180px;
+  font-size: 0.9rem;
+  height: calc(1.5em + .75rem + 2px);
+}
+
+/* Actions Bar Styling */
+.admin-interface .actions .form-select,
+.admin-interface .actions .btn {
+    height: calc(1.5em + .75rem + 2px); /* Standard Bootstrap input height */
+    display: inline-flex; /* Helps align items vertically with their content */
+    align-items: center;
+    font-size: 0.9rem; /* Consistent font size */
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+}
+
+.admin-interface .actions .form-select {
+    /* Add any specific select styling if needed */
+}
+
+.admin-interface .actions .btn {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    justify-content: center; /* Center content in button */
+}
+
+.admin-interface .actions .action-counter,
+.admin-interface .actions .all,
+.admin-interface .actions .question,
+.admin-interface .actions .clear {
+    font-size: 0.875rem; /* Slightly smaller for these texts */
+    line-height: calc(1.5em + .75rem + 2px); /* Match height of select/button for alignment */
+    vertical-align: middle; /* Additional alignment help */
+}
+
+.admin-interface .actions .ms-md-auto {
+    display: flex; /* Allow vertical alignment of children if they wrap */
+    align-items: center;
+}
+
+/* Actions Bar Styling - Targeting specific classes */
+.admin-interface .actions .admin-action-select-wrapper,
+.admin-interface .actions .admin-action-button-wrapper,
+.admin-interface .actions .admin-action-counter-area {
+    display: flex; /* Ensure vertical alignment for items within these wrappers if needed */
+    align-items: center; /* Align items to the center vertically */
+}
+
+.admin-interface .actions .admin-action-select,
+.admin-interface .actions .admin-action-button {
+    height: 40px !important; /* Match your desired height, similar to search_form */
+    box-sizing: border-box !important;
+    display: inline-flex !important; /* Use inline-flex for better content alignment */
+    align-items: center !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    font-size: 0.875rem !important; /* Consistent font size */
+    line-height: 1.5 !important; /* Consistent line height */
+    border-radius: 0.25rem !important; /* Standard Bootstrap border-radius */
+}
+
+.admin-interface .actions .admin-action-select {
+    padding-left: 0.75rem !important;
+    padding-right: 2rem !important; /* Space for dropdown arrow */
+    border: 1px solid #ced4da; /* Standard Bootstrap border */
+}
+
+.admin-interface .actions .admin-action-button {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    justify-content: center !important; /* Center icon/text in button */
+}
+
+.admin-interface .actions .admin-action-button i {
+    font-size: 1rem !important; /* Adjust icon size if needed */
+}
+
+.admin-interface .actions .admin-action-counter-area span {
+    line-height: 40px; /* Match height for vertical alignment */
+    padding-left: 0.5rem; /* Add some spacing */
 }
