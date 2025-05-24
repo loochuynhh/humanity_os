@@ -1,7 +1,12 @@
 {% extends "layouts/base.html" %}
 {% load i18n static admin_urls %}
 
-{% block title %}Admin Dashboard{% endblock %}
+{% block title %}Admin Dashboard - Humanity OS{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'assets/css/custom_admin.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
@@ -9,7 +14,7 @@
   <div class="row">
     {% if app_list %}
       {% for app in app_list %}
-        {% if app.app_label != 'auth' %}  <!-- Bỏ qua ứng dụng auth hoàn toàn -->
+        {% if app.app_label != 'auth' %}  
           <div class="col-lg-6 mb-4">
             <div class="card h-100">
               <div class="card-header pb-0">
@@ -66,4 +71,16 @@
     {% endif %}
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+// Kiểm tra nếu có dữ liệu biểu đồ thì mới khởi tạo
+var userChartData = {% if user_chart_data %}{{ user_chart_data|safe }}{% else %}{ labels: [], data: [] }{% endif %};
+var taskChartData = {% if task_chart_data %}{{ task_chart_data|safe }}{% else %}{ labels: [], data: [], colors: [] }{% endif %};
+var projectChartData = {% if project_chart_data %}{{ project_chart_data|safe }}{% else %}{ labels: [], data: [], colors: [] }{% endif %};
+var performanceChartData = {% if performance_chart_data %}{{ performance_chart_data|safe }}{% else %}{ labels: [], data: [], colors: [] }{% endif %};
+</script>
+<script src="{% static 'assets/js/admin/dashboard.js' %}"></script>
 {% endblock %}

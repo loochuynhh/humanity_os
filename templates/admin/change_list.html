@@ -1,4 +1,4 @@
-{% extends "admin/base_site.html" %}
+{% extends "layouts/base.html" %}
 {% load i18n admin_urls static admin_list %}
 
 {% block extrastyle %}
@@ -7,14 +7,12 @@
     {% if cl.formset %}
         <link rel="stylesheet" type="text/css" href="{% static "assets/css/forms.css" %}">
     {% endif %}
-    {% if cl.formset or action_form %}
-        {# <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script> #} {# Django's jsi18n might not be needed if we handle translations in JS manually or if not many translatable strings in the new filter JS #}
-    {% endif %}
+    <link rel="stylesheet" type="text/css" href="{% static "assets/css/custom_admin.css" %}">
     {{ media.css }}
     {% if not actions_on_top and not actions_on_bottom %}
         <style>
             #changelist table thead th:first-child {
-                width: inherit
+                width: inherit;
             }
         </style>
     {% endif %}
@@ -22,15 +20,13 @@
 
 {% block extrahead %}
     {{ block.super }}
-    {{ media.js }} {# Ensures any Django admin JS media is loaded #}
+    {{ media.js }}
     <style>
       .date-hierarchy-links .btn {
         margin-right: 5px;
         margin-bottom: 5px;
       }
-      #changelist-filter-source-container { /* Wrapper for the original Django filter, to be hidden */
-          display: none !important;
-      }
+      /* #changelist-filter-source-container { display: none !important; } */ /* Re-enable sidebar if JS is removed */
     </style>
 {% endblock %}
 
@@ -46,7 +42,7 @@
                     <h5 class="m-b-10">{{ cl.opts.verbose_name_plural|capfirst }}</h5>
                   </div>
                   <ul class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'admin:index' %}"><i class="feather icon-home"></i></a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'custom_admin:index' %}"><i class="feather icon-home"></i></a></li>
                     <li class="breadcrumb-item"><a href="{% url 'admin:app_list' cl.opts.app_label %}">{{ cl.opts.app_config.verbose_name }}</a></li>
                     <li class="breadcrumb-item"><a href="javascript:void(0);">{{ cl.opts.verbose_name_plural|capfirst }}</a></li>
                   </ul>
@@ -60,22 +56,15 @@
 {% block content %}
 <div class="container-fluid py-2 admin-interface">
     <div class="table-settings my-3">
-        <div class="row align-items-start g-3">
-            <div class="col-12 col-xl-7 col-lg-6 mb-3 mb-lg-0">
+        <div class="row align-items-center g-3"> {# Changed align-items-start to align-items-center for better vertical alignment of search and add button #}
+            <div class="col-md-8 col-lg-9"> {# Search form takes more space #}
                 {% block search %}{% search_form cl %}{% endblock %}
             </div>
-            <div class="col-12 col-xl-5 col-lg-6">
-                 <div id="top-filters-container" class="d-flex flex-wrap gap-2 justify-content-lg-end">
-                    {# JavaScript will populate this area #}
-                 </div>
-            </div>
-            <div class="col-12 d-flex justify-content-end mt-2">
-                <div class="btn-toolbar">
-                    <div class="btn-group w-auto">
-                        {% block object-tools-items %}
-                            {% change_list_object_tools %}
-                        {% endblock %}
-                    </div>
+            <div class="col-md-4 col-lg-3 text-md-end"> {# Add button aligned to the right #}
+                <div class="btn-toolbar d-inline-block">
+                    {% block object-tools-items %}
+                        {% change_list_object_tools %}
+                    {% endblock %}
                 </div>
             </div>
         </div>
@@ -89,19 +78,23 @@
         {% endif %}
     {% endblock %}
 
-    {# Container for the original Django filter sidebar - will be hidden by CSS but used by JS #}
-    {% if cl.has_filters %}
-        <div id="changelist-filter-source-container">
-            <div id="changelist-filter">
-                {% for spec in cl.filter_specs %}
-                    {% admin_list_filter cl spec %}
-                {% endfor %}
+    <div class="row mt-3">
+        {% if cl.has_filters %}
+            <div class="col-md-3 order-md-1 mb-3" id="changelist-filter">
+                 <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light border-bottom py-2 px-3">
+                        <h6 class="mb-0 fw-semibold text-dark-emphasis">{% trans 'Filter' %}</h6>
+                    </div>
+                    <div class="list-group list-group-flush p-2">
+                        {% for spec in cl.filter_specs %}
+                            {% admin_list_filter cl spec %}
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
-        </div>
-    {% endif %}
+        {% endif %}
 
-    <div class="row mt-0">
-        <div class="col-md-12">
+        <div class="{% if cl.has_filters %}col-md-9 order-md-2{% else %}col-md-12{% endif %} w-100">
             <form id="changelist-form" method="post" {% if cl.formset and cl.formset.is_multipart %}
                 enctype="multipart/form-data"{% endif %} novalidate>
                 {% csrf_token %}
@@ -135,106 +128,7 @@
 </div>
 {% endblock %} 
 
-{% block js %}
+{% block extra_js %}
 {{ block.super }}
-<script type="text/javascript">
-    document.addEventListener('DOMContentLoaded', function() {
-        const sourceFilterContainer = document.getElementById('changelist-filter-source-container');
-        const targetContainer = document.getElementById('top-filters-container');
-
-        if (sourceFilterContainer && targetContainer) {
-            const filterGroups = sourceFilterContainer.querySelectorAll('#changelist-filter .filter-group'); // Target .filter-group inside #changelist-filter
-            
-            filterGroups.forEach(group => {
-                const titleElement = group.querySelector('h6'); 
-                const links = group.querySelectorAll('ul li a');
-                
-                if (titleElement && links.length > 0) {
-                    const selectGroupDiv = document.createElement('div');
-                    selectGroupDiv.className = 'filter-select-group';
-
-                    const label = document.createElement('label');
-                    label.className = 'form-label'; 
-                    label.htmlFor = 'filter-' + titleElement.textContent.trim().toLowerCase().replace(/\s+/g, '-');
-                    label.textContent = titleElement.textContent.trim();
-                    selectGroupDiv.appendChild(label);
-
-                    const select = document.createElement('select');
-                    select.className = 'form-select form-select-sm';
-                    select.id = 'filter-' + titleElement.textContent.trim().toLowerCase().replace(/\s+/g, '-');
-                    
-                    let isSelectedInGroup = false;
-                    links.forEach(link => {
-                        const option = document.createElement('option');
-                        option.value = link.getAttribute('href');
-                        option.textContent = link.textContent.trim();
-                        if (link.parentElement.classList.contains('selected')) {
-                            option.selected = true;
-                            isSelectedInGroup = true;
-                        }
-                        select.appendChild(option);
-                    });
-
-                    const allOption = document.createElement('option');
-                    let allHref = '?'; 
-                    
-                    const originalAllLink = Array.from(links).find(link => 
-                        link.textContent.trim().toLowerCase() === "{% trans 'all' %}".toLowerCase() || 
-                        link.textContent.trim().toLowerCase() === "tất cả" || // Specific for Vietnamese
-                        link.textContent.trim().toLowerCase().startsWith("{% trans 'all' %}".toLowerCase().split(' ')[0]) // Handle cases like "All forms"
-                    );
-
-                    if (originalAllLink) {
-                        allHref = originalAllLink.getAttribute('href');
-                    } else {
-                        const currentUrlForManipulation = new URL(window.location.href);
-                        const paramsInThisGroup = new Set();
-                        
-                        links.forEach(link => {
-                            try {
-                                const linkUrl = new URL(link.href, window.location.origin);
-                                linkUrl.searchParams.forEach((val, key) => {
-                                    if (key !== 'o' && key !== 'p' && key !== 'q' && !key.startsWith('_')) { 
-                                        paramsInThisGroup.add(key);
-                                    }
-                                });
-                            } catch (e) { 
-                                console.warn("Could not parse URL for a filter link:", link.href, e);
-                            }
-                        });
-
-                        paramsInThisGroup.forEach(param => currentUrlForManipulation.searchParams.delete(param));
-                        allHref = currentUrlForManipulation.pathname + currentUrlForManipulation.search;
-
-                        if (allHref.endsWith('?') && allHref.length > 1) { 
-                            allHref = allHref.slice(0, -1);
-                        } else if (allHref === '?') {
-                            allHref = currentUrlForManipulation.pathname;
-                        }
-                        if (!allHref || allHref === '/') {
-                             allHref = window.location.pathname;
-                        }
-                    }
-                    
-                    allOption.value = allHref;
-                    allOption.textContent = "{% trans "All" %}";
-                    select.insertBefore(allOption, select.firstChild);
-
-                    if (!isSelectedInGroup) {
-                        allOption.selected = true;
-                    }
-
-                    select.addEventListener('change', function() {
-                        if (this.value) {
-                            window.location.href = this.value;
-                        }
-                    });
-                    
-                    selectGroupDiv.appendChild(select);
-                    targetContainer.appendChild(selectGroupDiv);
-                }
-            });
-        }
-    });
-</script>
+{# Entire JavaScript block for top filters has been removed as it was causing issues #}
 {% endblock %}

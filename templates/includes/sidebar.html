@@ -1,159 +1,294 @@
 {% load i18n static custom_admin %}
 
-<aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3" id="sidenav-main">
+<aside class="admin-interface sidenav navbar navbar-vertical navbar-expand-xs border-0 fixed-start bg-dark" id="sidenav-main">
   <div class="sidenav-header">
     <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
-    <a class="navbar-brand m-0 d-flex align-items-center" href="{% url "admin:index" %}">
-      <img src="{% static 'assets/images/Logo.png' %}" alt="Humanity OS Logo" class="navbar-brand-img h-100 me-2" style="max-width: 40px;">
-      <span class="ms-1 font-weight-bold">Humanity OS</span>
+    <a class="navbar-brand m-0 d-flex align-items-center" href="{% url 'custom_admin:index' %}">
+      <img src="{% static 'assets/images/Logo.png' %}" alt="Humanity OS Logo" class="navbar-brand-img h-100 me-2" style="max-width: 32px;">
+      <span class="ms-1 font-weight-bold text-white fs-6">Humanity OS</span>
     </a>
   </div>
   
-  <hr class="horizontal dark mt-0">
+  <hr class="horizontal dark mt-0 mb-2">
   
-  <div class="h-100 w-auto">
-    <ul class="navbar-nav">
-    {% if request.user.is_superuser %}   
-      {% admin_get_menu as app_list %}
-      {% if app_list %}
-        {% for app in app_list %}
-          {% if app.has_perms and not app.pinned %}
-            <li class="nav-item">
-              <a data-bs-toggle="collapse" href="#apps" class="nav-link text-white" aria-controls="apps" role="button" aria-expanded="false">
-                <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                  <i class="bi bi-folder text-dark"></i>
-                </div>
-                <span class="nav-link-text ms-1">{{ app.label|slice:10 }}{% if app.label|length > 10 %}..{% endif %}</span>
-              </a>
-              {% if app.models %}
-              <div class="collapse show" id="apps">
-                <ul class="navbar-nav">
-                  {% for model in app.models %}
-                    {% if model.url %}
-                      <li class="nav-item ps-5">
-                        <a class="nav-link text-white" href="{{ model.url }}">
-                          <span class=""> {{ model.label }} </span>
-                        </a>
-                      </li>
-                    {% else %}
-                      <li class="nav-item">{{ model.label }}</li>
-                    {% endif %}
-                  {% endfor %}
-                </ul>
-              </div>
-              {% endif %}
-            </li>
-          {% endif %}
-        {% endfor %}
+  <div class="h-100" id="sidenav-collapse-main">
+    <ul class="navbar-nav mb-3">
+      {% if request.user.is_superuser %}
+        <li class="nav-item">
+          <a class="nav-link py-2" href="{% url 'admin:index' %}" id="admin-home-link" style="color: #ffffff !important;">
+            {% if request.path == '/admin/' %}<div class="custom-active-indicator"></div>{% endif %}
+            <i class="bi bi-grid-fill text-white me-2 fs-6"></i>
+            <span class="nav-link-text text-white fs-7">Home</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link py-2" href="{% url 'custom_admin:index' %}" id="admin-dashboard-link" style="color: #ffffff !important;">
+            {% if request.path == '/admin/dashboard/' %}<div class="custom-active-indicator"></div>{% endif %}
+            <i class="bi bi-speedometer2 text-white me-2 fs-6"></i>
+            <span class="nav-link-text text-white fs-7">Dashboard</span>
+          </a>
+        </li>
+        {% admin_get_menu as app_list %}
+        {% if app_list %}
+          {% for app in app_list %}
+            {% if app.has_perms and not app.pinned and app.app_label != 'auth' %}
+              <li class="nav-item">
+                <!-- Dropdown header for app -->
+                <a href="#app-{{ app.app_label }}" class="nav-link py-2 text-white sidebar-app-link" data-app="{{ app.app_label }}" style="color: #ffffff !important;">
+                  {% if app.current %}<div class="custom-active-indicator"></div>{% endif %}
+                  {% if app.app_label == 'evaluations' %}
+                    <i class="bi bi-clipboard2-check-fill text-white me-2 fs-6"></i>
+                  {% elif app.app_label == 'kpis' %}
+                    <i class="bi bi-bar-chart-fill text-white me-2 fs-6"></i>
+                  {% elif app.app_label == 'projects' %}
+                    <i class="bi bi-briefcase-fill text-white me-2 fs-6"></i>
+                  {% elif app.app_label == 'users' %}
+                    <i class="bi bi-people-fill text-white me-2 fs-6"></i>
+                  {% else %}
+                    <i class="bi bi-folder-fill text-white me-2 fs-6"></i>
+                  {% endif %}
+                  <span class="nav-link-text text-white fs-7 d-inline-block text-truncate" style="max-width: 160px;">{{ app.label }}</span>
+                  <i class="bi bi-caret-down-fill text-white ms-auto fs-8"></i>
+                </a>
+                <!-- Model items for the app -->
+                {% if app.models %}
+                  <div class="collapse" id="app-{{ app.app_label }}" data-app="{{ app.app_label }}">
+                    <ul class="navbar-nav ms-2 ps-2 border-start border-secondary border-opacity-25">
+                      {% for model in app.models %}
+                        {% if model.url and model.has_perms %}
+                          <li class="nav-item">
+                            <a class="nav-link py-2 text-white sidebar-model-link" href="{{ model.url }}" data-model="{{ model.object_name|lower }}" data-app="{{ app.app_label }}" style="color: #ffffff !important;">
+                              {% if model.current %}<div class="custom-active-indicator"></div>{% endif %}
+                              {% if model.label == 'Form Questions' %}
+                                <i class="bi bi-question-circle-fill text-white me-2 fs-7"></i>
+                              {% elif model.label == 'Form Responses' %}
+                                <i class="bi bi-chat-square-text-fill text-white me-2 fs-7"></i>
+                              {% elif model.label == 'Forms' %}
+                                <i class="bi bi-file-earmark-text-fill text-white me-2 fs-7"></i>
+                              {% elif model.label == 'Employee KPIs' %}
+                                <i class="bi bi-person-check-fill text-white me-2 fs-7"></i>
+                              {% elif model.label == 'KPIs' %}
+                                <i class="bi bi-graph-up-arrow text-white me-2 fs-7"></i>
+                              {% elif model.label == 'Deadline Requests' %}
+                                <i class="bi bi-calendar2-event-fill text-white me-2 fs-7"></i>
+                              {% elif model.label == 'Projects' %}
+                                <i class="bi bi-kanban-fill text-white me-2 fs-7"></i>
+                              {% elif model.label == 'Task Assignments' %}
+                                <i class="bi bi-person-plus-fill text-white me-2 fs-7"></i>
+                              {% elif model.label == 'Tasks' %}
+                                <i class="bi bi-list-task text-white me-2 fs-7"></i>
+                              {% elif model.label == 'Time Entries' %}
+                                <i class="bi bi-clock-fill text-white me-2 fs-7"></i>
+                              {% elif model.label == 'Check-in/Check-out' %}
+                                <i class="bi bi-door-open-fill text-white me-2 fs-7"></i>
+                              {% elif model.label == 'User Face Images' %}
+                                <i class="bi bi-person-bounding-box text-white me-2 fs-7"></i>
+                              {% elif model.label == 'Users' %}
+                                <i class="bi bi-person-fill text-white me-2 fs-7"></i>
+                              {% else %}
+                                <i class="bi bi-file-fill text-white me-2 fs-7"></i>
+                              {% endif %}
+                              <span class="text-truncate d-inline-block text-white" style="max-width: 150px;">{{ model.label }}</span>
+                            </a>
+                          </li>
+                        {% endif %}
+                      {% endfor %}
+                    </ul>
+                  </div>
+                {% endif %}
+              </li>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
       {% endif %}
-      <li class="nav-item mb-5">
-        
-      </li>    
-    {% endif %}  
     </ul>
   </div>
 </aside>
 
-<style>
-:root {
-  --sidebar-bg: linear-gradient(180deg, #1a2a44 0%, #2c3e50 100%);
-  --primary-color: #0d6efd;
-  --active-bg: rgba(255, 255, 255, 0.1);
-  --hover-bg: rgba(255, 255, 255, 0.05);
-}
+<!-- Sidevar override styles -->
+<style type="text/css">
+  /* Custom font sizes */
+  .fs-6 { font-size: 0.875rem !important; }
+  .fs-7 { font-size: 0.8125rem !important; }
+  .fs-8 { font-size: 0.75rem !important; }
 
-.sidenav {
-  background: var(--sidebar-bg);
-  min-height: 100vh;
-  width: 250px;
-  transition: all 0.3s ease;
-  z-index: 1000;
-  overflow-y: hidden; /* Prevent scrollbar on sidenav itself */
-}
+  /* Fix scrollbar issues */
+  #sidenav-collapse-main {
+    overflow-y: auto !important;
+    scrollbar-width: thin !important; 
+    scrollbar-color: rgba(255,255,255,0.2) transparent !important;
+  }
 
-#sidenav-collapse-main {
-  height: 100%; /* Occupy full height of parent */
-  overflow-y: auto; /* Enable vertical scroll if content overflows */
-  scrollbar-width: thin; /* Firefox: Thin scrollbar */
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent; /* Firefox: Scrollbar color */
-}
+  #sidenav-collapse-main::-webkit-scrollbar {
+    width: 4px !important;
+  }
 
-#sidenav-collapse-main::-webkit-scrollbar {
-  width: 6px; /* Chrome, Safari: Scrollbar width */
-}
+  #sidenav-collapse-main::-webkit-scrollbar-track {
+    background: transparent !important;
+  }
 
-#sidenav-collapse-main::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-}
+  #sidenav-collapse-main::-webkit-scrollbar-thumb {
+    background-color: rgba(255,255,255,0.2) !important;
+    border-radius: 3px !important;
+  }
 
-#sidenav-collapse-main::-webkit-scrollbar-track {
-  background: transparent;
-}
+  /* Hover effect */
+  .navbar-nav .nav-link:hover {
+    background-color: rgba(255,255,255,0.05) !important;
+  }
 
-/* Hide scrollbar when content fits within viewport */
-#sidenav-collapse-main:not(:hover)::-webkit-scrollbar {
-  width: 0; /* Hide scrollbar when not hovering */
-}
-
-.navbar-vertical .navbar-nav .nav-link {
-  padding: 0.75rem 1.5rem;
-  font-size: 0.95rem;
-  color: #e9ecef !important;
-  transition: all 0.2s ease;
-}
-
-.navbar-vertical .navbar-nav .nav-link:hover {
-  color: #ffffff !important;
-  background: var(--hover-bg);
-  transform: translateX(5px);
-}
-
-.navbar-vertical .navbar-nav .nav-link.active {
-  background: var(--active-bg);
-  color: #ffffff !important;
-  font-weight: 600;
-}
-
-.navbar-vertical .navbar-nav .nav-item .collapse .nav .nav-item .nav-link {
-  padding: 0.5rem 1.5rem 0.5rem 3.25rem;
-  font-size: 0.9rem;
-}
-
-.sidenav-header .navbar-brand {
-  color: #fff;
-}
-
-.navbar-vertical .navbar-nav h6 {
-  color: #adb5bd;
-}
-
-.navbar-vertical .navbar-nav .icon-shape {
-  width: 32px;
-  height: 32px;
-}
-
-.navbar-vertical .navbar-nav .bi {
-  font-size: 1rem;
-}
-
-.sidenav .nav-link-text {
-  max-width: 200px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-@media (max-width: 767.98px) {
-  .sidenav {
-    position: fixed;
-    top: 0;
+  /* Custom active indicator */
+  .custom-active-indicator {
+    position: absolute;
     left: 0;
-    width: 280px;
-    transform: translateX(-100%);
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background-color: #0d6efd;
   }
-  .sidenav.show {
-    transform: translateX(0);
+
+  .nav-link {
+    position: relative;
   }
-}
+
+  /* Force white text on all nav links */
+  .nav-link, .nav-link:hover, .nav-link:focus, .nav-link:active {
+    color: #ffffff !important;
+  }
+
+  .nav-link i, .nav-link span {
+    color: #ffffff !important;
+  }
+
+  /* Active styling */
+  .nav-link.active, .nav-link:has(.custom-active-indicator) {
+    background-color: rgba(255,255,255,0.08) !important;
+    font-weight: 500;
+  }
 </style>
+
+<!-- Sidebar functionality script -->
+<script type="text/javascript">
+document.addEventListener('DOMContentLoaded', function() {
+  // Remove Bootstrap's collapse handling
+  document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(element => {
+    element.removeAttribute('data-bs-toggle');
+  });
+
+  // Custom sidebar state management
+  const SIDEBAR_STATE_KEY = 'humanity_os_sidebar_state';
+  
+  // Save sidebar state
+  function saveSidebarState() {
+    const state = {
+      currentPath: window.location.pathname,
+      openApps: []
+    };
+    
+    // Save open apps
+    document.querySelectorAll('.collapse.show').forEach(element => {
+      if (element.hasAttribute('data-app')) {
+        state.openApps.push(element.getAttribute('data-app'));
+      }
+    });
+    
+    localStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify(state));
+  }
+  
+  // Restore sidebar state
+  function restoreSidebarState() {
+    try {
+      const stateJson = localStorage.getItem(SIDEBAR_STATE_KEY);
+      if (!stateJson) return;
+      
+      const state = JSON.parse(stateJson);
+      const currentPath = window.location.pathname;
+      
+      // Determine current app from URL
+      let currentApp = '';
+      if (currentPath.includes('/admin/')) {
+        const parts = currentPath.split('/').filter(p => p);
+        if (parts.length > 1) {
+          currentApp = parts[1];
+        }
+      }
+      
+      // Open saved apps
+      state.openApps.forEach(appName => {
+        const appElement = document.querySelector(`#app-${appName}`);
+        if (appElement) {
+          appElement.classList.add('show');
+        }
+      });
+      
+      // Always open current app
+      if (currentApp && currentApp !== 'dashboard') {
+        const currentAppElement = document.querySelector(`#app-${currentApp}`);
+        if (currentAppElement) {
+          currentAppElement.classList.add('show');
+        }
+      }
+      
+      // Update all caret icons
+      updateCaretIcons();
+    } catch (error) {
+      console.error('Error restoring sidebar state:', error);
+    }
+  }
+  
+  // Handle app link clicks
+  document.querySelectorAll('.sidebar-app-link').forEach(element => {
+    element.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const appId = this.getAttribute('href');
+      const targetCollapse = document.querySelector(appId);
+      
+      if (targetCollapse) {
+        // Toggle collapse
+        if (targetCollapse.classList.contains('show')) {
+          targetCollapse.classList.remove('show');
+        } else {
+          targetCollapse.classList.add('show');
+        }
+        
+        // Update caret icon
+        updateCaretIcons();
+        
+        // Save state
+        saveSidebarState();
+      }
+    });
+  });
+  
+  // Handle model link clicks
+  document.querySelectorAll('.sidebar-model-link').forEach(element => {
+    element.addEventListener('click', function() {
+      saveSidebarState();
+    });
+  });
+  
+  // Update caret icons based on collapse state
+  function updateCaretIcons() {
+    document.querySelectorAll('.sidebar-app-link').forEach(element => {
+      const appId = element.getAttribute('href');
+      const targetCollapse = document.querySelector(appId);
+      const caretIcon = element.querySelector('.bi-caret-down-fill');
+      
+      if (targetCollapse && caretIcon) {
+        if (targetCollapse.classList.contains('show')) {
+          caretIcon.style.transform = 'rotate(180deg)';
+          caretIcon.style.transition = 'transform 0.2s';
+        } else {
+          caretIcon.style.transform = 'rotate(0deg)';
+          caretIcon.style.transition = 'transform 0.2s';
+        }
+      }
+    });
+  }
+  
+  // Initialize sidebar state
+  restoreSidebarState();
+});
+</script>

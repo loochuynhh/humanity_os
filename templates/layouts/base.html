@@ -9,8 +9,6 @@
 <head>
   {% include "includes/head.html" %}
   
-  {# Custom Admin CSS - ĐÃ CHUYỂN SANG admin/base_site.html #}
-  {# <link rel="stylesheet" href="{% static 'assets/css/custom_admin.css' %}"> #}
 
   {% block extrastyle %}
     <!-- Bootstrap CSS -->
@@ -21,15 +19,14 @@
     <!-- Font Awesome CSS -->
     <link rel="stylesheet" href="{% static 'assets/fonts/all.min.css' %}">
 
-    {# DataTables CSS - ĐÃ CHUYỂN SANG admin/base_site.html NẾU CHỈ DÙNG CHO ADMIN #}
-    {# <link rel="stylesheet" href="{% static 'assets/css/jquery.dataTables.min.css' %}"> #}
-    {# <link rel="stylesheet" href="{% static 'assets/css/components/datatables.css' %}"> #}
-
-    <!-- Custom CSS cho phần USER (nếu có) -->
-    <link rel="stylesheet" href="{% static 'assets/css/custom_main.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/jquery.dataTables.min.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/components/datatables.css' %}">
 
     <!-- Chatbot CSS -->
     <link rel="stylesheet" href="{% static 'assets/css/chatbot.css' %}">
+
+    <!-- Đảm bảo custom_admin.css là file CSS cuối cùng để có độ ưu tiên cao nhất -->
+    <link rel="stylesheet" href="{% static 'assets/css/custom_admin.css' %}" id="custom-admin-css">
 
   {% endblock extrastyle %}
   {% block extrahead %}{% endblock extrahead %}
@@ -95,15 +92,14 @@
   </main>
   
   {% include "includes/scripts.html" %}
-
   <script src="{% static 'assets/js/core/jquery-3.7.1.min.js' %}"></script>
   <script src="{% static 'assets/js/core/popper.min.js' %}"></script>
   <script src="{% static 'assets/js/core/bootstrap.min.js' %}"></script>
   <script src="{% static 'assets/js/plugin/sweetalert/sweetalert2.all.min.js' %}"></script>
   <script src="{% static 'assets/js/plugin/chart.js/chart.min.js' %}"></script>
   <script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
-  <!-- Marked.js for Markdown rendering -->
   <script src="https://cdn.jsdelivr.net/npm/marked@4.0.18/marked.min.js"></script>
+  <script src="{% static 'assets/js/admin/dashboard.js' %}"></script>
 
   <!-- Script cho chatbot -->
   <script>
@@ -219,12 +215,10 @@
           });
       });
 
-      // Hiện icon chatbot khi đóng modal
       $('#aiChatModal').on('hidden.bs.modal', function() {
           $('.chatbot-icon').removeClass('hidden');
       });
 
-      // Xử lý resize để đảm bảo cuộn đúng
       $(window).resize(function() {
           setTimeout(scrollToBottom, 100);
       });
@@ -233,6 +227,44 @@
   
   {% block extra_js %}
   {% endblock extra_js %}
+  
+  <!-- Script để đảm bảo CSS custom ghi đè lên CSS mặc định -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Di chuyển custom_admin.css xuống cuối <head> để đảm bảo độ ưu tiên cao nhất
+      const customAdminCss = document.getElementById('custom-admin-css');
+      if (customAdminCss) {
+        document.head.appendChild(customAdminCss);
+      }
+      
+      // Áp dụng CSS ghi đè bổ sung
+      const overrideStyles = `
+        /* Đảm bảo các phần tử nav-link trong sidebar luôn có text màu trắng */
+        .admin-interface .sidenav .nav-link,
+        .admin-interface .sidenav .nav-link:hover,
+        .admin-interface .sidenav .nav-link:active,
+        .admin-interface .sidenav .nav-link:focus,
+        .admin-interface .sidenav .nav-link.active {
+          color: #ffffff !important;
+        }
+        
+        .admin-interface .sidenav .nav-link i,
+        .admin-interface .sidenav .nav-link span {
+          color: #ffffff !important;
+        }
+        
+        /* Đảm bảo hiệu ứng active sử dụng màu nền nhẹ */
+        .admin-interface .sidenav .nav-link:has(.custom-active-indicator),
+        .admin-interface .sidenav .nav-link.active {
+          background-color: rgba(255,255,255,0.08) !important;
+          font-weight: 500;
+        }
+      `;
+      
+      const overrideStyleElement = document.createElement('style');
+      overrideStyleElement.textContent = overrideStyles;
+      document.head.appendChild(overrideStyleElement);
+    });
+  </script>
 </body>
-
 </html>

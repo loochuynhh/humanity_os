@@ -1,0 +1,177 @@
+{% extends "layouts/base.html" %}
+{% load i18n static admin_urls %}
+
+{% block title %}Admin Dashboard - Humanity OS{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'assets/css/custom_admin.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <!-- Statistics Cards -->
+  <div class="row mb-4">
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card">
+        <div class="card-body p-3">
+          <div class="row">
+            <div class="col-8">
+              <div class="numbers">
+                <p class="text-sm mb-0 text-uppercase font-weight-bold">Users</p>
+                <h5 class="font-weight-bolder">{{ user_count }}</h5>
+                <p class="mb-0 text-sm">
+                  <span class="text-{% if user_trend >= 0 %}success{% else %}danger{% endif %} text-sm font-weight-bolder">{{ user_trend }}%</span> vs last month
+                </p>
+              </div>
+            </div>
+            <div class="col-4 text-end">
+              <div class="icon icon-shape bg-gradient-primary shadow-primary text-center rounded-circle">
+                <i class="bi bi-people text-lg opacity-10 pb-3"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card">
+        <div class="card-body p-3">
+          <div class="row">
+            <div class="col-8">
+              <div class="numbers">
+                <p class="text-sm mb-0 text-uppercase font-weight-bold">Projects</p>
+                <h5 class="font-weight-bolder">{{ project_count }}</h5>
+                <p class="mb-0 text-sm">
+                  <span class="text-success text-sm font-weight-bolder">+10%</span> vs last month
+                </p>
+              </div>
+            </div>
+            <div class="col-4 text-end">
+              <div class="icon icon-shape bg-gradient-success shadow-success text-center rounded-circle">
+                <i class="bi bi-folder text-lg opacity-10 pb-3"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card">
+        <div class="card-body p-3">
+          <div class="row">
+            <div class="col-8">
+              <div class="numbers">
+                <p class="text-sm mb-0 text-uppercase font-weight-bold">Tasks</p>
+                <h5 class="font-weight-bolder">{{ task_count }}</h5>
+                <p class="mb-0 text-sm">
+                  <span class="text-success text-sm font-weight-bolder">+15%</span> vs last month
+                </p>
+              </div>
+            </div>
+            <div class="col-4 text-end">
+              <div class="icon icon-shape bg-gradient-info shadow-info text-center rounded-circle">
+                <i class="bi bi-list-task text-lg opacity-10 pb-3"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+      <div class="card">
+        <div class="card-body p-3">
+          <div class="row">
+            <div class="col-8">
+              <div class="numbers">
+                <p class="text-sm mb-0 text-uppercase font-weight-bold">Performance</p>
+                <h5 class="font-weight-bolder">{{ avg_achievement }}</h5>
+                <p class="mb-0 text-sm">
+                  <span class="text-success text-sm font-weight-bolder">{{ kpi_count }}</span> total KPIs
+                </p>
+              </div>
+            </div>
+            <div class="col-4 text-end">
+              <div class="icon icon-shape bg-gradient-warning shadow-warning text-center rounded-circle">
+                <i class="bi bi-graph-up text-lg opacity-10 pb-3"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="row mb-4">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header pb-0">
+          <h6 class="mb-0">User Growth Trend</h6>
+          <p class="text-sm mb-0 text-muted">New user counts for the past 6 months</p>
+        </div>
+        <div class="card-body p-3">
+          <div class="chart">
+            <canvas id="users-chart" class="chart-canvas" height="300"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header pb-0">
+          <h6 class="mb-0">Task Status Distribution</h6>
+          <p class="text-sm mb-0 text-muted">Tasks by current status</p>
+        </div>
+        <div class="card-body p-3">
+          <div class="chart">
+            <canvas id="task-status-chart" class="chart-canvas" height="300"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Second Charts Row -->
+  <div class="row mb-4">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header pb-0">
+          <h6 class="mb-0">Project Status</h6>
+          <p class="text-sm mb-0 text-muted">Project completion statistics</p>
+        </div>
+        <div class="card-body p-3">
+          <div class="chart">
+            <canvas id="project-status-chart" class="chart-canvas" height="300"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header pb-0">
+          <h6 class="mb-0">Performance Metrics</h6>
+          <p class="text-sm mb-0 text-muted">KPI achievement distributions</p>
+        </div>
+        <div class="card-body p-3">
+          <div class="chart">
+            <canvas id="performance-chart" class="chart-canvas" height="300"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+// Kiểm tra nếu có dữ liệu biểu đồ thì mới khởi tạo
+var userChartData = {% if user_chart_data %}{{ user_chart_data|safe }}{% else %}{ labels: [], data: [] }{% endif %};
+var taskChartData = {% if task_chart_data %}{{ task_chart_data|safe }}{% else %}{ labels: [], data: [], colors: [] }{% endif %};
+var projectChartData = {% if project_chart_data %}{{ project_chart_data|safe }}{% else %}{ labels: [], data: [], colors: [] }{% endif %};
+var performanceChartData = {% if performance_chart_data %}{{ performance_chart_data|safe }}{% else %}{ labels: [], data: [], colors: [] }{% endif %};
+</script>
+<script src="{% static 'assets/js/admin/dashboard.js' %}"></script>
+{% endblock %}

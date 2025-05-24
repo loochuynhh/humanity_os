@@ -3,7 +3,6 @@ from django.contrib.auth.admin import UserAdmin
 from .models import Users, UserFaceImage, CheckInCheckOut, AIChatMessage
 from django.utils.html import format_html
 
-
 class CustomUserAdmin(UserAdmin):
     list_display = ("username", "email", "phone", "department", "fixed_location", "is_staff", "is_superuser")
     list_filter = ("is_staff", "is_superuser", "department")

@@ -1,63 +1,153 @@
-/* Custom Admin Styles */
-.admin-interface :root {
-  --sidebar-bg: linear-gradient(180deg, #1a2a44 0%, #2c3e50 100%);
-  --sidebar-width: 250px;
+/* ====================================================
+   HUMANITY OS - ADMIN STYLESHEET
+   ==================================================== */
+
+/* ----------------
+   VARIABLES
+   ---------------- */
+:root {
+  /* Colors */
   --primary-color: #0d6efd;
-  --active-bg: rgba(255, 255, 255, 0.1);
+  --secondary-color: #6c757d;
+  --success-color: #42ba5b;
+  --danger-color: #f53939;
+  --warning-color: #fbcf33;
+  --info-color: #2152ff;
+  --dark-color: #343a40;
+  
+  /* Sidebar */
+  --sidebar-bg: linear-gradient(180deg, #1a2a44 0%, #2c3e50 100%);
+  --active-bg: #2c3e50;
   --hover-bg: rgba(255, 255, 255, 0.05);
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(310deg, #7928ca, #ff0080);
+  --gradient-success: linear-gradient(310deg, #17ad37, #98ec2d);
+  --gradient-info: linear-gradient(310deg, #2152ff, #21d4fd);
+  --gradient-warning: linear-gradient(310deg, #f53939, #fbcf33);
+  --gradient-danger: linear-gradient(310deg, #ea0606, #ff667c);
+  --gradient-dark: linear-gradient(310deg, #141727, #3a416f);
+
+  /* Shadows */
+  --shadow-primary: 0 4px 10px rgba(118, 56, 255, 0.5);
+  --shadow-success: 0 4px 10px rgba(66, 186, 91, 0.5);
+  --shadow-info: 0 4px 10px rgba(33, 150, 243, 0.5);
+  --shadow-warning: 0 4px 10px rgba(255, 193, 7, 0.5);
 }
 
-/* Sidebar styling */
+/* ----------------
+   SIDEBAR STYLING
+   ---------------- */
 .admin-interface .sidenav {
   background: var(--sidebar-bg) !important;
   min-height: 100vh;
-  width: var(--sidebar-width);
+  width: 250px;
   z-index: 1000;
+  overflow-y: hidden;
 }
 
-.admin-interface .sidenav .navbar-nav .nav-link {
+.admin-interface #sidenav-collapse-main {
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.admin-interface #sidenav-collapse-main::-webkit-scrollbar {
+  width: 4px;
+}
+
+.admin-interface #sidenav-collapse-main::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.admin-interface #sidenav-collapse-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-interface #sidenav-collapse-main:not(:hover)::-webkit-scrollbar {
+  width: 0;
+}
+
+/* Custom font sizes */
+.fs-6 { font-size: 0.875rem; }
+.fs-7 { font-size: 0.8125rem; }
+.fs-8 { font-size: 0.75rem; }
+
+/* Navbar links styling */
+.admin-interface .navbar-vertical .navbar-nav .nav-link {
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
   color: #e9ecef !important;
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
-  margin: 0.25rem 1rem;
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
-.admin-interface .sidenav .navbar-nav .nav-link:hover {
-  background: var(--hover-bg);
+.admin-interface .navbar-vertical .navbar-nav .nav-link:hover {
   color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.05) !important;
 }
 
-.admin-interface .sidenav .navbar-nav .nav-link.active {
-  background: var(--active-bg);
+.admin-interface .navbar-vertical .navbar-nav .nav-link.active {
+  background: rgba(255, 255, 255, 0.1) !important;
   color: #ffffff !important;
-  font-weight: 600;
+  font-weight: 500;
 }
 
-.admin-interface .sidenav .navbar-nav .nav-item .collapse .nav .nav-item .nav-link {
-  font-size: 0.9rem;
-  padding: 0.5rem 1.5rem 0.5rem 2.5rem;
-  color: #adb5bd !important;
+.admin-interface .navbar-vertical .navbar-nav .nav-item .collapse .nav .nav-item .nav-link {
+  padding: 0.5rem 1rem 0.5rem 2rem;
+  font-size: 0.8125rem;
+  color: #e9ecef !important;
 }
 
-.admin-interface .sidenav .navbar-nav .nav-item .collapse .nav .nav-item .nav-link:hover,
-.admin-interface .sidenav .navbar-nav .nav-item .collapse .nav .nav-item .nav-link.active {
+.admin-interface .navbar-vertical .navbar-nav .nav-item .collapse .nav .nav-item .nav-link:hover,
+.admin-interface .navbar-vertical .navbar-nav .nav-item .collapse .nav .nav-item .nav-link.active {
   color: #ffffff !important;
-  background: var(--hover-bg);
+  background: rgba(255, 255, 255, 0.05) !important;
 }
 
 .admin-interface .sidenav-header .navbar-brand {
-  color: #fff !important;
+  color: #ffffff !important;
 }
 
-/* Card styling */
+/* Fix dropdown toggle */
+[aria-expanded="true"] .bi-caret-down-fill {
+  transform: rotate(180deg);
+  transition: transform 0.2s;
+}
+
+[aria-expanded="false"] .bi-caret-down-fill {
+  transform: rotate(0deg);
+  transition: transform 0.2s;
+}
+
+.admin-interface .navbar-vertical .navbar-nav .icon-shape {
+  width: 32px;
+  height: 32px;
+  background: #ffffff !important;
+  border-radius: 0.5rem;
+}
+
+.admin-interface .navbar-vertical .navbar-nav .bi {
+  font-size: 1rem;
+}
+
+.admin-interface .sidenav .nav-link-text {
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ----------------
+   CARD STYLING
+   ---------------- */
 .admin-interface .card {
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   border: none;
   overflow: hidden;
+  margin-bottom: 24px;
 }
 
 .admin-interface .card-header {
@@ -66,7 +156,19 @@
   padding: 1rem 1.5rem;
 }
 
-/* Table styling */
+.admin-interface .card-header h5,
+.admin-interface .card-header h6 {
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.admin-interface .card-body {
+  padding: 1.5rem;
+}
+
+/* ----------------
+   TABLE STYLING
+   ---------------- */
 .admin-interface .table {
   margin-bottom: 0;
 }
@@ -86,15 +188,41 @@
   background-color: rgba(0, 0, 0, 0.02);
 }
 
-.admin-interface .table td {
+.admin-interface .table td,
+.admin-interface .table th {
   vertical-align: middle !important;
-  padding-top: 10px;
-  padding-bottom: 10px;
-  padding-left: 12px;
-  padding-right: 12px;
+  padding: 10px 12px;
 }
 
-/* Button styling */
+/* Changelist table styling */
+.admin-interface #changelist table {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+#changelist table thead th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+/* Action checkbox alignment */
+.admin-interface td.action-checkbox,
+.admin-interface th.action-checkbox-column {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.admin-interface td.action-checkbox .action-select,
+.admin-interface th.action-checkbox-column #action-toggle {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+/* ----------------
+   BUTTON STYLING
+   ---------------- */
 .admin-interface .btn-primary {
   background-color: var(--primary-color);
   border-color: var(--primary-color);
@@ -105,13 +233,120 @@
   border-color: #0b5ed7;
 }
 
-/* Form styling */
+.admin-interface .actions .btn {
+  padding: 0.375rem 0.75rem;
+  min-width: 48px;
+  height: calc(1.5em + .75rem + 2px);
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-shadow: none;
+}
+
+/* ----------------
+   FORM STYLING
+   ---------------- */
 .admin-interface .form-control:focus {
   border-color: var(--primary-color);
   box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
 }
 
-/* Pagination styling */
+.admin-interface .form-row {
+  padding: 10px 0;
+}
+
+.admin-interface .aligned label {
+  font-weight: 500;
+}
+
+/* Submit button styling */
+.admin-interface .submit-row {
+  padding: 12px 0;
+  margin-top: 15px;
+  border-top: 1px solid #e9ecef;
+}
+
+.admin-interface .submit-row .btn {
+  margin-left: 5px;
+}
+
+/* Input group styling */
+.admin-interface .input-group-text {
+  background: #f8f9fa !important;
+  border: 1px solid #dee2e6 !important;
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
+  padding: 0 0.75rem;
+}
+
+.admin-interface .input-group .form-control {
+  min-height: 2.5rem;
+  border-left: 0;
+  font-size: 0.97rem;
+}
+
+/* Datetime styles */
+.datetime {
+  text-align: left !important;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.datetime input[type="text"] {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.datetime .datetimeshortcuts {
+  display: block !important;
+  text-align: left !important;
+  margin-left: 0 !important;
+  margin-right: auto;
+  margin-top: 5px;
+  font-size: 0.8rem;
+  padding-top: 2px;
+  clear: both;
+  float: none !important;
+}
+
+.datetime .datetimeshortcuts a[id^="calendarlink"],
+.datetime .datetimeshortcuts a[id^="clocklink"] {
+  float: none !important;
+  background: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.datetime .datetimeshortcuts a[id^="calendarlink"] span,
+.datetime .datetimeshortcuts a[id^="clocklink"] span {
+  float: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  vertical-align: middle;
+}
+
+.datetime .datetimeshortcuts a {
+  margin-left: 0;
+  margin-right: 5px;
+}
+
+.datetime br {
+  display: none;
+}
+
+/* ----------------
+   PAGINATION STYLING
+   ---------------- */
+#changelist .paginator {
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  padding: 10px;
+  margin-top: 15px;
+}
+
 .admin-interface .pagination .page-item.active .page-link {
   background-color: var(--primary-color);
   border-color: var(--primary-color);
@@ -127,148 +362,9 @@
   color: #0b5ed7;
 }
 
-/* Filter styling */
-.admin-interface .filter_card_header {
-  background-color: #f8f9fa;
-}
-
-/* Breadcrumbs styling */
-.admin-interface .breadcrumb {
-  background-color: transparent;
-  margin-bottom: 0;
-}
-
-.admin-interface .breadcrumb-item a {
-  color: var(--primary-color);
-}
-
-/* Login form styling */
-.admin-interface .login-form {
-  max-width: 400px;
-  margin: 0 auto;
-}
-
-/* Responsive adjustments */
-@media (max-width: 767.98px) {
-  .admin-interface .sidenav {
-    position: fixed;
-  }
-  .admin-interface .sidenav.show {
-  }
-
-  #changelist-filter {
-    width: 100%;
-    margin-top: 15px;
-  }
-}
-
-/* Icon styling */
-.admin-interface .icon-shape {
-  width: 32px;
-  height: 32px;
-  background: rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.5rem;
-}
-
-.admin-interface .icon-shape i {
-  font-size: 1rem;
-  color: #fff;
-}
-
-/* Submit button styling */
-.admin-interface .submit-row {
-  padding: 12px 0;
-  margin-top: 15px;
-  border-top: 1px solid #e9ecef;
-}
-
-.admin-interface .submit-row .btn {
-  margin-left: 5px;
-}
-
-/* Sidebar Styling */
-.admin-interface #sidebar {
-  background: var(--sidebar-bg);
-}
-
-.admin-interface .module h2, .admin-interface .module caption, .admin-interface .inline-group h2 {
-  background: var(--sidebar-bg);
-}
-
-#header {
-  background: var(--sidebar-bg);
-  color: #fff;
-}
-
-#user-tools a:focus, #user-tools a:hover {
-  border-bottom-color: var(--primary-color);
-  color: #fff;
-}
-
-.button, input[type=submit], input[type=button], .submit-row input, a.button {
-  background: var(--primary-color);
-  color: #fff;
-  border-radius: 4px;
-  padding: 0.5rem 1rem;
-  border: none;
-}
-
-.button:hover, input[type=submit]:hover, input[type=button]:hover {
-  background: #0b5ed7;
-}
-
-.button.default, input[type=submit].default, .submit-row input.default {
-  background: #198754;
-}
-
-.button.default:hover, input[type=submit].default:hover {
-  background: #157347;
-}
-
-/* Card Styling */
-.admin-interface .dashboard .module {
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border: none;
-  overflow: hidden;
-}
-
-.admin-interface .dashboard .module table th {
-  background-color: #f8f9fa;
-}
-
-/* Table Styling */
-.admin-interface #changelist table {
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-#changelist table thead th {
-  background-color: #f8f9fa;
-  font-weight: 600;
-}
-
-#changelist .paginator {
-  border-radius: 8px;
-  background-color: #f8f9fa;
-  padding: 10px;
-  margin-top: 15px;
-}
-
-/* Form Styling */
-.admin-interface .form-row {
-  padding: 10px 0;
-}
-
-.admin-interface .aligned label {
-  font-weight: 500;
-}
-
-/* Filter Styling */
+/* ----------------
+   FILTER STYLING
+   ---------------- */
 #changelist-filter {
   background-color: #fff;
   border-radius: 8px;
@@ -284,233 +380,18 @@
   font-size: 1rem;
 }
 
-/* Breadcrumbs */
-div.breadcrumbs {
-  background: #f8f9fa;
-  color: #333;
-  border-bottom: 1px solid #e9ecef;
-  padding: 0.75rem 1.25rem;
+.admin-interface .filter_card_header {
+  background-color: #f8f9fa;
 }
 
-div.breadcrumbs a {
-  color: var(--primary-color);
+.admin-interface .filter-group h6 {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 0.5rem;
 }
 
-/* App Index */
-.admin-interface .app-index {
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-/* Messages */
-.admin-interface .messagelist {
-  margin-bottom: 15px;
-}
-
-.admin-interface .messagelist li {
-  border-radius: 4px;
-  padding: 0.75rem 1.25rem;
-}
-
-/* Login Form */
-.admin-interface .login #container {
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  background: #fff;
-  padding: 2rem;
-}
-
-.admin-interface .login .form-row {
-  padding: 8px 0;
-}
-
-.admin-interface .login .submit-row {
-  padding: 15px 0 0 0;
-  text-align: center;
-}
-
-.admin-interface .login .submit-row input {
-  display: block;
-  width: 100%;
-  padding: 10px;
-}
-
-/* CSS đã chỉnh sửa ở các bước trước, cần thêm .admin-interface */
-.admin-interface .actions.row.g-2.align-items-center {
-  margin-left: 0;
-  margin-right: 0;
-}
-.admin-interface .actions .col-auto {
-  padding-left: 0;
-  padding-right: 0;
-}
-.admin-interface .actions label.fw-semibold {
-  margin-bottom: 0;
-  margin-right: 8px;
-  font-weight: 500;
-  font-size: 0.95rem;
-  color: #333;
-}
-.admin-interface .actions select {
-  min-width: 160px;
-  height: calc(1.5em + .75rem + 2px);
+.admin-interface .filter-group .list-group-item a {
   font-size: 0.9rem;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  padding: 4px 8px;
-  margin-right: 8px;
-}
-.admin-interface .actions .btn {
-  min-width: 48px;
-  height: calc(1.5em + .75rem + 2px);
-  font-size: 0.9rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 0.375rem 0.75rem;
-  box-shadow: none;
-}
-.admin-interface .actions .action-counter,
-.admin-interface .actions .all,
-.admin-interface .actions .question,
-.admin-interface .actions .clear {
-  font-size: 0.9rem;
-  color: #6c757d !important;
-  margin-left: 0.5rem;
-}
-.admin-interface .actions .clear a {
-  color: #dc3545 !important;
-}
-.input-group-text {
-    background: #f8f9fa !important;
-    border: 1px solid #dee2e6 !important;
-    min-height: 2.5rem;
-    display: flex;
-    align-items: center;
-    padding: 0 0.75rem;
-}
-.input-group .form-control {
-    min-height: 2.5rem;
-    border-left: 0;
-    font-size: 0.97rem;
-}
-.input-group .btn {
-    min-height: 2.5rem;
-    font-size: 0.97rem;
-    border-radius: 0 6px 6px 0;
-}
-#changelist-search .small.quiet {
-    color: #6c757d;
-    font-size: 0.93rem;
-}
-
-#td.action-checkbox {
-    width: 1em;
-    text-align: center;
-    margin-left: 10px !important;
-    padding-left: 10px !important;
-}
-
-/* CSS đã chỉnh sửa ở các bước trước, cần thêm .admin-interface */
-.admin-interface .actions.row.g-2.align-items-center {
-  margin-left: 0;
-  margin-right: 0;
-}
-.admin-interface .actions .col-auto {
-  padding-left: 0;
-  padding-right: 0;
-}
-.admin-interface .actions label.fw-semibold {
-  margin-bottom: 0;
-  margin-right: 8px;
-  font-weight: 500;
-  font-size: 0.95rem;
-  color: #333;
-}
-.admin-interface .actions select {
-  min-width: 160px;
-  height: 36px;
-  font-size: 0.95rem;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  padding: 4px 8px;
-  margin-right: 8px;
-}
-.admin-interface .actions .btn {
-  min-width: 48px;
-  height: 36px;
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-.admin-interface .actions .action-counter {
-  margin-left: 12px;
-  font-size: 0.92rem;
-}
-
-.admin-interface .table th, 
-.admin-interface .table td {
-  vertical-align: middle !important;
-}
-.admin-interface .table th .form-check, 
-.admin-interface .table td.action-checkbox .form-check {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%; 
-  margin: 0;
-}
-.admin-interface .table td.action-checkbox {
-    padding-top: 0 !important; /* Reset padding that might affect height */
-    padding-bottom: 0 !important; /* Reset padding that might affect height */
-    /* Ensure the cell itself doesn't have extra height compared to others */
-    /* The height of td is usually determined by its content or specific table CSS */
-    /* We rely on align-items: center in the .form-check div and consistent row padding */
-}
-.admin-interface .table th input[type="checkbox"],
-.admin-interface .table td.action-checkbox input[type="checkbox"] {
-  width: 1em; /* Slightly larger for better clickability */
-  height: 1em;
-  margin-top: 0; /* Remove any top margin that might cause misalignment */ 
-  /* vertical-align: middle; */ /* Flex alignment should handle this */
-}
-
-.admin-interface .table th, 
-.admin-interface .table td {
-  padding-top: 10px;
-  padding-bottom: 10px;
-  padding-left: 12px;
-  padding-right: 12px;
-}
-
-.admin-interface .table th, 
-.admin-interface .table td, 
-.admin-interface .actions label, 
-.admin-interface .actions select, 
-.admin-interface .actions .btn {
-  background: none;
-  color: #222;
-}
-
-/* Các styles mới từ custom_admin.css chưa được tiền tố */
-/* (Cần xem xét và thêm .admin-interface nếu chúng thuộc về admin) */
-
-.admin-interface .input-group-text {
-  background-color: #fff;
-  border-right: 0;
-  padding: 0.5rem 0.75rem;
-  height: 100%;
-  display: flex;
-  align-items: center;
-}
-
-.admin-interface .input-group .form-control {
-  border-left: 0;
-  box-shadow: none;
 }
 
 .admin-interface .card .filter-group:not(:last-child) {
@@ -523,72 +404,146 @@ div.breadcrumbs a {
   padding: 0.3rem 0;
   border: none;
 }
+
 .admin-interface .card .filter-group .list-group-item .link-primary {
   font-weight: 500;
 }
+
 .admin-interface .card .filter-group .list-group-item .link-dark {
   color: #555 !important;
 }
-.admin-interface .actions .btn {
-  padding: 0.375rem 0.75rem;
-}
-.admin-interface .actions label {
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-.admin-interface .actions .action-counter,
-.admin-interface .actions .all,
-.admin-interface .actions .question,
-.admin-interface .actions .clear {
-  font-size: 0.8rem;
-}
-.admin-interface .actions .clear a {
-  color: #dc3545;
-}
-/* Additional styles for search form, ensuring alignment and modern look */
-.admin-interface #changelist-search .input-group-text {
-    border-top-left-radius: .375rem;
-    border-bottom-left-radius: .375rem;
-}
-.admin-interface #changelist-search .form-control {
-    height: calc(1.5em + .75rem + 2px); /* Standard Bootstrap input height */
-}
-.admin-interface #changelist-search .btn {
-    border-top-right-radius: .375rem;
-    border-bottom-right-radius: .375rem;
-}
-.admin-interface #changelist-search .small.quiet {
-    font-size: .875em;
-    color: #6c757d;
-    margin-top: .25rem;
-    display: inline-block;
+
+/* ----------------
+   BREADCRUMB STYLING
+   ---------------- */
+.admin-interface .breadcrumb {
+  background-color: transparent;
+  margin-bottom: 0;
 }
 
-/* Ensuring the icon in search input is vertically centered */
-.admin-interface .input-group-text i.bi-search {
-    line-height: 1; /* Helps in vertical alignment */
+.admin-interface .breadcrumb-item a {
+  color: var(--primary-color);
 }
 
-/* Styles for action-checkbox to ensure they are well-aligned */
-.admin-interface td.action-checkbox,
-.admin-interface th.action-checkbox-column {
-    text-align: center;
-    vertical-align: middle;
+div.breadcrumbs {
+  background: #f8f9fa;
+  color: #333;
+  border-bottom: 1px solid #e9ecef;
+  padding: 0.75rem 1.25rem;
 }
 
-.admin-interface td.action-checkbox input[type="checkbox"],
-.admin-interface th.action-checkbox-column input[type="checkbox"] {
-    margin: 0 auto; /* Center checkbox within the cell */
-    display: block; /* Needed for margin auto to work on inline elements */
+div.breadcrumbs a {
+  color: var(--primary-color);
 }
 
-/* Date Hierarchy (Toplinks) Styling */
+/* ----------------
+   DASHBOARD STYLING
+   ---------------- */
+/* Statistics card */
+.icon-shape {
+  width: 48px;
+  height: 48px;
+  background-position: center;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-shape i {
+  font-size: 1.25rem;
+  color: #fff;
+}
+
+/* Background gradients for dashboard items */
+.bg-gradient-primary {
+  background-image: var(--gradient-primary);
+}
+
+.bg-gradient-success {
+  background-image: var(--gradient-success);
+}
+
+.bg-gradient-info {
+  background-image: var(--gradient-info);
+}
+
+.bg-gradient-warning {
+  background-image: var(--gradient-warning);
+}
+
+.bg-gradient-danger {
+  background-image: var(--gradient-danger);
+}
+
+.bg-gradient-dark {
+  background-image: var(--gradient-dark);
+}
+
+/* Shadow styles for dashboard cards */
+.shadow-primary {
+  box-shadow: var(--shadow-primary);
+}
+
+.shadow-success {
+  box-shadow: var(--shadow-success);
+}
+
+.shadow-info {
+  box-shadow: var(--shadow-info);
+}
+
+.shadow-warning {
+  box-shadow: var(--shadow-warning);
+}
+
+.numbers {
+  white-space: nowrap;
+}
+
+.numbers h5 {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+  font-weight: 700;
+}
+
+/* Chart styling */
+.chart {
+  position: relative;
+  height: 300px;
+}
+
+.chart-canvas {
+  width: 100% !important;
+}
+
+/* Progress bar styling */
+.progress {
+  height: 6px;
+  overflow: visible;
+  font-size: 10px;
+  border-radius: 0.25rem;
+  background-color: #f0f2f5;
+}
+
+.progress-bar {
+  border-radius: 0.25rem;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  transition: width 1s ease;
+  animation: progress-animation 1s;
+}
+
+@keyframes progress-animation {
+  from {
+    width: 0%;
+  }
+}
+
+/* Date hierarchy links */
 .admin-interface .date-hierarchy-links a {
   display: inline-block;
   padding: 0.375rem 0.75rem;
-  margin-right: 0.35rem;
-  margin-left: 0.35rem;
-  margin-bottom: 0.5rem;
+  margin: 0 0.35rem 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.5;
@@ -617,157 +572,59 @@ div.breadcrumbs a {
   font-weight: bold;
 }
 
-/* Filter styling improvements */
-.admin-interface .card .list-group-flush .list-group-item {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
+/* ----------------
+   UTILITY CLASSES
+   ---------------- */
+.font-weight-bold {
+  font-weight: 600 !important;
 }
 
-.admin-interface .filter-group h6 {
-    font-size: 0.8rem;
-    color: #6c757d;
-    margin-top: 0.5rem;
+.text-sm {
+  font-size: 0.875rem !important;
+  line-height: 1.5;
 }
 
-.admin-interface .filter-group .list-group-item a {
-    font-size: 0.9rem;
+.text-xs {
+  font-size: 0.75rem !important;
+  line-height: 1.25;
 }
 
-/* Ensure search input and button have same height and content is centered */
-.admin-interface #changelist-search .input-group .form-control,
-.admin-interface #changelist-search .input-group .btn,
-.admin-interface #changelist-search .input-group .input-group-text {
-    height: calc(1.5em + .75rem + 2px); /* Standard Bootstrap input height */
-    display: flex;
-    align-items: center; /* Vertically center content */
-    padding-top: 0;
-    padding-bottom: 0;
+/* Badge styling */
+.badge.bg-success {
+  background-color: var(--success-color) !important;
 }
 
-.admin-interface #changelist-search .input-group .input-group-text i {
-    line-height: 1; /* Helps align icon better */
+.badge.bg-warning {
+  background-color: var(--warning-color) !important;
+  color: #212529;
 }
 
-.admin-interface #changelist-search .input-group .btn {
-    justify-content: center; /* Center content in button if it's also flex */
+.badge.bg-danger {
+  background-color: var(--danger-color) !important;
 }
 
-/* Centering checkbox in table cells */
-.admin-interface .table td.action-checkbox {
-    text-align: center;
-    vertical-align: middle;
-}
-
-.admin-interface .table th.action-checkbox-column {
-    text-align: center;
-    vertical-align: middle;
-}
-
-.admin-interface .table td.action-checkbox .action-select,
-.admin-interface .table th.action-checkbox-column #action-toggle {
-    margin-left: auto;
-    margin-right: auto;
-    display: block; /* Helps with centering */
-}
-
-/* TOP FILTERS AREA */
-.admin-interface #top-filters-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.admin-interface .filter-select-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.admin-interface .filter-select-group label {
-  font-size: 0.8rem;
-  color: #6c757d;
-  margin-bottom: 0.25rem;
-}
-
-.admin-interface .filter-select-group select.form-select {
-  min-width: 180px;
-  font-size: 0.9rem;
-  height: calc(1.5em + .75rem + 2px);
-}
-
-/* Actions Bar Styling */
-.admin-interface .actions .form-select,
-.admin-interface .actions .btn {
-    height: calc(1.5em + .75rem + 2px); /* Standard Bootstrap input height */
-    display: inline-flex; /* Helps align items vertically with their content */
-    align-items: center;
-    font-size: 0.9rem; /* Consistent font size */
-    padding-top: 0.375rem;
-    padding-bottom: 0.375rem;
-}
-
-.admin-interface .actions .form-select {
-    /* Add any specific select styling if needed */
-}
-
-.admin-interface .actions .btn {
-    padding-left: 1rem;
-    padding-right: 1rem;
-    justify-content: center; /* Center content in button */
-}
-
-.admin-interface .actions .action-counter,
-.admin-interface .actions .all,
-.admin-interface .actions .question,
-.admin-interface .actions .clear {
-    font-size: 0.875rem; /* Slightly smaller for these texts */
-    line-height: calc(1.5em + .75rem + 2px); /* Match height of select/button for alignment */
-    vertical-align: middle; /* Additional alignment help */
-}
-
-.admin-interface .actions .ms-md-auto {
-    display: flex; /* Allow vertical alignment of children if they wrap */
-    align-items: center;
-}
-
-/* Actions Bar Styling - Targeting specific classes */
-.admin-interface .actions .admin-action-select-wrapper,
-.admin-interface .actions .admin-action-button-wrapper,
-.admin-interface .actions .admin-action-counter-area {
-    display: flex; /* Ensure vertical alignment for items within these wrappers if needed */
-    align-items: center; /* Align items to the center vertically */
-}
-
-.admin-interface .actions .admin-action-select,
-.admin-interface .actions .admin-action-button {
-    height: 40px !important; /* Match your desired height, similar to search_form */
-    box-sizing: border-box !important;
-    display: inline-flex !important; /* Use inline-flex for better content alignment */
-    align-items: center !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    font-size: 0.875rem !important; /* Consistent font size */
-    line-height: 1.5 !important; /* Consistent line height */
-    border-radius: 0.25rem !important; /* Standard Bootstrap border-radius */
-}
-
-.admin-interface .actions .admin-action-select {
-    padding-left: 0.75rem !important;
-    padding-right: 2rem !important; /* Space for dropdown arrow */
-    border: 1px solid #ced4da; /* Standard Bootstrap border */
-}
-
-.admin-interface .actions .admin-action-button {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-    justify-content: center !important; /* Center icon/text in button */
-}
-
-.admin-interface .actions .admin-action-button i {
-    font-size: 1rem !important; /* Adjust icon size if needed */
-}
-
-.admin-interface .actions .admin-action-counter-area span {
-    line-height: 40px; /* Match height for vertical alignment */
-    padding-left: 0.5rem; /* Add some spacing */
+/* ----------------
+   RESPONSIVE STYLES
+   ---------------- */
+@media (max-width: 767.98px) {
+  .admin-interface .sidenav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    transform: translateX(-100%);
+  }
+  
+  .admin-interface .sidenav.show {
+    transform: translateX(0);
+  }
+  
+  #changelist-filter {
+    width: 100%;
+    margin-top: 15px;
+  }
+  
+  .numbers h5 {
+    font-size: 1.25rem;
+  }
 }
