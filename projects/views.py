@@ -19,6 +19,13 @@ from .utils import (
     get_project_status
 )
 from datetime import timedelta, datetime
+from django.views.decorators.csrf import csrf_exempt
+from django.core.serializers import serialize
+from kpis.models import EmployeeKPIs
+from users.models import Users, CheckInCheckOut
+import google.generativeai as genai
+from django.conf import settings
+from django.db.models import Avg
 
 @login_required
 def all_projects(request):
@@ -698,3 +705,322 @@ def create_time_entry(request):
 
         return JsonResponse({'success': True, 'id': time_entry.id})
     return JsonResponse({'success': False, 'error': 'Yêu cầu không hợp lệ!'}, status=400)
+
+@login_required
+@require_POST
+def suggest_user_for_task(request):
+    """
+    API endpoint để đề xuất người dùng phù hợp cho một task
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Yêu cầu đăng nhập.'}, status=401)
+    
+    try:
+        # Đọc dữ liệu từ JSON body thay vì form data
+        try:
+            data = json.loads(request.body)
+            task_id = data.get('task_id')
+        except json.JSONDecodeError:
+            # Fallback cho form data nếu không phải JSON
+            task_id = request.POST.get('task_id')
+        
+        if not task_id:
+            return JsonResponse({'error': 'Thiếu task_id trong yêu cầu.'}, status=400)
+        
+        task = Tasks.objects.get(id=task_id)
+        project = task.project
+        
+        if not project:
+            return JsonResponse({'error': 'Task không thuộc dự án nào.'}, status=400)
+        
+        # Lấy danh sách thành viên trong dự án
+        team_members = project.team_members.all()
+        
+        if not team_members.exists():
+            return JsonResponse({'error': 'Không có thành viên nào trong dự án.'}, status=400)
+            
+        # Thu thập thông tin chi tiết cho AI gợi ý
+        ai_suggestion_prompt = build_ai_suggestion_prompt(task, project, team_members)
+        
+        # Gọi AI để đề xuất người dùng phù hợp
+        suggestion_result = get_ai_suggestion(ai_suggestion_prompt)
+        
+        if not suggestion_result:
+            return JsonResponse({'error': 'Không thể lấy đề xuất từ AI.'}, status=500)
+        
+        return JsonResponse(suggestion_result)
+        
+    except Tasks.DoesNotExist:
+        return JsonResponse({'error': 'Không tìm thấy task.'}, status=404)
+    except Exception as e:
+        import traceback
+        print(f"Lỗi trong suggest_user_for_task: {str(e)}")
+        print(traceback.format_exc())
+        return JsonResponse({'error': f'Đã xảy ra lỗi: {str(e)}'}, status=500)
+
+
+def build_ai_suggestion_prompt(task, project, team_members):
+    """
+    Xây dựng prompt cho AI để đề xuất người dùng phù hợp
+    """
+    today = timezone.now().date()
+    one_month_ago = today - timezone.timedelta(days=30)
+    
+    # Tạo thông tin chi tiết về task
+    task_info = {
+        'id': task.id,
+        'title': task.title,
+        'description': task.description,
+        'deadline': task.deadline.strftime('%Y-%m-%d %H:%M') if task.deadline else 'Chưa có deadline',
+        'status': task.status,
+        'difficulty': task.difficulty,
+        'estimated_time': f"{task.estimated_time} giờ" if task.estimated_time else 'Chưa ước tính',
+        'github_link': task.github_link,
+        'notes': task.notes,
+        'start_date': task.start_date.strftime('%Y-%m-%d %H:%M') if task.start_date else 'Chưa bắt đầu',
+    }
+    
+    # Tạo thông tin chi tiết về dự án
+    project_info = {
+        'id': project.id,
+        'name': project.name,
+        'description': project.description,
+        'start_date': project.start_date.strftime('%Y-%m-%d %H:%M'),
+        'end_date': project.end_date.strftime('%Y-%m-%d %H:%M'),
+        'manager': project.manager.get_full_name() if project.manager else 'Chưa có quản lý',
+        'total_team_members': project.team_members.count(),
+    }
+    
+    # Thu thập thông tin về tất cả thành viên trong dự án
+    members_data = []
+    
+    for user in team_members:
+        # Thông tin cơ bản
+        user_data = {
+            'id': user.id,
+            'username': user.username,
+            'full_name': user.get_full_name() or user.username,
+            'role': user.role,
+            'department': user.department or 'Chưa xác định',
+            'status': user.status,
+            'date_of_joining': user.date_of_joining.strftime('%Y-%m-%d') if user.date_of_joining else 'Không có thông tin',
+        }
+        
+        # Thông tin công việc hiện tại
+        current_tasks = Tasks.objects.filter(
+            task_assignments__user=user, 
+            status__in=['To-do', 'In progress']
+        ).count()
+        
+        user_data['current_tasks_count'] = current_tasks
+        
+        # Thống kê công việc đã hoàn thành trong 1 tháng qua
+        completed_tasks = Tasks.objects.filter(
+            task_assignments__user=user,
+            status='Completed',
+            completed_date__gte=one_month_ago
+        ).count()
+        
+        user_data['completed_tasks_last_month'] = completed_tasks
+        
+        # Thời gian làm việc theo dõi trong 1 tuần qua
+        week_start = today - timezone.timedelta(days=today.weekday())
+        time_entries = TimeEntries.objects.filter(
+            task_assignment__user=user,
+            start_time__gte=week_start
+        )
+        
+        total_hours = time_entries.aggregate(total=Sum('duration'))['total'] or 0
+        user_data['hours_worked_this_week'] = round(total_hours, 2)
+        
+        # Điểm danh hôm nay
+        attendance_today = CheckInCheckOut.objects.filter(
+            user=user, 
+            date=today
+        ).first()
+        
+        user_data['checked_in_today'] = attendance_today is not None and attendance_today.checkin_time is not None
+        
+        # KPI và đánh giá
+        user_kpis = EmployeeKPIs.objects.filter(user=user)
+        avg_kpi = user_kpis.aggregate(avg=Avg('achieved_percentage'))['avg'] or 0
+        
+        user_data['avg_kpi_percentage'] = round(avg_kpi, 2)
+        
+        # Đánh giá năng lực dựa trên công việc tương tự
+        similar_tasks = Tasks.objects.filter(
+            Q(difficulty=task.difficulty) |
+            Q(title__icontains=task.title) |
+            Q(description__icontains=task.description)
+        )
+        
+        similar_task_performance = TaskAssignments.objects.filter(
+            user=user,
+            task__in=similar_tasks,
+            status='Completed'
+        ).count()
+        
+        user_data['similar_tasks_completed'] = similar_task_performance
+        
+        # Tổng hợp
+        members_data.append(user_data)
+    
+    # Xây dựng prompt
+    prompt = f"""
+Tôi cần bạn đề xuất người dùng phù hợp nhất để gán cho một nhiệm vụ trong dự án, dựa trên dữ liệu chi tiết về người dùng và yêu cầu nhiệm vụ. Vai trò của bạn là một trợ lý AI chuyên nghiệp về phân bổ nguồn lực dự án.
+
+## Thông tin Nhiệm vụ (Task)
+- **ID**: {task_info['id']}
+- **Tiêu đề**: {task_info['title']}
+- **Mô tả**: {task_info['description']}
+- **Deadline**: {task_info['deadline']}
+- **Độ khó**: {task_info['difficulty']}
+- **Thời gian ước tính**: {task_info['estimated_time']}
+- **Ghi chú**: {task_info['notes'] or 'Không có'}
+
+## Thông tin Dự án
+- **Tên**: {project_info['name']}
+- **Mô tả**: {project_info['description']}
+- **Thời gian**: {project_info['start_date']} đến {project_info['end_date']}
+- **Quản lý**: {project_info['manager']}
+- **Số thành viên**: {project_info['total_team_members']}
+
+## Thông tin các thành viên trong dự án
+{json.dumps(members_data, indent=2, ensure_ascii=False)}
+
+## Yêu cầu
+1. Phân tích thông tin của tất cả thành viên và chọn ra người phù hợp nhất để thực hiện nhiệm vụ này.
+2. Cân nhắc các yếu tố sau:
+   - Kinh nghiệm với các nhiệm vụ tương tự (similar_tasks_completed)
+   - Tải công việc hiện tại (current_tasks_count)
+   - Hiệu suất KPI (avg_kpi_percentage)
+   - Sự có mặt hôm nay (checked_in_today)
+   - Hoạt động gần đây (completed_tasks_last_month)
+   - Phù hợp với độ khó của nhiệm vụ
+   - Khả năng hoàn thành công việc đúng deadline
+
+3. Trả về JSON với định dạng sau:
+{{
+  "suggested_user_id": [id người dùng được đề xuất],
+  "suggested_user_name": "[tên đầy đủ hoặc username của người dùng được đề xuất]",
+  "reasoning": "[phân tích chi tiết dưới dạng HTML với định dạng ul/li, bao gồm hết các điểm sau:]
+    <ul>
+      <li><strong>Lý do chọn người này:</strong> [Phân tích ưu điểm chính của người được chọn, tối thiểu 3 lý do]</li>
+      <li><strong>Về kinh nghiệm:</strong> [Chi tiết về kinh nghiệm liên quan của họ]</li>
+      <li><strong>Về tình trạng hiện tại:</strong> [Thông tin về tải công việc hiện tại, điểm danh hôm nay]</li>
+      <li><strong>So sánh với các ứng viên tiềm năng:</strong> [So sánh với 2 ứng viên tiềm năng khác, phân tích tại sao họ không được chọn]</li>
+      <li><strong>Khuyến nghị phân công:</strong> [Đề xuất thêm về cách phân công tối ưu]</li>
+    </ul>"
+}}
+
+QUAN TRỌNG: Phản hồi của bạn PHẢI LÀ MỘT JSON HỢP LỆ có thể phân tích cú pháp bởi Python, không có bất kỳ ký tự markdown, tag, hoặc chú thích nào khác. Không thêm các ký tự "```json" hoặc "```" vào đầu và cuối.
+"""
+    
+    return prompt
+
+
+def get_ai_suggestion(prompt):
+    """
+    Gọi API Gemini để lấy đề xuất người dùng phù hợp
+    """
+    try:
+        genai.configure(api_key=settings.GEMINI_API_KEY)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # Cấu hình parameters
+        generation_config = {
+            "temperature": 0.1,  # Giảm temperature để có kết quả nhất quán hơn
+            "top_p": 0.8,
+            "top_k": 16,
+            "max_output_tokens": 8192,
+            "response_mime_type": "application/json",  # Yêu cầu phản hồi dạng JSON
+        }
+        
+        safety_settings = [
+            {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+            }
+        ]
+        
+        response = model.generate_content(
+            prompt,
+            generation_config=generation_config,
+            safety_settings=safety_settings
+        )
+        
+        # Lấy phản hồi dạng văn bản
+        response_text = response.text
+        
+        # Xử lý phản hồi để loại bỏ các tag markdown và làm sạch JSON
+        # Loại bỏ ```json hoặc ``` hoặc kí tự không cần thiết từ đầu và cuối
+        cleaned_response = response_text.strip()
+        if cleaned_response.startswith('```json'):
+            cleaned_response = cleaned_response[7:]
+        elif cleaned_response.startswith('```'):
+            cleaned_response = cleaned_response[3:]
+            
+        if cleaned_response.endswith('```'):
+            cleaned_response = cleaned_response[:-3]
+            
+        cleaned_response = cleaned_response.strip()
+        
+        # Log phản hồi cho debugging
+        print(f"Response từ AI (đã làm sạch): {cleaned_response[:100]}...")
+        
+        # Parse JSON từ kết quả trả về
+        try:
+            suggestion = json.loads(cleaned_response)
+            
+            # Kiểm tra định dạng phản hồi
+            if not isinstance(suggestion, dict) or 'suggested_user_id' not in suggestion:
+                raise ValueError("Phản hồi từ AI không đúng định dạng JSON")
+                
+            return suggestion
+            
+        except json.JSONDecodeError as e:
+            print(f"Lỗi khi phân tích JSON từ phản hồi AI: {str(e)}")
+            print(f"Phản hồi gốc: {response_text}")
+            # Thử phân tích lại sau khi làm sạch triệt để hơn
+            try:
+                # Tìm vị trí bắt đầu của JSON (tìm dấu { đầu tiên)
+                start_pos = response_text.find('{')
+                # Tìm vị trí kết thúc của JSON (tìm dấu } cuối cùng)
+                end_pos = response_text.rfind('}') + 1
+                
+                if start_pos >= 0 and end_pos > start_pos:
+                    json_content = response_text[start_pos:end_pos]
+                    suggestion = json.loads(json_content)
+                    
+                    # Kiểm tra định dạng phản hồi
+                    if not isinstance(suggestion, dict) or 'suggested_user_id' not in suggestion:
+                        raise ValueError("Phản hồi từ AI không đúng định dạng JSON")
+                        
+                    return suggestion
+            except:
+                # Nếu tất cả cách khác đều thất bại, thử cung cấp một phản hồi phòng hờ
+                return {
+                    'suggested_user_id': None,
+                    'suggested_user_name': 'Không thể đề xuất',
+                    'reasoning': '<ul><li>Không thể phân tích phản hồi từ AI</li><li>Vui lòng thử lại hoặc chọn thủ công</li></ul>'
+                }
+            
+            return None
+            
+    except Exception as e:
+        import traceback
+        print(f"Lỗi khi gọi API Gemini: {str(e)}")
+        print(traceback.format_exc())
+        return None

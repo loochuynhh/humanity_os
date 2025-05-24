@@ -20,9 +20,9 @@
     <div class="collapse navbar-collapse mt-sm-0 mt-2" id="navbar">
       <ul class="navbar-nav ms-auto">
         <li class="nav-item d-flex align-items-center" style="position: relative;">
-          <a href="#" class="nav-link font-weight-bold" style="padding: 0.25rem 0.75rem; color: #535353;" onclick="var menu = this.nextElementSibling; menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; return false;">
+          <a href="#" class="nav-link font-weight-bold" style="padding: 0.25rem 0.75rem; color: #000000 !important;" onclick="var menu = this.nextElementSibling; menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; return false;">
             <i class="fa fa-user me-1"></i>
-            <span class="d-sm-inline d-none">{{ request.user.username }}</span>
+            <span class="d-sm-inline d-none" style="color: #000000 !important;">{{ request.user.username }}</span>
           </a>
           <div class="mt-2 ml-2" style="display: none; position: absolute; top: 100%; left: 0; width: max-content; background: linear-gradient(180deg, #dddddd 0%, #b3b3b3 100%); border-radius: 0.25rem; box-shadow: 0 2px 4px rgba(221, 220, 220, 0.2); z-index: 1000; padding: 0.125rem 0; font-size: 0.875rem;">
             <a href="{% url 'custom_admin:logout' %}" style="display: block; padding: 0.25rem 0.75rem; color: #dc3545; text-decoration: none; white-space: nowrap; line-height: 1.2;">

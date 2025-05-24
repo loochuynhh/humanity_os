@@ -4,6 +4,7 @@ from django.urls import path, include
 from .views import index, home
 from django.conf.urls.static import static
 from django.conf import settings
+from projects.views import suggest_user_for_task
 
 urlpatterns = [
     path("", home, name="home"),
@@ -14,6 +15,7 @@ urlpatterns = [
     path("projects/", include(("projects.urls", "projects"), namespace="projects")),
     path("users/", include(("users.urls", "users"), namespace="users")),
     path("api/projects/", include("projects.urls")),
+    path("api/suggest-user-for-task/", suggest_user_for_task, name="suggest_user_for_task"),
 ]
 
 if settings.DEBUG:

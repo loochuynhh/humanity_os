@@ -628,3 +628,69 @@ div.breadcrumbs a {
     font-size: 1.25rem;
   }
 }
+
+/* AI Suggestion Button and Modal Styles */
+#ai_suggest_user {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    background: linear-gradient(135deg, #6366F1, #8B5CF6);
+    border: none;
+    box-shadow: 0 4px 6px rgba(99, 102, 241, 0.2);
+    transition: all 0.2s ease-in-out;
+}
+
+#ai_suggest_user:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(99, 102, 241, 0.3);
+}
+
+#ai_suggest_user .bi-robot {
+    font-size: 1rem;
+}
+
+.reasoning-content {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border-left: 3px solid #6366F1;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.reasoning-content ul {
+    padding-left: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.reasoning-content li {
+    margin-bottom: 0.5rem;
+}
+
+#aiSuggestionModal .modal-header {
+    background: linear-gradient(135deg, #6366F1, #8B5CF6);
+}
+
+#suggestedUserContainer {
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+}
+
+#applyUserSuggestion {
+    transition: all 0.2s ease;
+}
+
+#applyUserSuggestion:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(25, 135, 84, 0.2);
+}
+
+@media (max-width: 576px) {
+    #ai_suggest_user {
+        margin-top: 0.5rem;
+        margin-left: 0 !important;
+    }
+}

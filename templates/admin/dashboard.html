@@ -1,7 +1,7 @@
 {% extends "layouts/base.html" %}
 {% load i18n static admin_urls %}
 
-{% block title %}Admin Dashboard - Humanity OS{% endblock %}
+{% block title %}Bảng Điều Khiển Quản Trị - Humanity OS{% endblock %}
 
 {% block extrastyle %}
 {{ block.super }}
@@ -10,7 +10,7 @@
 
 {% block content %}
 <div class="container-fluid py-4">
-  <!-- Statistics Cards -->
+  <!-- Thẻ Thống Kê -->
   <div class="row mb-4">
     <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
       <div class="card">
@@ -18,10 +18,10 @@
           <div class="row">
             <div class="col-8">
               <div class="numbers">
-                <p class="text-sm mb-0 text-uppercase font-weight-bold">Users</p>
+                <p class="text-sm mb-0 text-uppercase font-weight-bold">Người Dùng</p>
                 <h5 class="font-weight-bolder">{{ user_count }}</h5>
                 <p class="mb-0 text-sm">
-                  <span class="text-{% if user_trend >= 0 %}success{% else %}danger{% endif %} text-sm font-weight-bolder">{{ user_trend }}%</span> vs last month
+                  <span class="text-{% if user_trend >= 0 %}success{% else %}danger{% endif %} text-sm font-weight-bolder">{{ user_trend }}%</span> so với tháng trước
                 </p>
               </div>
             </div>
@@ -40,10 +40,10 @@
           <div class="row">
             <div class="col-8">
               <div class="numbers">
-                <p class="text-sm mb-0 text-uppercase font-weight-bold">Projects</p>
+                <p class="text-sm mb-0 text-uppercase font-weight-bold">Dự Án</p>
                 <h5 class="font-weight-bolder">{{ project_count }}</h5>
                 <p class="mb-0 text-sm">
-                  <span class="text-success text-sm font-weight-bolder">+10%</span> vs last month
+                  <span class="text-success text-sm font-weight-bolder">+10%</span> so với tháng trước
                 </p>
               </div>
             </div>
@@ -62,10 +62,10 @@
           <div class="row">
             <div class="col-8">
               <div class="numbers">
-                <p class="text-sm mb-0 text-uppercase font-weight-bold">Tasks</p>
+                <p class="text-sm mb-0 text-uppercase font-weight-bold">Công việc</p>
                 <h5 class="font-weight-bolder">{{ task_count }}</h5>
                 <p class="mb-0 text-sm">
-                  <span class="text-success text-sm font-weight-bolder">+15%</span> vs last month
+                  <span class="text-success text-sm font-weight-bolder">+15%</span> so với tháng trước
                 </p>
               </div>
             </div>
@@ -84,10 +84,10 @@
           <div class="row">
             <div class="col-8">
               <div class="numbers">
-                <p class="text-sm mb-0 text-uppercase font-weight-bold">Performance</p>
+                <p class="text-sm mb-0 text-uppercase font-weight-bold">Hiệu Suất</p>
                 <h5 class="font-weight-bolder">{{ avg_achievement }}</h5>
                 <p class="mb-0 text-sm">
-                  <span class="text-success text-sm font-weight-bolder">{{ kpi_count }}</span> total KPIs
+                  <span class="text-success text-sm font-weight-bolder">{{ kpi_count }}</span> tổng số KPI
                 </p>
               </div>
             </div>
@@ -102,13 +102,13 @@
     </div>
   </div>
 
-  <!-- Charts Row -->
+  <!-- Hàng Biểu Đồ -->
   <div class="row mb-4">
     <div class="col-lg-6">
       <div class="card h-100">
         <div class="card-header pb-0">
-          <h6 class="mb-0">User Growth Trend</h6>
-          <p class="text-sm mb-0 text-muted">New user counts for the past 6 months</p>
+          <h6 class="mb-0">Xu Hướng Tăng Trưởng Người Dùng</h6>
+          <p class="text-sm mb-0 text-muted">Số lượng người dùng mới trong 6 tháng qua</p>
         </div>
         <div class="card-body p-3">
           <div class="chart">
@@ -120,8 +120,8 @@
     <div class="col-lg-6">
       <div class="card h-100">
         <div class="card-header pb-0">
-          <h6 class="mb-0">Task Status Distribution</h6>
-          <p class="text-sm mb-0 text-muted">Tasks by current status</p>
+          <h6 class="mb-0">Phân Bố Trạng Thái Công việc</h6>
+          <p class="text-sm mb-0 text-muted">Công việc theo trạng thái hiện tại</p>
         </div>
         <div class="card-body p-3">
           <div class="chart">
@@ -132,13 +132,13 @@
     </div>
   </div>
   
-  <!-- Second Charts Row -->
+  <!-- Hàng Biểu Đồ Thứ Hai -->
   <div class="row mb-4">
     <div class="col-lg-6">
       <div class="card h-100">
         <div class="card-header pb-0">
-          <h6 class="mb-0">Project Status</h6>
-          <p class="text-sm mb-0 text-muted">Project completion statistics</p>
+          <h6 class="mb-0">Trạng Thái Dự Án</h6>
+          <p class="text-sm mb-0 text-muted">Thống kê hoàn thành dự án</p>
         </div>
         <div class="card-body p-3">
           <div class="chart">
@@ -150,8 +150,8 @@
     <div class="col-lg-6">
       <div class="card h-100">
         <div class="card-header pb-0">
-          <h6 class="mb-0">Performance Metrics</h6>
-          <p class="text-sm mb-0 text-muted">KPI achievement distributions</p>
+          <h6 class="mb-0">Chỉ Số Hiệu Suất</h6>
+          <p class="text-sm mb-0 text-muted">Phân bố thành tích KPI</p>
         </div>
         <div class="card-body p-3">
           <div class="chart">
