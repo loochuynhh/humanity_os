@@ -5,8 +5,14 @@ from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
 import json
-from django.views.decorators.http import require_POST, require_http_methods
+from django.views.decorators.http import require_POST
 from .models import Tasks, Projects, TimeEntries, TeamProjectMembership, DeadlineExtensionRequest, TaskAssignments
+from datetime import timedelta, datetime
+from kpis.models import EmployeeKPIs
+from users.models import CheckInCheckOut
+import google.generativeai as genai
+from django.conf import settings
+from django.db.models import Avg
 from .utils import (
     calculate_team_member_data,
     calculate_time_totals,
@@ -18,14 +24,7 @@ from .utils import (
     calculate_time_by_task,
     get_project_status
 )
-from datetime import timedelta, datetime
-from django.views.decorators.csrf import csrf_exempt
-from django.core.serializers import serialize
-from kpis.models import EmployeeKPIs
-from users.models import Users, CheckInCheckOut
-import google.generativeai as genai
-from django.conf import settings
-from django.db.models import Avg
+
 
 @login_required
 def all_projects(request):

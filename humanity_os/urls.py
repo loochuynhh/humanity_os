@@ -1,7 +1,7 @@
 """humanity_os URL Configuration"""
 from django.contrib import admin
 from django.urls import path, include
-from .views import index, home
+from .views import home
 from django.conf.urls.static import static
 from django.conf import settings
 from projects.views import suggest_user_for_task

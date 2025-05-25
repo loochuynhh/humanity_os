@@ -1,7 +1,6 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
-from .models import EmployeeKPIs
 from projects.models import Projects
 
 def get_period_dates(period):

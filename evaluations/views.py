@@ -1,9 +1,8 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.template.loader import render_to_string
 from django.utils import timezone
-from django.db.models import Avg, Count, Q
 from .models import Forms, FormQuestions, FormResponses
 from users.models import Users
 from projects.models import TeamProjectMembership

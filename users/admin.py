@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Users, UserFaceImage, CheckInCheckOut, AIChatMessage
+from .models import Users, UserFaceImage, CheckInCheckOut
 from django.utils.html import format_html
 
 class CustomUserAdmin(UserAdmin):

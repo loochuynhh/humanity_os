@@ -1,0 +1,257 @@
+./kpis/apps.py:from django.apps import AppConfig
+./kpis/admin.py:from django.contrib import admin
+./kpis/admin.py:from .models import KPIs, EmployeeKPIs
+./kpis/utils.py:from datetime import timedelta
+./kpis/utils.py:from dateutil.relativedelta import relativedelta
+./kpis/utils.py:from django.utils import timezone
+./kpis/utils.py:from projects.models import Projects
+./kpis/urls.py:from django.urls import path
+./kpis/urls.py:from . import views
+./kpis/models.py:from django.db import models
+./kpis/models.py:from django.db.models import Sum
+./kpis/models.py:from projects.models import TimeEntries 
+./kpis/tests.py:from django.test import TestCase
+./kpis/views.py:from django.contrib.auth.decorators import login_required
+./kpis/views.py:from django.shortcuts import render, get_object_or_404
+./kpis/views.py:from django.http import JsonResponse, HttpResponse
+./kpis/views.py:from django.views.decorators.http import require_POST
+./kpis/views.py:from django.db.models import Sum
+./kpis/views.py:from django.template.loader import render_to_string
+./kpis/views.py:from .models import EmployeeKPIs
+./kpis/views.py:from projects.models import Tasks, TimeEntries
+./kpis/views.py:from .utils import get_period_dates, get_all_projects, filter_kpis_by_project, calculate_kpi_metrics
+./kpis/views.py:from weasyprint import HTML
+./kpis/views.py:import json
+./kpis/views.py:from django.utils.safestring import mark_safe
+./kpis/migrations/0001_initial.py:from django.db import migrations, models
+./kpis/migrations/0002_initial.py:import django.db.models.deletion
+./kpis/migrations/0002_initial.py:from django.conf import settings
+./kpis/migrations/0002_initial.py:from django.db import migrations, models
+./kpis/migrations/0003_alter_employeekpis_options_alter_kpis_options.py:from django.db import migrations
+./manage.py:import os
+./manage.py:import sys
+./manage.py:        from django.core.management import execute_from_command_line
+./manage.py:            "Couldn't import Django. Are you sure it's installed and "
+./manage.py:        ) from exc
+./evaluations/apps.py:from django.apps import AppConfig
+./evaluations/admin.py:from django.contrib import admin
+./evaluations/admin.py:from .models import Forms, FormQuestions, FormResponses
+./evaluations/utils.py:from django.db.models import Q
+./evaluations/utils.py:from .models import FormResponses
+./evaluations/urls.py:from django.urls import path
+./evaluations/urls.py:from . import views
+./evaluations/templatetags/evaluation_tags.py:from django import template
+./evaluations/models.py:from django.db import models
+./evaluations/models.py:from django.utils import timezone
+./evaluations/tests.py:from django.test import TestCase
+./evaluations/views.py:from django.shortcuts import render
+./evaluations/views.py:from django.http import JsonResponse
+./evaluations/views.py:from django.contrib.auth.decorators import login_required
+./evaluations/views.py:from django.template.loader import render_to_string
+./evaluations/views.py:from django.utils import timezone
+./evaluations/views.py:from .models import Forms, FormQuestions, FormResponses
+./evaluations/views.py:from users.models import Users
+./evaluations/views.py:from projects.models import TeamProjectMembership
+./evaluations/views.py:from .utils import calculate_feedback_metrics, get_staff_feedback_queryset, is_anonymous_response
+./evaluations/migrations/0001_initial.py:import django.db.models.deletion
+./evaluations/migrations/0001_initial.py:import django.utils.timezone
+./evaluations/migrations/0001_initial.py:from django.db import migrations, models
+./evaluations/migrations/0002_initial.py:import django.db.models.deletion
+./evaluations/migrations/0002_initial.py:from django.conf import settings
+./evaluations/migrations/0002_initial.py:from django.db import migrations, models
+./evaluations/migrations/0003_alter_formquestions_options_and_more.py:from django.db import migrations
+./urls.py:from django.urls import path
+./urls.py:from projects import views
+./projects/scripts/migrate_and_seed.py:import os
+./projects/scripts/migrate_and_seed.py:import sys
+./projects/scripts/migrate_and_seed.py:import django
+./projects/scripts/migrate_and_seed.py:from django.db import connection
+./projects/scripts/migrate_and_seed.py:from pathlib import Path
+./projects/scripts/migrate_and_seed.py:    from django.core.management import call_command
+./projects/apps.py:from django.apps import AppConfig
+./projects/admin.py:from django.contrib import admin
+./projects/admin.py:from .models import Projects, Tasks, TaskAssignments, TimeEntries, DeadlineExtensionRequest
+./projects/utils.py:from django.db.models import Sum, Count, Q
+./projects/utils.py:from django.utils import timezone
+./projects/utils.py:from datetime import timedelta
+./projects/utils.py:from .models import Tasks, Projects, TimeEntries, TeamProjectMembership, TaskAssignments
+./projects/urls.py:from django.urls import path
+./projects/urls.py:from .views import (
+./projects/models.py:from django.db import models
+./projects/models.py:from django.utils import timezone
+./projects/models.py:from django.db.models import Sum
+./projects/models.py:from django.core.exceptions import ValidationError
+./projects/tests.py:from django.test import TestCase
+./projects/views.py:from django.contrib.auth.decorators import login_required
+./projects/views.py:from django.core.exceptions import ObjectDoesNotExist
+./projects/views.py:from django.http import HttpRequest, JsonResponse
+./projects/views.py:from django.shortcuts import render, get_object_or_404
+./projects/views.py:from django.utils import timezone
+./projects/views.py:from django.db.models import Sum, Count, Q
+./projects/views.py:import json
+./projects/views.py:from django.views.decorators.http import require_POST
+./projects/views.py:from .models import Tasks, Projects, TimeEntries, TeamProjectMembership, DeadlineExtensionRequest, TaskAssignments
+./projects/views.py:from datetime import timedelta, datetime
+./projects/views.py:from kpis.models import EmployeeKPIs
+./projects/views.py:from users.models import CheckInCheckOut
+./projects/views.py:import google.generativeai as genai
+./projects/views.py:from django.conf import settings
+./projects/views.py:from django.db.models import Avg
+./projects/views.py:from .utils import (
+./projects/views.py:        import traceback
+./projects/views.py:        import traceback
+./projects/migrations/0001_initial.py:from django.db import migrations, models
+./projects/migrations/0003_alter_deadlineextensionrequest_options.py:from django.db import migrations
+./projects/migrations/0002_initial.py:import django.db.models.deletion
+./projects/migrations/0002_initial.py:from django.conf import settings
+./projects/migrations/0002_initial.py:from django.db import migrations, models
+./humanity_os/settings.py:from pathlib import Path
+./humanity_os/settings.py:import environ
+./humanity_os/middleware.py:import re
+./humanity_os/middleware.py:from django.conf import settings
+./humanity_os/middleware.py:from django.shortcuts import redirect
+./humanity_os/wsgi.py:import os
+./humanity_os/wsgi.py:from django.core.wsgi import get_wsgi_application
+./humanity_os/urls.py:from django.contrib import admin
+./humanity_os/urls.py:from django.urls import path, include
+./humanity_os/urls.py:from .views import home
+./humanity_os/urls.py:from django.conf.urls.static import static
+./humanity_os/urls.py:from django.conf import settings
+./humanity_os/urls.py:from projects.views import suggest_user_for_task
+./humanity_os/asgi.py:import os
+./humanity_os/asgi.py:from django.core.asgi import get_asgi_application
+./humanity_os/views.py:from django.shortcuts import render
+./custom_admin/forms.py:from django import forms
+./custom_admin/forms.py:from django.contrib.auth.forms import (
+./custom_admin/forms.py:from django.contrib.auth.models import User
+./custom_admin/forms.py:from django.utils.translation import gettext_lazy as _
+./custom_admin/apps.py:from django.apps import AppConfig
+./custom_admin/admin.py:from django.contrib import admin
+./custom_admin/utils.py:import json
+./custom_admin/utils.py:from django.template import Context
+./custom_admin/utils.py:from django.utils import translation
+./custom_admin/utils.py:    from django.apps.registry import apps
+./custom_admin/utils.py:        from django.apps import apps  # Fix Django 1.7 import issue
+./custom_admin/utils.py:from django.core.serializers.json import DjangoJSONEncoder
+./custom_admin/utils.py:from django.http import HttpResponse
+./custom_admin/utils.py:    from django.core.urlresolvers import reverse, resolve, NoReverseMatch
+./custom_admin/utils.py:    from django.urls import reverse, resolve, NoReverseMatch
+./custom_admin/utils.py:from django.contrib.admin import AdminSite
+./custom_admin/utils.py:from django.utils.text import capfirst
+./custom_admin/utils.py:from django.contrib import messages
+./custom_admin/utils.py:from django.contrib.admin.options import IncorrectLookupParameters
+./custom_admin/utils.py:from django.contrib import admin
+./custom_admin/utils.py:from django.utils.text import slugify
+./custom_admin/utils.py:from django.shortcuts import render
+./custom_admin/utils.py:    from django.utils.translation import ugettext_lazy as _
+./custom_admin/utils.py:    from django.utils.translation import gettext_lazy as _  # Django 4.0.0 and more
+./custom_admin/utils.py:    from collections import OrderedDict
+./custom_admin/utils.py:    from ordereddict import OrderedDict  # Python 2.6
+./custom_admin/urls.py:from django.urls import path
+./custom_admin/urls.py:from custom_admin import views
+./custom_admin/templatetags/replace_value.py:from django import template
+./custom_admin/templatetags/custom_admin_tags.py:import re
+./custom_admin/templatetags/custom_admin_tags.py:from django import template
+./custom_admin/templatetags/custom_admin_tags.py:from django.utils.safestring import mark_safe
+./custom_admin/templatetags/custom_admin.py:import re
+./custom_admin/templatetags/custom_admin.py:import json
+./custom_admin/templatetags/custom_admin.py:from django import template
+./custom_admin/templatetags/custom_admin.py:from django.utils.html import format_html
+./custom_admin/templatetags/custom_admin.py:from custom_admin.utils import get_menu_items
+./custom_admin/templatetags/custom_admin.py:from django.utils.safestring import mark_safe
+./custom_admin/templatetags/custom_admin.py:from django.contrib.admin.views.main import PAGE_VAR
+./custom_admin/models.py:from django.db import models
+./custom_admin/tests.py:from django.test import TestCase
+./custom_admin/views.py:from django.shortcuts import render, redirect
+./custom_admin/views.py:from django.contrib.auth import logout
+./custom_admin/views.py:from custom_admin.utils import superuser_required
+./custom_admin/views.py:from django.apps import apps
+./custom_admin/views.py:from django.db.models import Count, Avg
+./custom_admin/views.py:from django.contrib.auth import get_user_model
+./custom_admin/views.py:from django.contrib.admin.models import LogEntry
+./custom_admin/views.py:from django.utils import timezone
+./custom_admin/views.py:from datetime import timedelta
+./custom_admin/views.py:from dateutil.relativedelta import relativedelta
+./users/apps.py:from django.apps import AppConfig
+./users/admin.py:from django.contrib import admin
+./users/admin.py:from django.contrib.auth.admin import UserAdmin
+./users/admin.py:from .models import Users, UserFaceImage, CheckInCheckOut
+./users/admin.py:from django.utils.html import format_html
+./users/admin.py:            from math import sin, cos, sqrt, atan2, radians
+./users/admin.py:            from math import sin, cos, sqrt, atan2, radians
+./users/utils.py:from django.db.models import Count, Sum
+./users/utils.py:from django.utils import timezone
+./users/utils.py:import json
+./users/utils.py:from projects.models import Tasks, TaskAssignments, TimeEntries, Projects
+./users/utils.py:from kpis.models import EmployeeKPIs
+./users/utils.py:from users.models import Users, CheckInCheckOut, UserFaceImage, AIChatMessage
+./users/utils.py:import base64
+./users/utils.py:import io
+./users/utils.py:from PIL import Image
+./users/utils.py:from django.core.files.base import ContentFile
+./users/utils.py:from django.utils.safestring import mark_safe
+./users/utils.py:import face_recognition
+./users/utils.py:import numpy as np
+./users/utils.py:import os
+./users/utils.py:from math import sin, cos, sqrt, atan2, radians
+./users/utils.py:import time
+./users/utils.py:    from users.models import CheckInCheckOut
+./users/utils.py:    from django.utils import timezone
+./users/utils.py:    from datetime import timedelta
+./users/utils.py:    from kpis.models import EmployeeKPIs
+./users/utils.py:    from projects.models import Tasks
+./users/utils.py:        from django.db import transaction
+./users/utils.py:        import traceback
+./users/utils.py:        from django.db import transaction
+./users/utils.py:        import traceback
+./users/utils.py:    from kpis.models import EmployeeKPIs
+./users/utils.py:    from evaluations.models import FormResponses
+./users/utils.py:    from evaluations.utils import calculate_feedback_metrics, get_staff_feedback_queryset
+./users/utils.py:        user_message: The current message from the user
+./users/utils.py:        from evaluations.models import FormResponses
+./users/utils.py:        from evaluations.utils import calculate_feedback_metrics
+./users/utils.py:    from .models import AIChatMessage
+./users/utils.py:    from django.db.models import Count, Sum, Avg, Q
+./users/utils.py:    from django.utils import timezone
+./users/utils.py:    from datetime import timedelta
+./users/utils.py:    from users.models import Users, CheckInCheckOut
+./users/utils.py:    from projects.models import Tasks, TaskAssignments, TimeEntries, Projects
+./users/utils.py:    from kpis.models import EmployeeKPIs
+./users/utils.py:        from .models import AIChatMessage
+./users/urls.py:from django.urls import path
+./users/urls.py:from .views import (
+./users/models.py:from django.contrib.auth.models import AbstractUser
+./users/models.py:from django.db import models
+./users/tests.py:from django.test import TestCase
+./users/views.py:from django.conf import settings
+./users/views.py:from django.contrib import messages
+./users/views.py:from django.contrib.auth import authenticate, login, logout
+./users/views.py:from django.contrib.auth.decorators import login_required
+./users/views.py:from django.contrib.auth.tokens import PasswordResetTokenGenerator
+./users/views.py:from django.core.mail import send_mail
+./users/views.py:from django.http import HttpResponseForbidden, JsonResponse
+./users/views.py:from django.shortcuts import render, redirect
+./users/views.py:from django.urls import reverse
+./users/views.py:from django.utils import timezone
+./users/views.py:from django.utils.encoding import force_bytes, force_str
+./users/views.py:from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+./users/views.py:from django.views.decorators.http import require_POST
+./users/views.py:from .models import Users, UserFaceImage, CheckInCheckOut, AIChatMessage
+./users/views.py:import google.generativeai as genai
+./users/views.py:from django.conf import settings
+./users/views.py:from .utils import (
+./users/views.py:        import traceback
+./users/views.py:        import traceback
+./users/views.py:    from django.template.loader import render_to_string
+./users/views.py:    from weasyprint import HTML
+./users/views.py:    from django.http import HttpResponse
+./users/views.py:            import traceback
+./users/views.py:        from .utils import get_chat_messages as get_messages_from_utils
+./users/views.py:        import traceback
+./users/migrations/0002_alter_aichatmessage_options_and_more.py:from django.db import migrations
+./users/migrations/0001_initial.py:import django.contrib.auth.models
+./users/migrations/0001_initial.py:import django.contrib.auth.validators
+./users/migrations/0001_initial.py:import django.db.models.deletion
+./users/migrations/0001_initial.py:import django.utils.timezone
+./users/migrations/0001_initial.py:from django.conf import settings
+./users/migrations/0001_initial.py:from django.db import migrations, models

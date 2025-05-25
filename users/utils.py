@@ -1,42 +1,18 @@
-from django.db import models
-from django.db.models import Count, Sum, Avg, Q
+from django.db.models import Count, Sum
 from django.utils import timezone
-from datetime import timedelta
 import json
 from projects.models import Tasks, TaskAssignments, TimeEntries, Projects
-from kpis.models import EmployeeKPIs, KPIs
+from kpis.models import EmployeeKPIs
 from users.models import Users, CheckInCheckOut, UserFaceImage, AIChatMessage
-from typing import Dict, List, Any, Optional, Union, TypedDict
 import base64
 import io
 from PIL import Image
 from django.core.files.base import ContentFile
 from django.utils.safestring import mark_safe
-from django.utils.html import escape
-from django.utils.text import slugify
 import face_recognition
 import numpy as np
 import os
 from math import sin, cos, sqrt, atan2, radians
-from django.shortcuts import render, redirect
-from django.contrib.auth.views import (
-    LoginView,
-    PasswordResetView,
-    PasswordChangeView,
-    PasswordResetConfirmView,
-)
-from custom_admin.forms import (
-    RegistrationForm,
-    LoginForm,
-    UserPasswordResetForm,
-    UserSetPasswordForm,
-    UserPasswordChangeForm,
-)
-from django.contrib.auth import logout
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
-from custom_admin.utils import superuser_required
-from django.contrib import messages
 import time
 
 def get_task_counts(user_id, as_json=False):

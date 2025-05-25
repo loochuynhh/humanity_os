@@ -12,10 +12,8 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.decorators.http import require_POST
 from .models import Users, UserFaceImage, CheckInCheckOut, AIChatMessage
-from projects.models import Tasks
 import google.generativeai as genai
 from django.conf import settings
-from typing import Dict, List, Any, Optional, cast
 from .utils import (
     get_task_counts,
     get_task_stats,

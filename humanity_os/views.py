@@ -1,9 +1,4 @@
-from django.shortcuts import render, redirect
-from django.http import HttpResponse
-
-
-def index(request):
-    return render(request, "main/index.html")
+from django.shortcuts import render
 
 
 def home(request):

@@ -1,32 +1,13 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth.views import (
-    LoginView,
-    PasswordResetView,
-    PasswordChangeView,
-    PasswordResetConfirmView,
-)
-from custom_admin.forms import (
-    RegistrationForm,
-    LoginForm,
-    UserPasswordResetForm,
-    UserSetPasswordForm,
-    UserPasswordChangeForm,
-)
+
 from django.contrib.auth import logout
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
 from custom_admin.utils import superuser_required
-from django.contrib import messages
 from django.apps import apps
-from django.contrib.admin.views.decorators import staff_member_required
-from django.db.models import Q, Sum, Count, Avg, F, ExpressionWrapper, fields
+from django.db.models import Count, Avg
 from django.contrib.auth import get_user_model
-from django.contrib import admin
 from django.contrib.admin.models import LogEntry
-from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
-import json
 from dateutil.relativedelta import relativedelta
 
 # Authentication

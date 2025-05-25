@@ -1,4 +1,4 @@
-find . -mindepth 1 -maxdepth 4 \( -path "./.git" -o -path "./.venv" -o -path "./staticfiles" -o -path "./static/assets/bootstrap-icons" -o -path "./media" \) -prune -o -print
+find . -mindepth 1 -maxdepth 2 \( -path "./.git" -o -path "./.venv" -o -path "./staticfiles" -o -path "./static/assets/bootstrap-icons" -o -path "./media" \) -prune -o -print
 
 find . -path "./.venv" -prune -o -type f -name "urls.py" -exec echo "===== {} =====" \; -exec cat {} \;
 find . -path "./.venv" -prune -o -type f -name "models.py" -exec echo "===== {} =====" \; -exec cat {} \;
@@ -9,3 +9,6 @@ sudo apt-get install mysql-server
 mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u root -p mysql
 SELECT * FROM time_zone_name WHERE Name = 'Asia/Ho_Chi_Minh';
 sudo systemctl restart mysql
+
+backup database
+mysqldump -u root -p humanity_os > humanity_os_backup.sql
