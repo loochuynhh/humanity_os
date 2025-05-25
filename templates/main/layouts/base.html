@@ -86,7 +86,7 @@
     <script src="{% static 'assets/js/plugin/chart.js/chart.min.js' %}"></script>
     <script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
     <!-- Marked.js for Markdown rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/marked@4.0.18/marked.min.js"></script>
+    <script src="{% static 'assets/js/marked.min.js' %}"></script>
 
     <!-- Script cho chatbot -->
     <script>
@@ -119,8 +119,35 @@
         // Gọi renderMessages khi trang tải
         renderMessages();
 
+        // Kiểm tra xem có đang ở trang admin không
+        function isAdminPage() {
+            return window.location.pathname.indexOf('/admin/') > -1;
+        }
+
+        // Thiết lập tiêu đề và biểu tượng cho AI chatbot tùy theo context
+        function setupChatbotAppearance() {
+            // Tiêu đề mặc định
+            let title = '<i class="bi bi-robot"></i>Trợ Lý AI Humanity OS';
+            
+            // Nếu ở trang admin, thêm biểu tượng và thay đổi tiêu đề
+            if (isAdminPage()) {
+                // Thay đổi tiêu đề cho trang admin
+                title = '<i class="bi bi-shield-lock-fill"></i>Trợ Lý Quản Trị Humanity OS';
+                
+                // Thay đổi màu nếu ở trang admin
+                $('.chatbot-header').addClass('admin-chatbot-header');
+                $('.chatbot-icon').addClass('admin-chatbot-icon');
+            }
+            
+            // Cập nhật tiêu đề
+            $('#aiChatModalLabel').html(title);
+        }
+
         // Tải tin nhắn cũ qua AJAX khi mở modal
         $('#aiChatModal').on('shown.bs.modal', function() {
+            // Thiết lập giao diện chatbot dựa trên context
+            setupChatbotAppearance();
+
             $.ajax({
                 url: "{% url 'users:get_chat_messages' %}",
                 method: 'GET',
@@ -202,12 +229,10 @@
             });
         });
 
-        // Hiện icon chatbot khi đóng modal
         $('#aiChatModal').on('hidden.bs.modal', function() {
             $('.chatbot-icon').removeClass('hidden');
         });
 
-        // Xử lý resize để đảm bảo cuộn đúng
         $(window).resize(function() {
             setTimeout(scrollToBottom, 100);
         });
@@ -251,6 +276,17 @@
         {% endfor %}
     });
     </script>
+
+    <!-- CSS cho admin chatbot -->
+    <style>
+    .admin-chatbot-header {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+    }
+
+    .admin-chatbot-icon {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+    }
+    </style>
 
     {% block extra_js %}{% endblock %}
 </body>

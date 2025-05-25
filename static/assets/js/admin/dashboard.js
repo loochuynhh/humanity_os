@@ -315,10 +315,20 @@ document.addEventListener('DOMContentLoaded', function () {
   // Check if we're on the admin dashboard page
   const isDashboardPage = document.querySelector('.container-fluid .row .card .numbers') !== null;
   if (!isDashboardPage) return;
-  
   console.log('Initializing admin dashboard...');
   
   try {
+    // Kiểm tra biến dữ liệu toàn cục
+    if (!window.adminDashboardData) {
+      console.error('Missing adminDashboardData global variable');
+      window.adminDashboardData = {
+        userChart: { labels: [], data: [] },
+        taskChart: { labels: [], data: [], colors: [] },
+        projectChart: { labels: [], data: [], colors: [] },
+        performanceChart: { labels: [], data: [], colors: [] }
+      };
+    }
+    
     // Initialize counter animations
     initCounterAnimation();
     
@@ -328,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize charts if canvas elements exist and data is available
     if (document.getElementById('users-chart')) {
       try {
-        const chartData = typeof userChartData !== 'undefined' ? userChartData : { labels: [], data: [] };
+        const chartData = window.adminDashboardData.userChart || { labels: [], data: [] };
         initUsersChart('users-chart', 
           chartData.labels || [], 
           chartData.data || []
@@ -341,7 +351,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     if (document.getElementById('task-status-chart')) {
       try {
-        const chartData = typeof taskChartData !== 'undefined' ? taskChartData : { labels: [], data: [], colors: [] };
+        const chartData = window.adminDashboardData.taskChart || { labels: [], data: [], colors: [] };
         initTaskStatusChart('task-status-chart', 
           chartData.labels || [], 
           chartData.data || [], 
@@ -355,7 +365,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     if (document.getElementById('project-status-chart')) {
       try {
-        const chartData = typeof projectChartData !== 'undefined' ? projectChartData : { labels: [], data: [], colors: [] };
+        const chartData = window.adminDashboardData.projectChart || { labels: [], data: [], colors: [] };
         initProjectStatusChart('project-status-chart',
           chartData.labels || [],
           chartData.data || [],
@@ -369,7 +379,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     if (document.getElementById('performance-chart')) {
       try {
-        const chartData = typeof performanceChartData !== 'undefined' ? performanceChartData : { labels: [], data: [], colors: [] };
+        const chartData = window.adminDashboardData.performanceChart || { labels: [], data: [], colors: [] };
         initPerformanceChart('performance-chart',
           chartData.labels || [],
           chartData.data || [],

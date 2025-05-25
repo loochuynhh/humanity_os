@@ -15,6 +15,7 @@ from .models import Users, UserFaceImage, CheckInCheckOut, AIChatMessage
 from projects.models import Tasks
 import google.generativeai as genai
 from django.conf import settings
+from typing import Dict, List, Any, Optional, cast
 from .utils import (
     get_task_counts,
     get_task_stats,
@@ -28,7 +29,7 @@ from .utils import (
     get_project_data,
     generate_user_report_data,
     build_gemini_prompt,
-    get_chat_messages,
+    build_admin_gemini_prompt,
 )
 
 
@@ -529,8 +530,18 @@ def ai_chat(request):
                 "parts": [{"text": msg.content}]
             })
 
-        # Xây dựng prompt với thông tin chi tiết
-        prompt = build_gemini_prompt(user, user_message)
+        # Xác định xem user có phải admin/superuser không hoặc có đang ở trang admin
+        is_admin_context = user.is_superuser or user.is_staff
+        is_admin_page = request.META.get('HTTP_REFERER', '').find('/admin/') > -1
+
+        # Xây dựng prompt với thông tin chi tiết tùy theo loại người dùng
+        if is_admin_context or is_admin_page:
+            # Sử dụng prompt cho admin/superuser với đầy đủ thông tin hệ thống
+            prompt = build_admin_gemini_prompt(user, user_message)
+        else:
+            # Sử dụng prompt thông thường cho người dùng bình thường
+            prompt = build_gemini_prompt(user, user_message)
+
         contents.append({
             "role": "user",
             "parts": [{"text": prompt}]
@@ -541,36 +552,46 @@ def ai_chat(request):
             genai.configure(api_key=settings.GEMINI_API_KEY)
             model = genai.GenerativeModel('gemini-1.5-flash')
             
-            # Cấu hình các tham số
-            generation_config = {
-                "temperature": 0.7,  # Kiểm soát sự ngẫu nhiên
-                "top_p": 0.95,      # Lọc theo xác suất
-                "top_k": 40,        # Lọc theo xếp hạng
-                "max_output_tokens": 2048,  # Giới hạn độ dài phản hồi
-            }
+            # Tạo cấu hình generation
+            generation_config = genai.types.GenerationConfig(
+                temperature=0.7,          # Kiểm soát sự ngẫu nhiên
+                top_p=0.95,               # Lọc theo xác suất
+                top_k=40,                 # Lọc theo xếp hạng
+                max_output_tokens=2048,   # Giới hạn độ dài phản hồi
+            )
+            
+            # Kiểm tra xem đây có phải là admin không để điều chỉnh cấu hình phù hợp
+            if is_admin_context:
+                # Tăng giới hạn độ dài phản hồi cho admin để có thông tin chi tiết hơn
+                generation_config.max_output_tokens = 4096
+                # Giảm temperature để phản hồi chính xác và ít sáng tạo hơn
+                generation_config.temperature = 0.3
+            
+            # Thiết lập safety settings
+            safety_settings = [
+                {
+                    "category": "HARM_CATEGORY_HARASSMENT",
+                    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                },
+                {
+                    "category": "HARM_CATEGORY_HATE_SPEECH",
+                    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                },
+                {
+                    "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                },
+                {
+                    "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                }
+            ]
             
             # Tạo phản hồi
             response = model.generate_content(
                 contents,
                 generation_config=generation_config,
-                safety_settings=[
-                    {
-                        "category": "HARM_CATEGORY_HARASSMENT",
-                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-                    },
-                    {
-                        "category": "HARM_CATEGORY_HATE_SPEECH",
-                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-                    },
-                    {
-                        "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-                    },
-                    {
-                        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-                    }
-                ]
+                safety_settings=safety_settings
             )
             ai_response = response.text
 
@@ -579,11 +600,12 @@ def ai_chat(request):
             
             # Nếu đã vượt quá giới hạn 50 cuộc hội thoại (100 tin nhắn = 50 cặp), xóa các tin nhắn cũ nhất
             if message_count >= 98:  # 98 tin nhắn = 49 cặp (nếu thêm 2 tin nhắn mới sẽ đủ 50 cặp)
-                # Lấy ID của các tin nhắn cũ nhất (2 tin nhắn cũ nhất = 1 cặp user-AI)
-                oldest_messages = AIChatMessage.objects.filter(user=user).order_by('timestamp')[:2]
-                oldest_ids = [msg.id for msg in oldest_messages]
-                # Xóa các tin nhắn cũ nhất
-                AIChatMessage.objects.filter(id__in=oldest_ids).delete()
+                # Lấy các tin nhắn cũ nhất (2 tin nhắn cũ nhất = 1 cặp user-AI)
+                oldest_messages = list(AIChatMessage.objects.filter(user=user).order_by('timestamp')[:2])
+                if oldest_messages:
+                    # Xóa các tin nhắn cũ nhất
+                    for msg in oldest_messages:
+                        msg.delete()
 
             # Lưu tin nhắn mới của người dùng
             AIChatMessage.objects.create(user=user, role='user', content=user_message)
@@ -607,9 +629,9 @@ def get_chat_messages(request):
     API endpoint để lấy tin nhắn chat của người dùng.
     """
     try:
-        from .utils import get_chat_messages as get_messages
+        from .utils import get_chat_messages as get_messages_from_utils
         
-        messages = get_messages(request.user, limit=20)
+        messages = get_messages_from_utils(request.user, limit=20)
         messages_data = [
             {
                 'role': msg.role,

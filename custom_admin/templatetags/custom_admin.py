@@ -1,4 +1,5 @@
 import re
+import json
 from django import template
 from django.utils.html import format_html
 from custom_admin.utils import get_menu_items
@@ -83,3 +84,9 @@ def sum_number(value, number):
 @register.filter
 def neg_num(value, number):
     return value - number
+
+
+@register.filter
+def json(value):
+    """Chuyển đổi giá trị Python thành chuỗi JSON"""
+    return json.dumps(value)

@@ -98,7 +98,7 @@
   <script src="{% static 'assets/js/plugin/sweetalert/sweetalert2.all.min.js' %}"></script>
   <script src="{% static 'assets/js/plugin/chart.js/chart.min.js' %}"></script>
   <script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked@4.0.18/marked.min.js"></script>
+  <script src="{% static 'assets/js/marked.min.js' %}"></script>
   <script src="{% static 'assets/js/admin/dashboard.js' %}"></script>
 
   <!-- Script cho chatbot -->
@@ -129,11 +129,36 @@
           setTimeout(scrollToBottom, 100);
       }
 
+      // Kiểm tra xem có đang ở trang admin không
+      function isAdminPage() {
+          return window.location.pathname.indexOf('/admin/') > -1;
+      }
+
+      // Thiết lập giao diện chatbot dựa vào context
+      function setupChatbotAppearance() {
+          // Tiêu đề và giao diện mặc định
+          let title = '<i class="bi bi-robot"></i>Trợ Lý AI Humanity OS';
+          
+          // Nếu đang ở trang admin, thay đổi giao diện
+          if (isAdminPage()) {
+              title = '<i class="bi bi-shield-lock-fill"></i>Trợ Lý Quản Trị Humanity OS';
+              $('.chatbot-header').addClass('admin-chatbot');
+              $('.chatbot-icon').addClass('admin-chatbot-icon');
+              $('#chatInput').attr('placeholder', 'Hỏi về quản lý dự án, nhân sự, KPI, công việc...');
+          }
+          
+          // Cập nhật tiêu đề
+          $('#aiChatModalLabel').html(title);
+      }
+
       // Gọi renderMessages khi trang tải
       renderMessages();
 
       // Tải tin nhắn cũ qua AJAX khi mở modal
       $('#aiChatModal').on('shown.bs.modal', function() {
+          // Thiết lập giao diện chatbot dựa vào context
+          setupChatbotAppearance();
+          
           $.ajax({
               url: "{% url 'users:get_chat_messages' %}",
               method: 'GET',
@@ -142,7 +167,7 @@
                       $('#chatMessages').empty();
                       data.messages.forEach(function(msg) {
                           const messageClass = msg.role === 'user' ? 'user-message' : 'ai-message';
-                          const sender = msg.role === 'user' ? 'Bạn' : 'AI';
+                          const sender = msg.role === 'user' ? 'Bạn' : isAdminPage() ? 'AI Quản Trị' : 'AI';
                           const messageHtml = `
                               <div class="message mb-3 ${messageClass}">
                                   <div class="message-content p-3 rounded-3 shadow-sm" data-content="${msg.content.replace(/"/g, '&quot;')}">
@@ -198,7 +223,7 @@
                   const aiMessage = $('<div>').addClass('message mb-3 ai-message').html(
                       '<div class="message-content p-3 rounded-3 shadow-sm" data-content="' + data.response.replace(/"/g, '&quot;') + '">' +
                       '<small class="message-timestamp">' + new Date().toLocaleString('vi-VN') + '</small>' +
-                      '<div class="message-sender">AI</div>' +
+                      '<div class="message-sender">' + (isAdminPage() ? 'AI Quản Trị' : 'AI') + '</div>' +
                       '<div class="message-text">' + renderedResponse + '</div>' +
                       '</div>'
                   ).hide();
@@ -226,6 +251,61 @@
   </script>
   
   {% block extrajs %}{% endblock extrajs %}
+  
+  <!-- Thêm CSS cho chatbot admin -->
+  <style>
+    .admin-chatbot {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .admin-chatbot-icon {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+      box-shadow: 0 5px 15px rgba(30, 60, 114, 0.4) !important;
+    }
+    
+    /* Tùy chỉnh giao diện tin nhắn cho admin */
+    .admin-chatbot + .modal-body .ai-message .message-content {
+      background-color: rgba(42, 82, 152, 0.1) !important;
+      border-left: 3px solid #2a5298 !important;
+    }
+    
+    /* Thiết kế tin nhắn riêng cho admin */
+    .admin-chatbot ~ .modal-body .message.ai-message .message-sender {
+      color: #1e3c72 !important;
+      font-weight: 600;
+    }
+    
+    /* Đảm bảo border bo tròn đẹp mắt */
+    .chatbot-modal {
+      border-radius: 12px !important;
+      overflow: hidden;
+    }
+    
+    /* Hiệu ứng khi nhập liệu cho admin */
+    .admin-chatbot ~ .modal-body .chat-input:focus {
+      border-color: #1e3c72 !important;
+      box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.2) !important;
+    }
+    
+    /* Nút gửi cho admin */
+    .admin-chatbot ~ .modal-body .chat-send-btn {
+      background-color: #1e3c72 !important;
+    }
+    
+    /* Phân biệt tin nhắn ưu tiên từ admin */
+    .admin-chatbot ~ .modal-body .ai-message .message-content strong {
+      color: #1e3c72;
+    }
+    
+    /* Highlight các thông tin quan trọng */
+    .admin-chatbot ~ .modal-body .ai-message .message-content h3,
+    .admin-chatbot ~ .modal-body .ai-message .message-content h4 {
+      color: #1e3c72;
+      font-weight: 600;
+      margin-top: 12px;
+    }
+  </style>
   
   <!-- Script để đảm bảo CSS custom ghi đè lên CSS mặc định -->
   <script>

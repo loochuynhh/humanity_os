@@ -5,17 +5,619 @@
     {{ block.super }}
     <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
     {{ media }}
+    <!-- Leaflet CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
 {% endblock %}
 
 {% block extrastyle %}
     {{ block.super }}
     <link rel="stylesheet" type="text/css" href="{% static "assets/css/forms.css" %}">
     <link rel="stylesheet" type="text/css" href="{% static "assets/css/custom_admin.css" %}">
+    
+    <!-- Custom Form Styling Override -->
+    <style>
+        /* Mạnh mẽ override toàn bộ style form */
+        .admin-form-container {
+            --input-bg: #f9fafb;
+            --input-border: #dee2e6;
+            --input-focus-border: #0d6efd;
+            --input-focus-shadow: rgba(13, 110, 253, 0.25);
+            --label-color: #495057;
+            --help-text-color: #6c757d;
+            --error-color: #dc3545;
+        }
+        
+        /* Form control mạnh mẽ */
+        .admin-form-container .form-control,
+        .admin-form-container textarea,
+        .admin-form-container select,
+        .admin-form-container input[type="text"],
+        .admin-form-container input[type="email"],
+        .admin-form-container input[type="password"],
+        .admin-form-container input[type="number"],
+        .admin-form-container input[type="url"],
+        .admin-form-container .select2-container .select2-selection {
+            background-color: var(--input-bg) !important;
+            border: 1px solid var(--input-border) !important;
+            border-radius: 0.375rem !important;
+            box-shadow: none !important;
+            padding: 0.75rem 1rem !important;
+            font-size: 0.875rem !important;
+            line-height: 1.5 !important;
+            height: calc(2.5rem + 2px) !important;
+            width: 100% !important;
+        }
+        
+        /* Focus states */
+        .admin-form-container .form-control:focus,
+        .admin-form-container textarea:focus,
+        .admin-form-container select:focus,
+        .admin-form-container input[type="text"]:focus,
+        .admin-form-container input[type="email"]:focus,
+        .admin-form-container input[type="password"]:focus,
+        .admin-form-container input[type="number"]:focus,
+        .admin-form-container input[type="url"]:focus {
+            border-color: var(--input-focus-border) !important;
+            box-shadow: 0 0 0 0.25rem var(--input-focus-shadow) !important;
+            outline: 0 !important;
+        }
+        
+        /* Textarea */
+        .admin-form-container textarea {
+            min-height: 120px !important;
+            resize: vertical !important;
+        }
+        
+        /* Labels */
+        .admin-form-container label {
+            display: block !important;
+            margin-bottom: 0.5rem !important;
+            font-weight: 600 !important;
+            font-size: 0.875rem !important;
+            color: var(--label-color) !important;
+        }
+        
+        /* Required labels */
+        .admin-form-container label.required {
+            font-weight: 700 !important;
+            position: relative !important;
+        }
+        
+        .admin-form-container label.required:after {
+            content: "*" !important;
+            color: var(--error-color) !important;
+            margin-left: 3px !important;
+            display: inline !important;
+        }
+        
+        /* Help text */
+        .admin-form-container .help,
+        .admin-form-container .helptext {
+            font-size: 0.75rem !important;
+            color: var(--help-text-color) !important;
+            margin-top: 0.25rem !important;
+            display: block !important;
+            font-style: italic !important;
+        }
+        
+        /* Fieldsets */
+        .admin-form-container fieldset {
+            padding: 0 !important;
+            margin: 0 0 1.5rem 0 !important;
+            border: none !important;
+        }
+        
+        /* Fieldset title */
+        .admin-form-container fieldset h5.title {
+            font-size: 1.125rem !important;
+            font-weight: 600 !important;
+            margin-bottom: 1.25rem !important;
+            color: #212529 !important;
+            padding-bottom: 0.5rem !important;
+            border-bottom: 1px solid #e9ecef !important;
+        }
+        
+        /* Form rows */
+        .admin-form-container .row {
+            margin-bottom: 0.5rem !important;
+        }
+        
+        /* Form field container */
+        .admin-form-container .field-container {
+            margin-bottom: 1.5rem !important;
+        }
+        
+        /* Error styling */
+        .admin-form-container .errorlist {
+            padding-left: 0 !important;
+            list-style: none !important;
+            color: var(--error-color) !important;
+            font-size: 0.875rem !important;
+            margin-top: 0.25rem !important;
+        }
+        
+        .admin-form-container .error input,
+        .admin-form-container .error select,
+        .admin-form-container .error textarea {
+            border-color: var(--error-color) !important;
+        }
+        
+        /* File uploads */
+        .admin-form-container .file-upload {
+            margin: 0 !important;
+            font-size: 0.875rem !important;
+        }
+        
+        .admin-form-container .file-upload a {
+            color: var(--input-focus-border) !important;
+            text-decoration: none !important;
+            font-weight: 600 !important;
+        }
+        
+        .admin-form-container .file-upload a:hover {
+            text-decoration: underline !important;
+        }
+        
+        .admin-form-container .file-upload input[type="file"] {
+            margin-top: 0.5rem !important;
+            padding: 0.375rem 0 !important;
+            width: 100% !important;
+            font-size: 0.875rem !important;
+            border: none !important;
+            height: auto !important;
+            background: transparent !important;
+            cursor: pointer !important;
+        }
+        
+        /* Clearable file input */
+        .admin-form-container .clearable-file-input {
+            display: inline-block !important;
+            margin-left: 1rem !important;
+        }
+        
+        .admin-form-container .clearable-file-input label {
+            display: inline !important;
+            font-weight: normal !important;
+            margin-left: 0.25rem !important;
+        }
+        
+        /* Checkbox styling - Cải thiện */
+        .admin-form-container .checkbox-row {
+            position: relative !important;
+            padding-left: 28px !important;
+            margin-top: 5px !important;
+            margin-bottom: 10px !important;
+        }
+        
+        .admin-form-container .checkbox-row input[type="checkbox"] {
+            position: absolute !important;
+            opacity: 0 !important;
+            cursor: pointer !important;
+            z-index: 3 !important;
+            margin: 0 !important;
+            width: 20px !important;
+            height: 20px !important;
+            left: 0 !important;
+            top: 4px !important;
+        }
+        
+        .admin-form-container .checkbox-row label {
+            display: inline-block !important;
+            font-weight: 600 !important;
+            margin-bottom: 0 !important;
+            position: relative !important;
+            z-index: 2 !important;
+            cursor: pointer !important;
+            padding-top: 4px !important;
+            font-size: 0.875rem !important;
+        }
+        
+        .admin-form-container .checkbox-row label:before {
+            content: '' !important;
+            position: absolute !important;
+            left: -28px !important;
+            top: 4px !important;
+            width: 20px !important;
+            height: 20px !important;
+            border: 2px solid #dee2e6 !important;
+            background-color: #fff !important;
+            border-radius: 4px !important;
+            transition: background-color 0.3s, border-color 0.3s !important;
+            z-index: 1 !important;
+        }
+        
+        .admin-form-container .checkbox-row label:after {
+            content: '\2713' !important; /* Check mark */
+            position: absolute !important;
+            left: -24px !important;
+            top: 2px !important;
+            font-size: 16px !important;
+            color: white !important;
+            opacity: 0 !important;
+            transition: opacity 0.2s !important;
+            z-index: 2 !important;
+        }
+        
+        .admin-form-container .checkbox-row input[type="checkbox"]:checked + label:before {
+            background-color: #0d6efd !important;
+            border-color: #0d6efd !important;
+        }
+        
+        .admin-form-container .checkbox-row input[type="checkbox"]:checked + label:after {
+            opacity: 1 !important;
+        }
+        
+        .admin-form-container .checkbox-row input[type="checkbox"]:focus + label:before {
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25) !important;
+        }
+        
+        /* Sửa lại cấu trúc checkbox của Sort UI */
+        .admin-form-container .form-check {
+            padding-left: 0 !important;
+            margin-bottom: 10px !important;
+        }
+        
+        .admin-form-container .form-check-label {
+            margin-bottom: 0 !important;
+            cursor: pointer !important;
+            display: block !important;
+        }
+        
+        .admin-form-container .form-check-sign,
+        .admin-form-container .vCheckboxLabel {
+            display: none !important; /* Ẩn phần tử không cần thiết */
+        }
+        
+        /* Buttons */
+        .admin-form-container .button,
+        .admin-form-container input[type="submit"],
+        .admin-form-container button[type="submit"] {
+            display: inline-block !important;
+            font-weight: 600 !important;
+            text-align: center !important;
+            white-space: nowrap !important;
+            vertical-align: middle !important;
+            user-select: none !important;
+            padding: 0.5rem 1rem !important;
+            font-size: 0.875rem !important;
+            line-height: 1.5 !important;
+            border-radius: 0.375rem !important **Grok** !important;
+            background-color: #0d6efd !important;
+            border: 1px solid #0d6efd !important;
+            color: #fff !important;
+            cursor: pointer !important;
+            box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2) !important;
+            height: auto !important;
+        }
+        
+        .admin-form-container .button:hover,
+        .admin-form-container input[type="submit"]:hover,
+        .admin-form-container button[type="submit"]:hover {
+            background-color: #0b5ed7 !important;
+            border-color: #0b5ed7 !important;
+            box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3) !important;
+        }
+        
+        /* Submit button container */
+        .admin-form-container .submit-row {
+            padding: 1.5rem 0 0 0 !important;
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 0.5rem !important;
+            border-top: 1px solid #e9ecef !important;
+            margin-top: 2rem !important;
+            justify-content: flex-end !important;
+        }
+        
+        /* Other action buttons */
+        .admin-form-container .submit-row input[name="_save"],
+        .admin-form-container .submit-row input[name="_addanother"],
+        .admin-form-container .submit-row input[name="_continue"] {
+            order: 1 !important;
+        }
+        
+        /* Delete button */
+        .admin-form-container .submit-row input[name="_delete"] {
+            background-color: #dc3545 !important;
+            border-color: #dc3545 !important;
+            order: 99 !important; /* Push to end */
+            margin-right: auto !important; /* Push to left */
+        }
+        
+        .admin-form-container .submit-row input[name="_delete"]:hover {
+            background-color: #c82333 !important;
+            border-color: #bd2130 !important;
+        }
+        
+        /* DateTime field specific styling */
+        .admin-form-container .datetime {
+            position: relative !important;
+            text-align: left !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        .admin-form-container .datetime br {
+            display: none !important;
+        }
+        
+        .admin-form-container .datetime .datetimeshortcuts {
+            display: block !important;
+            margin-top: 0.25rem !important;
+            font-size: 0.75rem !important;
+        }
+        
+        .admin-form-container .datetime .datetimeshortcuts a {
+            display: inline-block !important;
+            color: var(--input-focus-border) !important;
+            text-decoration: none !important;
+            margin-right: 0.5rem !important;
+        }
+        
+        .admin-form-container .datetime .datetimeshortcuts a:hover {
+            text-decoration: underline !important;
+        }
+        
+        /* Reset link styling */
+        .admin-form-container p a {
+            color: var(--input-focus-border) !important;
+            text-decoration: none !important;
+            font-weight: 600 !important;
+        }
+        
+        .admin-form-container p a:hover {
+            text-decoration: underline !important;
+        }
+        
+        /* Google Maps Location Picker */
+        .location-picker-container {
+            position: relative !important;
+            margin-top: 10px !important;
+            margin-bottom: 15px !important;
+        }
+        
+        .location-picker-map {
+            width: 100% !important;
+            height: 300px !important;
+            border-radius: 8px !important;
+            margin-bottom: 10px !important;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .location-search-container {
+            position: relative !important;
+            margin-bottom: 15px !important;
+        }
+        
+        .location-search-input {
+            padding-right: 40px !important;
+        }
+        
+        .location-search-addon {
+            position: absolute !important;
+            right: 10px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            color: #6c757d !important;
+            cursor: pointer !important;
+            z-index: 5 !important;
+        }
+        
+        .location-coordinates {
+            display: flex !important;
+            gap: 10px !important;
+            margin-bottom: 10px !important;
+        }
+        
+        .location-coordinates .coordinate-input {
+            width: 50% !important;
+        }
+        
+        .location-current-btn {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 5px !important;
+            padding: 6px 12px !important;
+            background-color: #f8f9fa !important;
+            border: 1px solid #dee2e6 !important;
+            border-radius: 4px !important;
+            color: #212529 !important;
+            font-size: 0.875rem !important;
+            cursor: pointer !important;
+            transition: all 0.15s !important;
+        }
+        
+        .location-current-btn:hover {
+            background-color: #e9ecef !important;
+        }
+        
+        /* Make sure all inputs are visible in dark mode */
+        @media (prefers-color-scheme: dark) {
+            .admin-form-container .form-control,
+            .admin-form-container textarea,
+            .admin-form-container select,
+            .admin-form-container input[type="text"],
+            .admin-form-container input[type="email"],
+            .admin-form-container input[type="password"],
+            .admin-form-container input[type="number"],
+            .admin-form-container input[type="url"] {
+                background-color: rgba(255, 255, 255, 0.9) !important;
+                color: #212529 !important;
+            }
+        }
+    </style>
 {% endblock %}
 
 {% block extrajs %}
     {{ block.super }}
     <script type="text/javascript" src="{% static 'assets/js/admin/forms.js' %}"></script>
+    
+    <!-- Custom Form JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Thêm class container vào form để áp dụng style
+            const mainForm = document.getElementById('{{ opts.model_name }}_form');
+            if (mainForm) {
+                mainForm.closest('.card-body').classList.add('admin-form-container');
+            }
+            
+            // Làm đẹp các dropdown hiện tại
+            const selectElements = document.querySelectorAll('.admin-form-container select:not([multiple])');
+            selectElements.forEach(function(select) {
+                select.classList.add('form-select');
+            });
+            
+            // Xử lý kích thước cho các fieldsets 
+            const fieldsets = document.querySelectorAll('.admin-form-container fieldset');
+            fieldsets.forEach(function(fieldset) {
+                const rows = fieldset.querySelectorAll('.row');
+                if (rows.length > 4) {
+                    // Compact mode cho fieldsets lớn
+                    fieldset.querySelectorAll('.mb-4').forEach(item => {
+                        item.classList.remove('mb-4');
+                        item.classList.add('mb-2');
+                    });
+                }
+            });
+            
+            // Animation cho input focus
+            const formControls = document.querySelectorAll('.admin-form-container input, .admin-form-container textarea, .admin-form-container select');
+            formControls.forEach(function(control) {
+                control.addEventListener('focus', function() {
+                    this.closest('.mb-4, .mb-2')?.classList.add('highlight-control');
+                });
+                
+                control.addEventListener('blur', function() {
+                    this.closest('.mb-4, .mb-2')?.classList.remove('highlight-control');
+                });
+            });
+            
+            // Sửa lại cấu trúc các checkbox
+            fixCheckboxStructure();
+            
+            // Khởi tạo Location Picker nếu trường fixed_location tồn tại
+            initLocationPicker();
+        });
+        
+        // Hàm sửa lại cấu trúc HTML của các checkbox để phù hợp với design mới
+        function fixCheckboxStructure() {
+            const checkboxRows = document.querySelectorAll('.admin-form-container .checkbox-row');
+            
+            checkboxRows.forEach(function(checkboxRow) {
+                // Đã có cấu trúc mới, bỏ qua
+                if (checkboxRow.classList.contains('fixed-structure')) return;
+                
+                // Tìm input checkbox và label trong cấu trúc hiện tại
+                const checkbox = checkboxRow.querySelector('input[type="checkbox"]');
+                let label = checkboxRow.querySelector('.vCheckboxLabel');
+                
+                // Nếu không tìm thấy label theo class, tìm theo tag
+                if (!label) {
+                    label = checkboxRow.querySelector('label');
+                }
+                
+                if (checkbox && label) {
+                    // Lưu lại text và for attribute của label
+                    const labelText = label.textContent.trim();
+                    const labelFor = label.getAttribute('for');
+                    const helpText = checkboxRow.querySelector('.help');
+                    
+                    // Xóa tất cả nội dung hiện tại
+                    checkboxRow.innerHTML = '';
+                    checkboxRow.classList.add('fixed-structure');
+                    
+                    // Tạo cấu trúc mới
+                    checkbox.setAttribute('id', labelFor);
+                    checkboxRow.appendChild(checkbox);
+                    
+                    // Tạo label mới
+                    const newLabel = document.createElement('label');
+                    newLabel.setAttribute('for', labelFor);
+                    newLabel.textContent = labelText;
+                    checkboxRow.appendChild(newLabel);
+                    
+                    // Thêm lại help text nếu có
+                    if (helpText) {
+                        checkboxRow.appendChild(helpText);
+                    }
+                }
+            });
+        }
+        
+        // Khởi tạo Location Picker
+        function initLocationPicker() {
+            const fixedLocationField = document.getElementById('id_fixed_location');
+            if (!fixedLocationField) return;
+            
+            // Lấy giá trị hiện tại từ field (nếu có)
+            const currentValue = fixedLocationField.value.trim();
+            let initialLat = 21.0278;  // Default: Hà Nội
+            let initialLng = 105.8342;
+            
+            if (currentValue) {
+                const [lat, lng] = currentValue.split(',').map(coord => parseFloat(coord.trim()));
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    initialLat = lat;
+                    initialLng = lng;
+                }
+            }
+            
+            // Tạo container cho map picker
+            const mapContainer = document.createElement('div');
+            mapContainer.className = 'location-picker-container';
+            
+            // Tạo map element
+            const mapElement = document.createElement('div');
+            mapElement.className = 'location-picker-map';
+            mapElement.id = 'location-picker-map';
+            
+            // Thêm các elements vào container
+            mapContainer.appendChild(mapElement);
+            
+            // Chèn map container sau fixed_location input field
+            fixedLocationField.parentNode.appendChild(mapContainer);
+            
+            // Kiểm tra Leaflet đã tải chưa
+            if (typeof L === 'undefined') {
+                console.error('Leaflet not loaded. Check CDN or network.');
+                return;
+            }
+            
+            // Khởi tạo Leaflet Map
+            const map = L.map('location-picker-map').setView([initialLat, initialLng], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                maxZoom: 19
+            }).addTo(map);
+            
+            // Khởi tạo marker
+            const marker = L.marker([initialLat, initialLng], { draggable: true }).addTo(map);
+            
+            // Cập nhật tọa độ ban đầu
+            updateFixedLocationField({ lat: initialLat, lng: initialLng }, fixedLocationField);
+            
+            // Sự kiện click map
+            map.on('click', function(e) {
+                marker.setLatLng(e.latlng);
+                updateFixedLocationField(e.latlng, fixedLocationField);
+            });
+            
+            // Sự kiện drag marker
+            marker.on('dragend', function(e) {
+                updateFixedLocationField(e.target.getLatLng(), fixedLocationField);
+            });
+        }
+        
+        // Cập nhật giá trị cho field fixed_location
+        function updateFixedLocationField(latlng, field) {
+            const lat = latlng.lat;
+            const lng = latlng.lng;
+            
+            // Cập nhật giá trị cho input field
+            field.value = `${lat.toFixed(7)},${lng.toFixed(7)}`;
+        }
+    </script>
 {% endblock %}
 
 {% block title %}
@@ -74,7 +676,7 @@
 
     <div class="row">
         <div class="col-12 mb-4">
-            <div class="card">
+            <div class="card shadow-sm border-0 rounded-3">
                 <div class="card-body">
                     <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}"
                           method="post" id="{{ opts.model_name }}_form" novalidate>
@@ -120,4 +722,41 @@
         </div>
     </div>
 </div>
+
+<!-- Extra styling for animations and effects -->
+<style>
+    .admin-form-container .highlight-control {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .admin-form-container .highlight-control:before {
+        content: '';
+        position: absolute;
+        left: -0.5rem;
+        right: -0.5rem;
+        top: -0.5rem;
+        bottom: -0.5rem;
+        background-color: rgba(13, 110, 253, 0.03);
+        border-radius: 0.5rem;
+        z-index: -1;
+        animation: pulseFade 2s infinite;
+        pointer-events: none;
+    }
+    
+    @keyframes pulseFade {
+        0% { opacity: 0.7; }
+        50% { opacity: 0.3; }
+        100% { opacity: 0.7; }
+    }
+    
+    /* Card shadow enhancement */
+    .card.shadow-sm {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075), 0 0.5rem 1rem rgba(0, 0, 0, 0.05) !important;
+    }
+    
+    .card.shadow-sm:hover {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075), 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1) !important;
+    }
+</style>
 {% endblock %}

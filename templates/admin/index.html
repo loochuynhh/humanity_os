@@ -75,12 +75,4 @@
 
 {% block extra_js %}
 {{ block.super }}
-<script>
-// Kiểm tra nếu có dữ liệu biểu đồ thì mới khởi tạo
-var userChartData = {% if user_chart_data %}{{ user_chart_data|safe }}{% else %}{ labels: [], data: [] }{% endif %};
-var taskChartData = {% if task_chart_data %}{{ task_chart_data|safe }}{% else %}{ labels: [], data: [], colors: [] }{% endif %};
-var projectChartData = {% if project_chart_data %}{{ project_chart_data|safe }}{% else %}{ labels: [], data: [], colors: [] }{% endif %};
-var performanceChartData = {% if performance_chart_data %}{{ performance_chart_data|safe }}{% else %}{ labels: [], data: [], colors: [] }{% endif %};
-</script>
-<script src="{% static 'assets/js/admin/dashboard.js' %}"></script>
 {% endblock %}

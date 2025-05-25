@@ -1,11 +1,12 @@
 from django.db import models
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Avg, Q
 from django.utils import timezone
 from datetime import timedelta
 import json
 from projects.models import Tasks, TaskAssignments, TimeEntries, Projects
-from kpis.models import EmployeeKPIs
+from kpis.models import EmployeeKPIs, KPIs
 from users.models import Users, CheckInCheckOut, UserFaceImage, AIChatMessage
+from typing import Dict, List, Any, Optional, Union, TypedDict
 import base64
 import io
 from PIL import Image
@@ -1103,6 +1104,300 @@ Humanity OS là một nền tảng quản lý nhân sự và công việc toàn 
 - Đưa ra những gợi ý phù hợp với vai trò của người dùng.
 """
     return prompt
+
+def build_admin_gemini_prompt(user, user_message):
+    """
+    Xây dựng prompt đặc biệt dành cho admin/superuser với đầy đủ thông tin về toàn bộ hệ thống.
+    
+    Args:
+        user: Đối tượng user admin/superuser
+        user_message: Tin nhắn từ admin/superuser
+    
+    Returns:
+        Prompt đầy đủ thông tin cho Gemini AI
+    """
+    if not user or not user_message:
+        return "Lỗi: Thiếu thông tin người dùng hoặc câu hỏi."
+
+    # Lấy lịch sử chat để tạo ngữ cảnh
+    from .models import AIChatMessage
+    chat_history = AIChatMessage.objects.filter(user=user).order_by('-timestamp')[:20]
+    conversation_context = ""
+    
+    if chat_history.exists():
+        # Tạo danh sách mới và sắp xếp lại theo thời gian
+        chat_messages = list(reversed(chat_history))
+        
+        # Nhóm thành cặp người dùng - AI
+        for i in range(0, len(chat_messages) - 1, 2):
+            if i + 1 < len(chat_messages):
+                user_msg = chat_messages[i]
+                ai_msg = chat_messages[i + 1]
+                
+                # Giới hạn độ dài để không vượt quá giới hạn token
+                user_content = summarize_chat(user_msg.content, 250)
+                ai_content = summarize_chat(ai_msg.content, 250)
+                
+                conversation_context += f"User: {user_content}\nAI: {ai_content}\n\n"
+    
+    # Lấy thông tin người dùng hiện tại
+    user_info = f"""
+    Thông tin người dùng:
+    - Tên: {user.first_name} {user.last_name}
+    - Email: {user.email}
+    - Vai trò: {'Quản trị viên' if user.is_superuser else 'Quản lý' if user.is_staff else 'Người dùng'}
+    - Phòng ban: {user.department or 'Chưa xác định'}
+    - Ngày tham gia: {user.date_of_joining.strftime('%d/%m/%Y') if user.date_of_joining else 'Không có thông tin'}
+    """
+    
+    # Lấy dữ liệu tổng quan về hệ thống
+    from django.db.models import Count, Sum, Avg, Q
+    from django.utils import timezone
+    from datetime import timedelta
+    from users.models import Users, CheckInCheckOut
+    from projects.models import Tasks, TaskAssignments, TimeEntries, Projects
+    from kpis.models import EmployeeKPIs
+    
+    # Khởi tạo các biến mặc định
+    system_overview = ""
+    priority_messages = ""
+    
+    try:
+        # Thống kê người dùng
+        total_users = Users.objects.count()
+        active_users = Users.objects.filter(is_active=True).count()
+        admins = Users.objects.filter(is_superuser=True).count()
+        staff = Users.objects.filter(is_staff=True).count()
+        
+        # Thống kê dự án
+        total_projects = Projects.objects.count()
+        active_projects = Projects.objects.filter(
+            start_date__lte=timezone.now().date(),
+            end_date__gte=timezone.now().date()
+        ).count()
+        
+        # Tính số dự án hoàn thành dựa trên ngày kết thúc đã qua
+        completed_projects = Projects.objects.filter(
+            end_date__lt=timezone.now().date()
+        ).count()
+        
+        # Thống kê công việc
+        total_tasks = Tasks.objects.count()
+        completed_tasks = Tasks.objects.filter(status='Completed').count()
+        overdue_tasks = Tasks.objects.filter(
+            status__in=['To-do', 'In progress'], 
+            deadline__lt=timezone.now()
+        ).count()
+        
+        # Thống kê KPI
+        avg_kpi = EmployeeKPIs.objects.aggregate(avg=Avg('achieved_percentage'))['avg'] or 0
+        
+        # Thống kê thời gian làm việc
+        today = timezone.now().date()
+        total_hours_today = TimeEntries.objects.filter(
+            start_time__date=today
+        ).aggregate(
+            total=Sum('duration')
+        )['total'] or 0
+        
+        # Dữ liệu điểm danh
+        checkin_today = CheckInCheckOut.objects.filter(
+            date=today,
+            checkin_time__isnull=False
+        ).count()
+        
+        checkin_percentage = round((checkin_today / active_users) * 100, 1) if active_users > 0 else 0
+        
+        # Thông tin người dùng với nhiều task nhất
+        user_tasks = Users.objects.annotate(
+            task_count=Count('task_assignments__task', distinct=True)
+        ).exclude(task_count=0).order_by('-task_count')
+        
+        most_tasks_info = ""
+        least_tasks_info = ""
+        
+        most_tasks_user = user_tasks.first()
+        if most_tasks_user:
+            most_tasks_info = f"{most_tasks_user.first_name} {most_tasks_user.last_name}: {most_tasks_user.task_count} tasks"
+        
+        least_tasks_user = user_tasks.last()
+        if least_tasks_user:
+            least_tasks_info = f"{least_tasks_user.first_name} {least_tasks_user.last_name}: {least_tasks_user.task_count} tasks"
+        
+        # Người có giờ làm nhiều nhất
+        most_hours_info = ""
+        try:
+            most_hours_user = Users.objects.annotate(
+                work_hours=Sum('task_assignments__actual_time')
+            ).exclude(work_hours__isnull=True).order_by('-work_hours').first()
+            
+            if most_hours_user and hasattr(most_hours_user, 'work_hours'):
+                most_hours_info = f"{most_hours_user.first_name} {most_hours_user.last_name}: {round(most_hours_user.work_hours, 2)} giờ"
+        except Exception:
+            pass
+        
+        # Tìm những vấn đề ưu tiên cần chú ý
+        priority_issues = []
+        
+        # 1. Dự án sắp hết hạn nhưng tiến độ thấp
+        upcoming_deadline_projects = Projects.objects.filter(
+            end_date__range=[today, today + timedelta(days=14)]
+        )
+        
+        for project in upcoming_deadline_projects[:5]:  # Giới hạn 5 dự án để tránh quá tải
+            try:
+                # Lấy tất cả tasks của project thông qua relationship
+                tasks = Tasks.objects.filter(project=project)
+                total_proj_tasks = tasks.count()
+                if total_proj_tasks > 0:
+                    completed_proj_tasks = tasks.filter(status='Completed').count()
+                    progress = (completed_proj_tasks / total_proj_tasks) * 100
+                    
+                    if progress < 50:
+                        days_left = (project.end_date - today).days
+                        priority_issues.append({
+                            'type': 'project_deadline',
+                            'severity': 'high' if days_left <= 7 else 'medium',
+                            'message': f"Dự án '{project.name}' còn {days_left} ngày nhưng mới hoàn thành {round(progress, 1)}%"
+                        })
+            except Exception:
+                # Skip projects with issues
+                continue
+        
+        # 2. Người dùng với nhiều task quá hạn
+        users_with_overdue = []
+        try:
+            # Tìm assignments quá hạn
+            overdue_assignments = TaskAssignments.objects.filter(
+                task__status__in=['To-do', 'In progress'],
+                task__deadline__lt=timezone.now()
+            ).select_related('user', 'task')
+            
+            # Đếm số lượng task quá hạn theo user
+            user_overdue_counts = {}
+            for assignment in overdue_assignments:
+                user_id = assignment.user_id 
+                if user_id not in user_overdue_counts:
+                    user_overdue_counts[user_id] = {
+                        'user': assignment.user,
+                        'count': 0
+                    }
+                user_overdue_counts[user_id]['count'] += 1
+            
+            # Chuyển thành list và sắp xếp
+            for user_data in user_overdue_counts.values():
+                if user_data['count'] >= 3:  # Chỉ quan tâm người có >= 3 task quá hạn
+                    users_with_overdue.append(user_data)
+            
+            users_with_overdue.sort(key=lambda x: x['count'], reverse=True)
+            
+            # Thêm top 5 người dùng có nhiều task quá hạn
+            for user_data in users_with_overdue[:5]:
+                u = user_data['user']
+                count = user_data['count']
+                priority_issues.append({
+                    'type': 'overdue_tasks',
+                    'severity': 'medium' if count >= 5 else 'low',
+                    'message': f"{u.first_name} {u.last_name} có {count} công việc quá hạn"
+                })
+        except Exception:
+            pass
+        
+        # 3. Người dùng không check-in/check-out trong 7 ngày qua
+        try:
+            week_ago = today - timedelta(days=7)
+            # Lấy danh sách người dùng đã check-in trong 7 ngày qua
+            checkin_user_ids = set(
+                CheckInCheckOut.objects.filter(
+                    date__gte=week_ago
+                ).values_list('user_id', flat=True)
+            )
+            
+            # Lấy người dùng active nhưng không có trong danh sách check-in
+            inactive_users = Users.objects.filter(
+                is_active=True
+            ).exclude(
+                id__in=checkin_user_ids
+            ).exclude(
+                is_superuser=True
+            ).exclude(
+                is_staff=True
+            )[:5]  # Chỉ lấy 5 người
+            
+            for u in inactive_users:
+                priority_issues.append({
+                    'type': 'inactive_user',
+                    'severity': 'low',
+                    'message': f"{u.first_name} {u.last_name} không check-in trong 7 ngày qua"
+                })
+        except Exception:
+            pass
+        
+        # Tạo tin nhắn vấn đề ưu tiên
+        priority_messages = ""
+        if priority_issues:
+            priority_messages = "VẤN ĐỀ ƯU TIÊN CẦN CHÚ Ý:\n"
+            for issue in sorted(priority_issues, key=lambda x: 0 if x['severity'] == 'high' else 1 if x['severity'] == 'medium' else 2):
+                severity_symbol = "🔴" if issue['severity'] == 'high' else "🟠" if issue['severity'] == 'medium' else "🟡"
+                priority_messages += f"{severity_symbol} {issue['message']}\n"
+        
+        # Thống kê tổng quan
+        system_overview = f"""
+        TỔNG QUAN HỆ THỐNG HUMANITY OS:
+        
+        👤 NGƯỜI DÙNG:
+        - Tổng số: {total_users} người dùng ({active_users} đang hoạt động)
+        - Quản trị viên: {admins}, Quản lý: {staff}
+        - Điểm danh hôm nay: {checkin_today}/{active_users} người ({checkin_percentage}%)
+        
+        📊 DỰ ÁN:
+        - Tổng số: {total_projects} dự án
+        - Đang hoạt động: {active_projects}
+        - Đã hoàn thành: {completed_projects}
+        
+        📝 CÔNG VIỆC:
+        - Tổng số: {total_tasks} tasks
+        - Đã hoàn thành: {completed_tasks} ({round(completed_tasks/total_tasks*100, 1) if total_tasks > 0 else 0}%)
+        - Quá hạn: {overdue_tasks} tasks
+        
+        ⏱️ THỜI GIAN & HIỆU SUẤT:
+        - Tổng giờ làm việc hôm nay: {round(total_hours_today, 2)} giờ
+        - Điểm KPI trung bình: {round(avg_kpi, 2)}%
+        - Người có nhiều task nhất: {most_tasks_info}
+        - Người có ít task nhất: {least_tasks_info}
+        - Người làm việc nhiều giờ nhất: {most_hours_info}
+        """
+    except Exception as e:
+        # Fallback nếu có lỗi
+        system_overview = f"Không thể tải thông tin hệ thống đầy đủ. Lỗi: {str(e)}"
+        priority_messages = ""
+
+    # Tạo prompt chính cho AI
+    admin_system_prompt = f"""Bạn là Trợ Lý AI Quản Trị của hệ thống Humanity OS - một hệ thống quản lý dự án, công việc và nhân sự. 
+    Bạn đang trò chuyện với {user.first_name} {user.last_name}, một {'quản trị viên' if user.is_superuser else 'quản lý'}. 
+    Vai trò của bạn là hỗ trợ trong việc quản lý dự án, công việc, và nhân sự, đưa ra thống kê, đánh giá, và đề xuất hành động.
+
+    {priority_messages}
+
+    {system_overview}
+
+    {user_info}
+
+    Ngữ cảnh cuộc trò chuyện trước đó:
+    {conversation_context}
+
+    Khi trả lời:
+    1. Ưu tiên phản hồi thông tin quản trị, đề cao góc nhìn tổng quan về dự án, nhân sự, hiệu suất
+    2. Cung cấp phân tích chi tiết dựa trên dữ liệu hệ thống
+    3. Tập trung vào quản lý, giám sát, tăng hiệu suất nhân sự và dự án
+    4. Đề xuất giải pháp cho các vấn đề ưu tiên (nếu có)
+    5. Trả lời chuyên nghiệp, súc tích và đầy đủ thông tin
+    6. Đảm bảo thông tin bảo mật phù hợp với vai trò quản trị viên
+
+    Câu hỏi/yêu cầu hiện tại của {user.first_name} {user.last_name}: "{user_message}"
+    """
+    
+    return admin_system_prompt
 
 # users/utils.py
 def get_chat_messages(user, limit=20):

@@ -8,10 +8,31 @@ document.addEventListener('DOMContentLoaded', function() {
             const aiButton = document.createElement('button');
             aiButton.type = 'button';
             aiButton.id = 'ai_suggest_user';
-            aiButton.className = 'btn btn-sm btn-primary ms-2 mt-2';
             aiButton.title = 'Đề xuất người dùng phù hợp bằng AI';
             aiButton.innerHTML = '<i class="bi bi-robot"></i> Đề xuất';
-            
+            aiButton.style.cssText = `
+                background: #0d6efd !important;
+                color: #ffffff !important;
+                padding: 0.25rem 0.75rem !important;
+                font-size: 0.875rem !important;
+                line-height: 1.5 !important;
+                border: 1px solid #0d6efd !important;
+                border-radius: 0.25rem !important;
+                margin-left: 0.5rem !important;
+                margin-top: 0.25rem !important;
+                width: auto !important;
+                height: auto !important;
+                transform: none !important;
+                transition: none !important;
+                overflow: hidden !important;
+                position: relative !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                text-align: center !important;
+                cursor: pointer !important;
+            `;
+
             userField.appendChild(aiButton);
             
             // Tạo modal để hiển thị kết quả
@@ -192,4 +213,4 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
-}); 
+});

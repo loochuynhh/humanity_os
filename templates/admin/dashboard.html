@@ -1,5 +1,5 @@
 {% extends "layouts/base.html" %}
-{% load i18n static admin_urls %}
+{% load i18n static admin_urls custom_admin %}
 
 {% block title %}Bảng Điều Khiển Quản Trị - Humanity OS{% endblock %}
 
@@ -151,7 +151,7 @@
       <div class="card h-100">
         <div class="card-header pb-0">
           <h6 class="mb-0">Chỉ Số Hiệu Suất</h6>
-          <p class="text-sm mb-0 text-muted">Phân bố thành tích KPI</p>
+          <p class="text-sm mb-0 text-muted">Phân bố thành tích KPI </p>
         </div>
         <div class="card-body p-3">
           <div class="chart">
@@ -162,16 +162,24 @@
     </div>
   </div>
 </div>
+
+{% if user_chart_data %}{{ user_chart_data|json_script:"user-chart-data" }}{% endif %}
+{% if task_chart_data %}{{ task_chart_data|json_script:"task-chart-data" }}{% endif %}
+{% if project_chart_data %}{{ project_chart_data|json_script:"project-chart-data" }}{% endif %}
+{% if performance_chart_data %}{{ performance_chart_data|json_script:"performance-chart-data" }}{% endif %}
+
+<script>
+// Khởi tạo biến toàn cục cho dữ liệu dashboard admin
+window.adminDashboardData = {
+  userChart: JSON.parse(document.getElementById('user-chart-data')?.textContent || '{"labels":[],"data":[]}'),
+  taskChart: JSON.parse(document.getElementById('task-chart-data')?.textContent || '{"labels":[],"data":[],"colors":[]}'),
+  projectChart: JSON.parse(document.getElementById('project-chart-data')?.textContent || '{"labels":[],"data":[],"colors":[]}'),
+  performanceChart: JSON.parse(document.getElementById('performance-chart-data')?.textContent || '{"labels":[],"data":[],"colors":[]}')
+};
+</script>
 {% endblock %}
 
 {% block extra_js %}
 {{ block.super }}
-<script>
-// Kiểm tra nếu có dữ liệu biểu đồ thì mới khởi tạo
-var userChartData = {% if user_chart_data %}{{ user_chart_data|safe }}{% else %}{ labels: [], data: [] }{% endif %};
-var taskChartData = {% if task_chart_data %}{{ task_chart_data|safe }}{% else %}{ labels: [], data: [], colors: [] }{% endif %};
-var projectChartData = {% if project_chart_data %}{{ project_chart_data|safe }}{% else %}{ labels: [], data: [], colors: [] }{% endif %};
-var performanceChartData = {% if performance_chart_data %}{{ performance_chart_data|safe }}{% else %}{ labels: [], data: [], colors: [] }{% endif %};
-</script>
 <script src="{% static 'assets/js/admin/dashboard.js' %}"></script>
 {% endblock %}
