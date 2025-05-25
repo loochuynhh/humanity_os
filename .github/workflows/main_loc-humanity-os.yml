@@ -38,35 +38,37 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Create .env file
-        run: |
-          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" > .env
-          echo "ALLOWED_HOSTS=loc-humanity-os-dkh3a2embegneshc.southeastasia-01.azurewebsites.net" >> .env
-          echo "DATABASE_ENGINE=django.db.backends.mysql" >> .env
-          echo "DATABASE_NAME=loc-humanity-os-database" >> .env
-          echo "DATABASE_USER=mxnwfmezyk" >> .env
-          echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
-          echo "DATABASE_HOST=loc-humanity-os-server.mysql.database.azure.com" >> .env
-          echo "DATABASE_PORT=3306" >> .env
-          echo "EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend" >> .env
-          echo "EMAIL_HOST=smtp.gmail.com" >> .env
-          echo "EMAIL_PORT=587" >> .env
-          echo "EMAIL_USE_TLS=True" >> .env
-          echo "EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }}" >> .env
-          echo "EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}" >> .env
-          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
-          echo "AZURE_ACCOUNT_NAME=${{ secrets.AZURE_ACCOUNT_NAME }}" >> .env
-          echo "AZURE_ACCOUNT_KEY=${{ secrets.AZURE_ACCOUNT_KEY }}" >> .env
-          echo "AZURE_CONTAINER=media" >> .env
-
       - name: Collect static files
+        env:
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          ALLOWED_HOSTS: loc-humanity-os-dkh3a2embegneshc.southeastasia-01.azurewebsites.net
+          DATABASE_ENGINE: django.db.backends.mysql
+          DATABASE_NAME: loc-humanity-os-database
+          DATABASE_USER: mxnwfmezyk
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          DATABASE_HOST: loc-humanity-os-server.mysql.database.azure.com
+          DATABASE_PORT: 3306
+          EMAIL_BACKEND: django.core.mail.backends.smtp.EmailBackend
+          EMAIL_HOST: smtp.gmail.com
+          EMAIL_PORT: 587
+          EMAIL_USE_TLS: True
+          EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
+          EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AZURE_ACCOUNT_NAME: ${{ secrets.AZURE_ACCOUNT_NAME }}
+          AZURE_ACCOUNT_KEY: ${{ secrets.AZURE_ACCOUNT_KEY }}
+          AZURE_CONTAINER: media
         run: |
           source venv/bin/activate
           python manage.py collectstatic --noinput
 
+      - name: Ensure startup.sh is executable
+        run: |
+          chmod +x startup.sh
+
       - name: Zip artifact for deployment
         run: |
-          zip -r release.zip . -x "venv/*" ".git/*" "__pycache__/*" "media/*" "*.sql"
+          zip -r release.zip . -x ".git/*" "__pycache__/*" "media/*" "*.sql"
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4

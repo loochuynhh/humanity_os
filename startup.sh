@@ -1,10 +1,10 @@
 #!/bin/bash
-# Cài dependencies hệ thống
-apt-get update
-apt-get install -y build-essential cmake libopenblas-dev liblapack-dev libx11-dev libgtk-3-dev python3-dev fonts-liberation
+# Kích hoạt virtual environment từ artifact
+source /home/site/wwwroot/venv/bin/activate
 
-# Cài requirements.txt
-pip install -r /home/site/wwwroot/requirements.txt
+# Cài dependencies hệ thống (phòng trường hợp cần cho runtime)
+apt-get update
+apt-get install -y fonts-liberation
 
 # Chạy migrations
 python /home/site/wwwroot/manage.py migrate
