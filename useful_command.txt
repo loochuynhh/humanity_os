@@ -12,3 +12,10 @@ sudo systemctl restart mysql
 
 backup database
 mysqldump -u root -p humanity_os > humanity_os_backup.sql
+
+
+sudo docker container prune -f
+sudo docker image prune -a -f
+sudo docker volume prune -f
+sudo docker network prune -f
+sudo docker system prune -a -f --volumes

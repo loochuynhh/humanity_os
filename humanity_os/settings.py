@@ -1,17 +1,25 @@
 from pathlib import Path
 import environ
-
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-env = environ.Env(DEBUG=(bool, False))
-environ.Env.read_env(BASE_DIR / ".env")
+env = environ.Env(
+    DEBUG=(bool, False),
+    ALLOWED_HOSTS=(list, []),
+    EMAIL_USE_TLS=(bool, True),
+    DATABASE_PORT=(int, 3306),
+)
 
-SECRET_KEY = "django-insecure-2ze2*^o@b9u&(_=$@-(5(*pmdjcw4y*nfk(8k_mka$@01_wuxj"
+env_file = BASE_DIR / ".env"
+if env_file.exists():
+    env.read_env(str(env_file))
 
-DEBUG = True
+SECRET_KEY = env("SECRET_KEY")
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+DEBUG = env("DEBUG")
+
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
 INSTALLED_APPS = [
     "custom_admin",
@@ -21,6 +29,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "storages",
     "users",
     "projects",
     "evaluations",
@@ -70,30 +79,16 @@ DATABASES = {
 }
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "Asia/Ho_Chi_Minh"
-
 USE_I18N = True
-
 USE_TZ = True
-
-
-STATIC_URL = "/static/"
 
 LOGIN_URL = "/users/login/"
 
@@ -104,29 +99,62 @@ STATICFILES_DIRS = [
 ]
 
 LOGIN_EXEMPT_URLS = [
-    r"^$",
-    r"^users/login/$",
-    r"^users/register/$",
-    r"^users/forgot-password/$",
-    r"^users/change-password/$",
-    r"^users/reset-password/.*$",
+    r'^$',
+    r'^users/login/$',
+    r'^users/register/$',
+    r'^users/forgot-password/$',
+    r'^users/change-password/$',
+    r'^users/reset-password/.*$',
+    r'^static/.*$',
+    r'^media/.*$',
 ]
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
-# STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
-
-MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 EMAIL_BACKEND = env("EMAIL_BACKEND")
 EMAIL_HOST = env("EMAIL_HOST")
-EMAIL_PORT = env("EMAIL_PORT")
-EMAIL_USE_TLS = env("EMAIL_USE_TLS")
+EMAIL_PORT = env.int("EMAIL_PORT")
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS")
 EMAIL_HOST_USER = env("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 
 AUTH_USER_MODEL = "users.Users"
-DEBUG = True
 GEMINI_API_KEY = env("GEMINI_API_KEY")
 
-DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
+
+if DEBUG:
+    STATIC_URL = "/static/"
+    MEDIA_URL = "/media/"
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+    DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+else:
+    AZURE_ACCOUNT_NAME = env("AZURE_ACCOUNT_NAME")
+    AZURE_ACCOUNT_KEY = env("AZURE_ACCOUNT_KEY")
+    AZURE_CONTAINER_STATIC = env("AZURE_CONTAINER_STATIC")
+    AZURE_CONTAINER_MEDIA = env("AZURE_CONTAINER_MEDIA")
+
+    STATIC_URL = f"https://{AZURE_ACCOUNT_NAME}.blob.core.windows.net/{AZURE_CONTAINER_STATIC}/"
+    MEDIA_URL = f"https://{AZURE_ACCOUNT_NAME}.blob.core.windows.net/{AZURE_CONTAINER_MEDIA}/"
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.azure_storage.AzureStorage",
+            "OPTIONS": {
+                "account_name": env("AZURE_ACCOUNT_NAME"),
+                "account_key": env("AZURE_ACCOUNT_KEY"),
+                "azure_container": env("AZURE_CONTAINER_MEDIA"),
+                "overwrite_files": True,
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "storages.backends.azure_storage.AzureStorage",
+            "OPTIONS": {
+                "account_name": env("AZURE_ACCOUNT_NAME"),
+                "account_key": env("AZURE_ACCOUNT_KEY"),
+                "azure_container": env("AZURE_CONTAINER_STATIC"),
+                "overwrite_files": True,
+            },
+        },
+    }
