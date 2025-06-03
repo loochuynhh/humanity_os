@@ -59,7 +59,9 @@
                   <h4 class="fw-bold text-success">{{ task_counts.Completed }}</h4>
                 </div>
               </div>
-              <canvas id="taskChart" height="100" class="mt-3" data-chart-data="{{ task_chart_data|safe }}"></canvas>
+              <div class="w-50 mx-auto">
+                <canvas id="taskChart" height="100" class="mt-3" data-chart-data="{{ task_chart_data|safe }}"></canvas>
+              </div>
               <a href="{% url 'projects:all_tasks' %}" class="btn btn-outline-primary w-100 mt-3">Xem tất cả Tasks</a>
             </div>
           </div>
@@ -98,7 +100,9 @@
             <div class="card shadow-sm hover-card">
                 <div class="card-body">
                     <h5 class="card-title fw-bold"><i class="bi bi-pie-chart me-2"></i>Phân bổ thời gian theo dự án</h5>
-                    <canvas id="projectTimeChart" height="200"></canvas>
+                    <div class="w-50 mx-auto">  
+                        <canvas id="projectTimeChart" height="200"></canvas>
+                    </div>
                     <a href="{% url 'projects:time_tracking' %}" class="btn btn-outline-primary w-100 mt-3">Xem chi tiết thời gian</a>
                 </div>
             </div>
