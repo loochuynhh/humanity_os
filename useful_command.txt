@@ -11,9 +11,6 @@ mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u root -p mysql
 SELECT * FROM time_zone_name WHERE Name = 'Asia/Ho_Chi_Minh';
 sudo systemctl restart mysql
 
-backup database
-mysqldump -u root -p humanity_os > humanity_os_backup.sql
-docker-compose exec db mysqldump -u root -p humanity_os > humanity_os_backup.sql
 
 sudo docker container prune -f
 sudo docker image prune -a -f
@@ -21,11 +18,16 @@ sudo docker volume prune -f
 sudo docker network prune -f
 sudo docker system prune -a -f --volumes
 
+sudo docker build -t lochuynhhsb/humanity-os:latest .
+sudo docker push lochuynhhsb/humanity-os:latest
+
 DROP DATABASE IF EXISTS humanity_os;
 CREATE DATABASE humanity_os;
 EXIT;
-docker-compose exec -T db mysql -u root -plocubmysql humanity_os < humanity_os_backup.sql
 
+backup database
+mysqldump -u root -p humanity_os > humanity_os_backup.sql
+docker-compose exec -T db mysql -u root -plocubmysql humanity_os < humanity_os_backup.sql
 docker-compose exec db mysqldump -u root -plocubtmysql humanity_os > humanity_os_backup.sql
 
 
