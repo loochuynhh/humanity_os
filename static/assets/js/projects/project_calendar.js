@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
       entriesList.innerHTML = `
         <div class="list-group-item text-center py-4">
           <i class="bi bi-calendar-x text-muted mb-2" style="font-size: 2rem;"></i>
-          <p class="mb-0 text-muted">Không có time entry nào trong ngày này</p>
+          <p class="mb-0 text-muted">Không có công việc cần thực hiện nào trong ngày này</p>
         </div>
       `;
     } else {

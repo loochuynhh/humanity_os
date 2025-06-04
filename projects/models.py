@@ -244,8 +244,8 @@ class TeamProjectMembership(models.Model):
 
     class Meta:
         db_table = "team_project_memberships"
-        verbose_name = "Team Project Membership"
-        verbose_name_plural = "Team Project Memberships"
+        verbose_name = "Project Member"
+        verbose_name_plural = "Project Members"
         unique_together = ("project", "user")
 
     def __str__(self):

@@ -3,6 +3,7 @@ find . -mindepth 1 -maxdepth 2 \( -path "./.git" -o -path "./.venv" -o -path "./
 find . -path "./.venv" -prune -o -type f -name "urls.py" -exec echo "===== {} =====" \; -exec cat {} \;
 find . -path "./.venv" -prune -o -type f -name "models.py" -exec echo "===== {} =====" \; -exec cat {} \;
 
+
 Lệnh lỗi ai chat do sai timestap
 SELECT * FROM time_zone_name LIMIT 1;
 sudo apt-get install mysql-server
@@ -12,10 +13,869 @@ sudo systemctl restart mysql
 
 backup database
 mysqldump -u root -p humanity_os > humanity_os_backup.sql
-
+docker-compose exec db mysqldump -u root -p humanity_os > humanity_os_backup.sql
 
 sudo docker container prune -f
 sudo docker image prune -a -f
 sudo docker volume prune -f
 sudo docker network prune -f
 sudo docker system prune -a -f --volumes
+
+DROP DATABASE IF EXISTS humanity_os;
+CREATE DATABASE humanity_os;
+EXIT;
+docker-compose exec -T db mysql -u root -plocubmysql humanity_os < humanity_os_backup.sql
+
+docker-compose exec db mysqldump -u root -plocubtmysql humanity_os > humanity_os_backup.sql
+
+
+prompt structure web:
+"humanity_os/
+│
+├── manage.py
+├── docker-compose.yml
+├── Dockerfile
+├── requirements.txt
+├── .env
+│
+├── humanity_os/                 # Cấu hình Django chính
+│   ├── settings.py
+│   ├── urls.py
+│   ├── middleware.py
+│   ├── wsgi.py
+│   ├── asgi.py
+│   └── views.py                 # Có thể có trang chính hoặc API gốc
+│
+├── users/                       # Quản lý người dùng (User, Auth, Roles)
+│   ├── models.py
+│   ├── views.py
+│   ├── urls.py
+│   ├── admin.py
+│   ├── utils.py
+│   ├── apps.py
+│   └── migrations/
+│
+├── projects/                    # Quản lý dự án, công việc
+│   ├── models.py
+│   ├── views.py
+│   ├── urls.py
+│   ├── admin.py
+│   ├── utils.py
+│   └── migrations/
+│
+├── evaluations/                # Quản lý đánh giá, KPI cá nhân
+│   ├── models.py
+│   ├── views.py
+│   ├── urls.py
+│   ├── admin.py
+│   ├── utils.py
+│   └── migrations/
+│
+├── kpis/                        # Quản lý chỉ số hiệu suất KPI tổng thể
+│   ├── models.py
+│   ├── views.py
+│   ├── urls.py
+│   ├── admin.py
+│   ├── utils.py
+│   └── migrations/
+│
+├── custom_admin/               # Giao diện admin tùy chỉnh
+│   ├── models.py
+│   ├── views.py
+│   ├── urls.py
+│   ├── admin.py
+│   ├── forms.py
+│   └── templatetags/
+│
+├── templates/                  # Giao diện website (admin + user)
+│   └── ... (base.html, layout, partials, pages...)
+│
+├── static/                     # File tĩnh (JS, CSS, hình ảnh)
+│   └── assets/
+│
+└── scripts/                    # Script SQL, seed, migration
+    └── migrate_and_seed.py
+"; "➜  humanity_os git:(main) find . -path "./.venv" -prune -o -type f -name "urls.py" -exec echo "===== {} =====" \; -exec cat {} \;
+===== ./kpis/urls.py =====
+from django.urls import path
+from . import views
+
+app_name = 'kpis'
+
+urlpatterns = [
+    path('performance-dashboard/', views.performance_dashboard, name='performance_dashboard'),
+    path('update/', views.update_kpi, name='update_kpi'),
+    path('kpi-detail/<int:kpi_id>/', views.kpi_detail, name='kpi_detail'),
+    path('generate-pdf/', views.generate_pdf, name='generate_pdf'),
+]===== ./evaluations/urls.py =====
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path("", views.evaluations, name="evaluations"),
+    path("feedback-detail/", views.feedback_detail, name="feedback_detail"),
+    path("submit-form/", views.submit_form, name="submit_form"),
+]===== ./projects/urls.py =====
+from django.urls import path
+from .views import (
+    all_projects,
+    project_detail,
+    all_tasks,
+    my_tasks,
+    task_detail,
+    update_status,
+    toggle_time,
+    update_task_details,
+    request_deadline_extension,
+    extend_deadline,
+    time_tracking,
+    update_time_entry,
+    update_assignment_status,
+    team_members_data,
+    project_calendar,
+    project_calendar_events,
+    project_statistics,
+    project_statistics_data,
+    project_progress,
+    project_progress_data,
+    create_time_entry,
+    update_time_entry,
+    update_assignment_status,
+    suggest_user_for_task,
+)
+
+urlpatterns = [
+    # Các route dự án
+    path("projects/", all_projects, name="all_projects"),
+    path("projects/<int:project_id>/", project_detail, name="project_detail"),
+    path("project-statistics/", project_statistics, name="project_statistics"),
+    path("project-statistics-data/", project_statistics_data, name="project_statistics_data"),
+    path("project-progress/", project_progress, name="project_progress"),
+    path("project-progress-data/", project_progress_data, name="project_progress_data"),
+    path("team-members-data/", team_members_data, name="team_members_data"),
+
+    # Calendar
+    path("project-calendar/", project_calendar, name="project_calendar"),
+    path("project-calendar-events/", project_calendar_events, name="project_calendar_events"),
+
+    # Các route task
+    path("tasks/", all_tasks, name="all_tasks"),
+    path("my-tasks/", my_tasks, name="my_tasks"),
+    path("task/<int:task_id>/", task_detail, name="task_detail"),
+    path("update-status/", update_status, name="update_status"),
+    path("toggle-time/", toggle_time, name="toggle_time"),
+    path("update-task-details/", update_task_details, name="update_task_details"),
+    path("request-deadline-extension/", request_deadline_extension, name="request_deadline_extension"),
+    path("extend-deadline/<int:task_id>/", extend_deadline, name="extend_deadline"),
+
+    # Thời gian làm việc
+    path("time-tracking/", time_tracking, name="time_tracking"),
+    path("update-time-entry/", update_time_entry, name="update_time_entry"),
+    path("update-assignment-status/", update_assignment_status, name="update_assignment_status"),
+    path('create_time_entry/', create_time_entry, name='create_time_entry'),
+    path('update_time_entry/', update_time_entry, name='update_time_entry'),
+    path('update_assignment_status/', update_assignment_status, name='update_assignment_status'),
+
+    # API
+    path("api/suggest-user-for-task/", suggest_user_for_task, name="suggest_user_for_task"),
+]
+===== ./humanity_os/urls.py =====
+"""humanity_os URL Configuration"""
+from django.contrib import admin
+from django.urls import path, include
+from .views import home
+from django.conf.urls.static import static
+from django.conf import settings
+from projects.views import suggest_user_for_task
+
+urlpatterns = [
+    path("", home, name="home"),
+    path("admin/dashboard/", include("custom_admin.urls")),
+    path("admin/", admin.site.urls), 
+    path("evaluations/", include(("evaluations.urls", "evaluations"), namespace="evaluations")),
+    path("kpis/", include(("kpis.urls", "kpis"), namespace="kpis")),
+    path("projects/", include(("projects.urls", "projects"), namespace="projects")),
+    path("users/", include(("users.urls", "users"), namespace="users")),
+    path("api/projects/", include("projects.urls")),
+    path("api/suggest-user-for-task/", suggest_user_for_task, name="suggest_user_for_task"),
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+===== ./custom_admin/urls.py =====
+from django.urls import path
+from custom_admin import views
+
+app_name = 'custom_admin'
+
+urlpatterns = [
+    path("", views.index, name="index"),
+    path("logout/", views.logout_view, name="logout"),
+]===== ./users/urls.py =====
+from django.urls import path
+from .views import (
+    login_view,
+    logout_view,
+    forgot_password,
+    change_password,
+    index,
+    reset_password,
+    check_in,
+    check_out,
+    profile,
+    update_profile,
+    upload_face_image,
+    update_fixed_location,
+    attendance,
+    get_current_work_time,
+    generate_user_report,
+    ai_chat,
+    get_chat_messages,
+)
+
+urlpatterns = [
+    path("", index, name="index"),
+    path("login/", login_view, name="login"),
+    path("logout/", logout_view, name="logout"),
+    path("forgot-password/", forgot_password, name="forgot_password"),
+    path("change-password/", change_password, name="change_password"),
+    path("reset-password/<uidb64>/<token>/", reset_password, name="reset_password"),
+    path("check-in/", check_in, name="check_in"),
+    path("check-out/", check_out, name="check_out"),
+    path('profile/', profile, name='profile'),
+    path('profile/update/', update_profile, name='update_profile'),
+    path('attendance/', attendance, name='attendance'),
+    path('profile/upload-face-image/', upload_face_image, name='upload_face_image'),
+    path('update-fixed-location/', update_fixed_location, name='update_fixed_location'),
+    path('api/current-work-time/', get_current_work_time, name='get_current_work_time'),
+    path('report/', generate_user_report, name='generate_user_report'),
+    path('api/ai_chat/', ai_chat, name='ai_chat'),
+    path('api/get_chat_messages/', get_chat_messages, name='get_chat_messages'),
+]
+➜  humanity_os git:(main) 
+"; "➜  humanity_os git:(main) find . -path "./.venv" -prune -o -type f -name "models.py" -exec echo "===== {} =====" \; -exec cat {} \;
+
+===== ./kpis/models.py =====
+from django.db import models
+from django.db.models import Sum
+from projects.models import TimeEntries 
+
+
+class KPIs(models.Model):
+    KPI_TYPES = [
+        ("Quantitative", "Quantitative"),
+        ("Qualitative", "Qualitative"),
+        ("Efficiency", "Efficiency"),
+        ("Quality", "Quality"),
+    ]
+
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+    kpi_type = models.CharField(max_length=20, choices=KPI_TYPES, default="Quantitative")
+    unit = models.CharField(max_length=20, null=True, blank=True)
+    weight = models.FloatField(default=1.0, help_text="Weight for overall performance calculation")
+    project = models.ForeignKey(
+        "projects.Projects",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="kpis",
+        help_text="Optional: Link to a specific project"
+    )
+
+    class Meta:
+        db_table = "kpis"
+        verbose_name = "KPI"
+        verbose_name_plural = "KPIs"
+
+    def __str__(self):
+        return self.name
+
+
+class EmployeeKPIs(models.Model):
+    TIME_PERIODS = [
+        ("Weekly", "Weekly"),
+        ("Monthly", "Monthly"),
+        ("Quarterly", "Quarterly"),
+        ("Yearly", "Yearly"),
+    ]
+
+    EVALUATION_LEVELS = [
+        ("Exceeded", "Exceeded"),
+        ("Achieved", "Achieved"),
+        ("Partially Achieved", "Partially Achieved"),
+        ("Not Achieved", "Not Achieved"),
+    ]
+
+    user = models.ForeignKey("users.Users", on_delete=models.CASCADE, related_name="kpis")
+    kpi = models.ForeignKey("kpis.KPIs", on_delete=models.CASCADE, related_name="employee_kpis")
+    target_value = models.FloatField()
+    actual_value = models.FloatField(null=True, blank=True)
+    achieved_percentage = models.FloatField(default=0.0, help_text="Percentage of target achieved")
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    time_period = models.CharField(max_length=20, choices=TIME_PERIODS, default="Monthly")
+    evaluation = models.CharField(
+        max_length=20,
+        choices=EVALUATION_LEVELS,
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        db_table = "employee_kpis"
+        verbose_name = "Employee KPI"
+        verbose_name_plural = "Employee KPIs"
+        indexes = [
+            models.Index(fields=['user', 'start_date']),
+            models.Index(fields=['kpi', 'time_period']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.kpi.name} ({self.time_period})"
+
+    def calculate_achieved_percentage(self):
+        """Calculate achieved percentage based on actual_value and target_value."""
+        if self.actual_value is not None and self.target_value > 0:
+            self.achieved_percentage = (self.actual_value / self.target_value) * 100
+            self.achieved_percentage = min(self.achieved_percentage, 200)
+        else:
+            self.achieved_percentage = 0
+        self.save()
+
+    def update_evaluation(self):
+        """Update evaluation based on achieved percentage."""
+        if self.achieved_percentage >= 120:
+            self.evaluation = "Exceeded"
+        elif self.achieved_percentage >= 100:
+            self.evaluation = "Achieved"
+        elif self.achieved_percentage >= 50:
+            self.evaluation = "Partially Achieved"
+        else:
+            self.evaluation = "Not Achieved"
+        self.save()
+
+    def update_from_project(self):
+        """Update actual_value based on project data."""
+        if self.kpi.project and self.kpi.kpi_type == "Quantitative":
+            # Lấy tất cả task_assignments của user trong project
+            task_assignments = self.user.task_assignments.filter(
+                task__project=self.kpi.project
+            )
+            
+            # Lọc time_entries thông qua task_assignment
+            time_entries = TimeEntries.objects.filter(
+                task_assignment__in=task_assignments,
+                start_time__gte=self.start_date,
+                start_time__lte=self.end_date
+            )
+            
+            # Lấy các task được gán cho user trong khoảng thời gian
+            tasks = self.kpi.project.tasks.filter(
+                task_assignments__user=self.user,
+                deadline__gte=self.start_date,
+                deadline__lte=self.end_date
+            ).distinct()
+            
+            if self.kpi.name.lower().find("time spent") != -1:
+                self.actual_value = time_entries.aggregate(total=Sum('duration'))['total'] or 0.0
+            elif self.kpi.name.lower().find("task completion") != -1:
+                completed_tasks = tasks.filter(status="Completed").count()
+                total_tasks = tasks.count()
+                self.actual_value = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0.0
+            elif self.kpi.name.lower().find("bug rate") != -1:
+                self.actual_value = time_entries.aggregate(total=Sum('duration'))['total'] or 0.0
+            
+            self.calculate_achieved_percentage()
+            self.update_evaluation()
+        
+        self.save()===== ./evaluations/models.py =====
+from django.db import models
+from django.utils import timezone
+
+class Forms(models.Model):
+    name = models.CharField(max_length=255)
+    type = models.CharField(
+        max_length=10,
+        choices=[
+            ("peer", "Peer"),
+            ("review", "Review"),
+            ("feedback", "Feedback"),
+        ],
+        default="peer",
+    )
+    period = models.CharField(max_length=20, default="monthly")
+    deadline = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(
+        max_length=10,
+        choices=[("open", "Open"), ("closed", "Closed")],
+        default="open",
+    )
+
+    class Meta:
+        db_table = "forms"
+        verbose_name = "Form"
+        verbose_name_plural = "Forms"
+
+    def __str__(self):
+        return self.name
+
+class FormQuestions(models.Model):
+    form = models.ForeignKey("evaluations.Forms", on_delete=models.CASCADE)
+    question_text = models.TextField()
+    question_type = models.CharField(
+        max_length=10,
+        choices=[("rating", "Rating"), ("text", "Text")],
+        default="text",
+    )
+    max_score = models.IntegerField(null=True, blank=True)  # For rating questions
+
+    class Meta:
+        db_table = "form_questions"
+        verbose_name = "Form Question"
+        verbose_name_plural = "Form Questions"
+
+    def __str__(self):
+        return self.question_text[:50]
+
+class FormResponses(models.Model):
+    form = models.ForeignKey("evaluations.Forms", on_delete=models.CASCADE)
+    question = models.ForeignKey("evaluations.FormQuestions", on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        "users.Users", on_delete=models.CASCADE, related_name="responses_given"
+    )
+    target_user = models.ForeignKey(
+        "users.Users", on_delete=models.CASCADE, related_name="responses_received"
+    )
+    answer = models.TextField()
+    answer_type = models.CharField(
+        max_length=10,
+        choices=[("numeric", "Numeric"), ("text", "Text")],
+        default="text",
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "form_responses"
+        verbose_name = "Form Response"
+        verbose_name_plural = "Form Responses"
+
+    def __str__(self):
+        return f"{self.user.username} -> {self.target_user.username} ({self.form.name})"
+    
+    ===== ./projects/models.py =====
+# projects/models.py
+from django.db import models
+from django.utils import timezone
+from django.db.models import Sum
+from django.core.exceptions import ValidationError
+
+
+class Projects(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    manager = models.ForeignKey(
+        "users.Users",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="managed_projects",
+    )
+    team_members = models.ManyToManyField(
+        "users.Users",
+        through="TeamProjectMembership",
+        related_name="projects"
+    )
+
+    class Meta:
+        db_table = "projects"
+        verbose_name = "Project"
+        verbose_name_plural = "Projects"
+
+    def __str__(self):
+        return self.name
+
+
+class Tasks(models.Model):
+    STATUS_CHOICES = [
+        ("To-do", "To-do"),
+        ("In progress", "In progress"),
+        ("Completed", "Completed"),
+        ("Late", "Late"),
+    ]
+
+    DIFFICULTY_CHOICES = [
+        ("Easy", "Easy"),
+        ("Medium", "Medium"),
+        ("Hard", "Hard"),
+    ]
+
+    project = models.ForeignKey("projects.Projects", on_delete=models.CASCADE, related_name="tasks")
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    deadline = models.DateTimeField()    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="To-do")
+    difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default="Medium") 
+    estimated_time = models.FloatField(null=True, blank=True)
+    github_link = models.URLField(null=True, blank=True)
+    total_time = models.FloatField(default=0.0)
+    is_tracking = models.BooleanField(default=False)
+    notes = models.TextField(null=True, blank=True)
+    start_date = models.DateTimeField(null=True, blank=True)  
+    completed_date = models.DateTimeField(null=True, blank=True) 
+    
+    class Meta:
+        db_table = "tasks"
+        verbose_name = "Task"
+        verbose_name_plural = "Tasks"
+        indexes = [
+            models.Index(fields=['deadline']),
+            models.Index(fields=['status']),
+            models.Index(fields=['start_date']),
+        ]
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def is_overdue(self):
+        return self.deadline.date() < timezone.now().date() and self.status != "Completed"
+
+    @property
+    def days_until_deadline(self):
+        return (self.deadline.date() - timezone.now().date()).days
+    
+    def update_start_date(self):
+        """Cập nhật ngày bắt đầu dựa trên TimeEntry đầu tiên của task"""
+        # Lấy TimeEntry đầu tiên từ tất cả TaskAssignment của task này
+        earliest_entry = TimeEntries.objects.filter(
+            task_assignment__task=self
+        ).order_by('start_time').first()
+        
+        self.start_date = earliest_entry.start_time if earliest_entry else None
+        self.save(update_fields=['start_date'])
+
+    def update_total_time(self):
+        """Cập nhật tổng thời gian thực tế từ tất cả TaskAssignment"""
+        # Tính tổng thời gian từ tất cả TaskAssignment
+        total = TaskAssignments.objects.filter(task=self).aggregate(
+            total=Sum('actual_time')
+        )['total'] or 0
+        
+        self.total_time = total
+        self.save(update_fields=['total_time'])
+
+    def update_status_from_assignments(self):
+        """Cập nhật trạng thái task dựa trên trạng thái của các TaskAssignment"""
+        assignments = TaskAssignments.objects.filter(task=self)
+        
+        if not assignments.exists():
+            self.status = "To-do"
+            self.completed_date = None
+            self.save(update_fields=['status', 'completed_date'])
+            return
+            
+        if all(assignment.status == "Completed" for assignment in assignments):
+            self.status = "Completed"
+            if not self.completed_date:
+                self.completed_date = timezone.now()
+        elif self.is_overdue:
+            self.status = "Late"
+        elif any(assignment.status == "In progress" for assignment in assignments):
+            self.status = "In progress"
+        else:
+            self.status = "To-do"
+        
+        self.save(update_fields=['status', 'completed_date'])
+
+
+class TaskAssignments(models.Model):
+    ROLE_CHOICES = [
+        ("Thực hiện chính", "Thực hiện chính"),
+        ("Đồng thực hiện", "Đồng thực hiện"),
+        ("Review", "Review"),
+        ("Test", "Test"),
+        ("Khác", "Khác"),
+    ]
+    
+    task = models.ForeignKey("projects.Tasks", on_delete=models.CASCADE, related_name="task_assignments")
+    user = models.ForeignKey("users.Users", on_delete=models.CASCADE, related_name="task_assignments")
+    role = models.CharField(max_length=50, choices=ROLE_CHOICES, default="Thực hiện chính")
+    estimated_time = models.FloatField(null=True, blank=True)
+    actual_time = models.FloatField(default=0.0)
+    status = models.CharField(
+        max_length=20,
+        choices=Tasks.STATUS_CHOICES,
+        default="To-do"
+    )
+    
+    class Meta:
+        db_table = "task_assignments"
+        verbose_name = "Task Assignment"
+        verbose_name_plural = "Task Assignments"
+        unique_together = ("task", "user", "role")
+        indexes = [
+            models.Index(fields=['task', 'user']),
+            models.Index(fields=['status']),
+        ]
+
+    def __str__(self):
+        return f"{self.task.title} - {self.user.username} ({self.role})"
+    
+    def update_actual_time(self):
+        """Cập nhật thời gian thực tế từ các TimeEntries"""
+        total = TimeEntries.objects.filter(task_assignment=self).aggregate(
+            total=Sum('duration')
+        )['total'] or 0
+        
+        self.actual_time = total
+        self.save(update_fields=['actual_time'])
+        
+        # Cập nhật tổng thời gian của task
+        self.task.update_total_time()
+
+
+class TimeEntries(models.Model):
+    task_assignment = models.ForeignKey("projects.TaskAssignments", on_delete=models.CASCADE, related_name="time_entries")
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField(null=True, blank=True)
+    duration = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        db_table = "time_entries"
+        verbose_name = "Time Entry"
+        verbose_name_plural = "Time Entries"
+        indexes = [
+            models.Index(fields=['task_assignment', 'start_time']),
+            models.Index(fields=['start_time']),
+        ]
+
+    def __str__(self):
+        return f"{self.task_assignment.user.username} - {self.task_assignment.task.title} ({self.start_time})"
+
+    def clean(self):
+        """Kiểm tra end_time > start_time"""
+        if self.end_time and self.start_time and self.end_time <= self.start_time:
+            raise ValidationError("Thời gian kết thúc phải lớn hơn thời gian bắt đầu.")
+            
+    def save(self, *args, **kwargs):
+        # Kiểm tra điều kiện trước khi lưu
+        self.clean()
+        
+        # Tính duration nếu có end_time
+        if self.end_time and self.start_time:
+            self.duration = (self.end_time - self.start_time).total_seconds() / 3600
+            
+        super().save(*args, **kwargs)
+        
+        # Cập nhật actual_time của TaskAssignment
+        if self.task_assignment:
+            self.task_assignment.update_actual_time()
+
+
+class DeadlineExtensionRequest(models.Model):
+    STATUS_CHOICES = [
+        ("Pending", "Pending"),
+        ("Approved", "Approved"),
+        ("Rejected", "Rejected"),
+    ]
+
+    task = models.ForeignKey("projects.Tasks", on_delete=models.CASCADE, related_name="deadline_requests")
+    requested_by = models.ForeignKey("users.Users", on_delete=models.CASCADE, related_name="deadline_requests")
+    requested_deadline = models.DateTimeField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Pending")
+    reason = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "deadline_extension_requests"
+        verbose_name = "Deadline Request"
+        verbose_name_plural = "Deadline Requests"
+        indexes = [
+            models.Index(fields=['task', 'status']),
+            models.Index(fields=['requested_by', 'status']),
+        ]
+
+    def __str__(self):
+        return f"Request for {self.task.title} by {self.requested_by.username}"
+
+
+class TeamProjectMembership(models.Model):
+    project = models.ForeignKey(Projects, on_delete=models.CASCADE)
+    user = models.ForeignKey("users.Users", on_delete=models.CASCADE)
+    join_date = models.DateTimeField(auto_now_add=True)
+    role = models.CharField(max_length=50, default="Member")
+
+    class Meta:
+        db_table = "team_project_memberships"
+        verbose_name = "Team Project Membership"
+        verbose_name_plural = "Team Project Memberships"
+        unique_together = ("project", "user")
+
+    def __str__(self):
+        return f"{self.user.username} in {self.project.name}"===== ./custom_admin/models.py =====
+from django.db import models
+
+# Create your models here.
+===== ./users/models.py =====
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+
+
+class Users(AbstractUser):
+    avatar = models.ImageField(upload_to="avatars/", null=True, blank=True)
+    phone = models.CharField(max_length=20, null=True, blank=True)
+    role = models.CharField(
+        max_length=50,
+        choices=[("Employee", "Employee"), ("Manager", "Manager"), ("Admin", "Admin")],
+        default="Employee",
+    )
+    department = models.CharField(max_length=100, null=True, blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[("Active", "Active"), ("Inactive", "Inactive")],
+        default="Active",
+    )
+    date_of_joining = models.DateField(null=True, blank=True)
+    fixed_location = models.CharField(max_length=255, null=True, blank=True)
+    bio = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = "users"
+        verbose_name = "User"
+        verbose_name_plural = "Users"
+
+    def __str__(self):
+        return self.username
+
+    @property
+    def avatar_url(self):
+        if self.avatar and hasattr(self.avatar, 'url'):
+            return self.avatar.url
+        return '/static/assets/img/default-avatar.png'
+
+
+class UserFaceImage(models.Model):
+    user = models.ForeignKey("users.Users", on_delete=models.CASCADE, related_name="face_images")
+    face_image = models.ImageField(upload_to="face_images/")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "user_face_images"
+        verbose_name = "User Face Image"
+        verbose_name_plural = "User Face Images"
+
+    def __str__(self):
+        return f"Face image for {self.user.username}"
+
+
+class CheckInCheckOut(models.Model):
+    user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    date = models.DateField()
+    checkin_time = models.DateTimeField(null=True, blank=True)
+    checkout_time = models.DateTimeField(null=True, blank=True)
+    checkin_image = models.ImageField(upload_to='checkin_images/', null=True, blank=True)
+    checkout_image = models.ImageField(upload_to='checkout_images/', null=True, blank=True)
+    checkin_location = models.CharField(max_length=100, null=True, blank=True)
+    checkout_location = models.CharField(max_length=100, null=True, blank=True)
+    is_valid_checkin = models.BooleanField(default=False)
+    is_valid_checkout = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "Check-in/Check-out"
+        verbose_name_plural = "Check-in/Check-out"
+        db_table = "checkin_checkout"
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'date'], name='unique_checkin_checkout_per_day'),
+        ]
+        indexes = [
+            models.Index(fields=['date']),
+            models.Index(fields=['user', 'date']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.date}"
+
+class AIChatMessage(models.Model):
+    user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    role = models.CharField(max_length=10, choices=[('user', 'User'), ('model', 'Model')])
+    content = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('timestamp',)
+        db_table = "ai_chat_messages"
+        verbose_name = "AI Chat Message"
+        verbose_name_plural = "AI Chat Messages"
+
+    def __str__(self):
+        return f"{self.role}: {self.content[:50]}"%                                                                                                           ➜  humanity_os git:(main) 
+"; "Dưới đây là tóm tắt ngắn gọn, xúc tích về chức năng của từng hàm trong các file `views.py` của dự án Django, được trình bày để AI dễ hiểu và ánh xạ với các URL tương ứng:
+
+### ./kpis/views.py
+- **`update_kpi`**: Cập nhật giá trị thực tế của KPI, tính toán phần trăm đạt được và đánh giá, trả về JSON kết quả. (URL: POST cập nhật KPI)
+- **`performance_dashboard`**: Hiển thị bảng điều khiển hiệu suất với dữ liệu KPI, task, thời gian làm việc, và biểu đồ KPI theo kỳ và dự án. (URL: GET bảng điều khiển hiệu suất)
+- **`generate_pdf`**: Tạo báo cáo PDF về hiệu suất KPI, task, và thời gian làm việc theo kỳ và dự án. (URL: GET xuất PDF báo cáo hiệu suất)
+- **`kpi_detail`**: Hiển thị chi tiết một KPI cụ thể của người dùng. (URL: GET chi tiết KPI)
+
+### ./evaluations/views.py
+- **`feedback_detail`**: Trả về HTML chi tiết phản hồi đánh giá từ một response_id, kiểm tra quyền truy cập. (URL: GET chi tiết đánh giá)
+- **`submit_form`**: 
+  - GET: Hiển thị form đánh giá với danh sách câu hỏi và người dùng mục tiêu. 
+  - POST: Gửi câu trả lời đánh giá, kiểm tra quyền và loại form. (URL: GET/POST gửi form đánh giá)
+- **`evaluations`**: Hiển thị danh sách đánh giá (nhận/gửi), form mở, và thống kê đánh giá của người dùng. (URL: GET danh sách đánh giá)
+
+### ./projects/views.py
+- **`all_projects`**: Hiển thị danh sách dự án (tất cả/của tôi/quản lý) với tiến độ, số lượng task, và bộ lọc. (URL: GET danh sách dự án)
+- **`project_detail`**: Trả về JSON chi tiết dự án, thành viên, task, và tiến độ, kiểm tra quyền truy cập. (URL: GET chi tiết dự án)
+- **`team_members_data`**: Trả về JSON dữ liệu thành viên dự án (task, thời gian, tiến độ). (URL: GET dữ liệu thành viên)
+- **`project_progress`**: Hiển thị trang tiến độ dự án của người dùng. (URL: GET trang tiến độ dự án)
+- **`project_progress_data`**: Trả về JSON tiến độ dự án, số lượng task, và trạng thái. (URL: GET dữ liệu tiến độ dự án)
+- **`all_tasks`**: Hiển thị danh sách task của các dự án người dùng tham gia, hỗ trợ bộ lọc. (URL: GET danh sách task)
+- **`my_tasks`**: Hiển thị danh sách task được gán cho người dùng, kèm cảnh báo deadline và tiến độ. (URL: GET danh sách task của tôi)
+- **`task_detail`**: Hiển thị chi tiết task, thời gian theo dõi, và tiến độ, kiểm tra quyền truy cập. (URL: GET chi tiết task)
+- **`update_status`**: Cập nhật trạng thái task assignment, kiểm tra quyền và deadline. (URL: POST cập nhật trạng thái task)
+- **`toggle_time`**: Bắt đầu/dừng theo dõi thời gian task, cập nhật trạng thái task. (URL: POST bắt đầu/dừng thời gian)
+- **`update_task_details`**: Cập nhật chi tiết task (tiêu đề, mô tả, độ khó, v.v.), kiểm tra quyền. (URL: POST cập nhật chi tiết task)
+- **`request_deadline_extension`**: Gửi yêu cầu gia hạn deadline cho task. (URL: POST yêu cầu gia hạn)
+- **`extend_deadline`**: Gia hạn deadline task, chỉ dành cho quản lý/admin. (URL: POST gia hạn deadline)
+- **`time_tracking`**: Hiển thị trang theo dõi thời gian với dữ liệu thời gian theo ngày/task. (URL: GET trang theo dõi thời gian)
+- **`update_time_entry`**: Cập nhật thời gian bắt đầu/kết thúc của time entry, kiểm tra quyền. (URL: POST cập nhật time entry)
+- **`project_calendar`**: Hiển thị trang lịch dự án. (URL: GET trang lịch dự án)
+- **`project_calendar_events`**: Trả về JSON sự kiện thời gian task trong khoảng thời gian và dự án. (URL: GET sự kiện lịch dự án)
+- **`project_statistics`**: Hiển thị trang thống kê dự án. (URL: GET trang thống kê dự án)
+- **`project_statistics_data`**: Trả về JSON thống kê dự án (task, thành viên, tiến độ, thời gian). (URL: GET dữ liệu thống kê dự án)
+- **`create_time_entry`**: Tạo time entry mới với thời gian bắt đầu/kết thúc, kiểm tra quyền. (URL: POST tạo time entry)
+- **`suggest_user_for_task`**: Đề xuất người dùng phù hợp cho task dựa trên AI, trả về JSON với lý do. (URL: POST đề xuất người dùng)
+
+### ./humanity_os/views.py
+- **`home`**: Hiển thị trang chủ. (URL: GET trang chủ)
+
+### ./custom_admin/views.py
+- **`logout_view`**: Đăng xuất người dùng và chuyển hướng về trang admin. (URL: GET đăng xuất admin)
+- **`index`**: Hiển thị bảng điều khiển admin với thống kê người dùng, dự án, task, KPI, và hoạt động gần đây. (URL: GET bảng điều khiển admin)
+
+### ./users/views.py
+- **`login_view`**: Xử lý đăng nhập người dùng, hiển thị thông báo thành công/thất bại. (URL: GET/POST đăng nhập)
+- **`logout_view`**: Đăng xuất người dùng và chuyển hướng về trang chủ. (URL: GET đăng xuất)
+- **`forgot_password`**: Gửi email đặt lại mật khẩu khi người dùng quên mật khẩu. (URL: GET/POST quên mật khẩu)
+- **`change_password`**: Thay đổi mật khẩu người dùng, yêu cầu xác nhận mật khẩu hiện tại. (URL: GET/POST đổi mật khẩu)
+- **`reset_password`**: Đặt lại mật khẩu qua liên kết token. (URL: GET/POST đặt lại mật khẩu)
+- **`user_list`**: Hiển thị danh sách người dùng (chỉ admin). (URL: GET danh sách người dùng)
+- **`create_user`**: Tạo người dùng mới (chỉ admin). (URL: GET/POST tạo người dùng)
+- **`check_in`**: Xử lý check-in với vị trí và ảnh, lưu vào hệ thống. (URL: POST check-in)
+- **`check_out`**: Xử lý check-out với vị trí và ảnh, lưu vào hệ thống. (URL: POST check-out)
+- **`index`**: Hiển thị bảng điều khiển người dùng với thông tin task, thời gian, KPI, và dự án. (URL: GET bảng điều khiển người dùng)
+- **`profile`**: Hiển thị hồ sơ người dùng với task gần đây, lịch sử check-in, và dự án. (URL: GET hồ sơ người dùng)
+- **`update_profile`**: Cập nhật thông tin hồ sơ người dùng (tên, điện thoại, v.v.). (URL: POST cập nhật hồ sơ)
+- **`upload_face_image`**: Tải lên ảnh khuôn mặt cho nhận diện. (URL: POST tải ảnh khuôn mặt)
+- **`update_fixed_location`**: Cập nhật vị trí làm việc cố định của người dùng. (URL: POST cập nhật vị trí)
+- **`attendance`**: Hiển thị lịch sử điểm danh 45 ngày gần nhất với thống kê. (URL: GET lịch sử điểm danh)
+- **`get_current_work_time`**: Trả về JSON thời gian làm việc hiện tại (hôm nay/tuần). (URL: GET thời gian làm việc)
+- **`generate_user_report`**: Tạo báo cáo PDF về hiệu suất người dùng theo kỳ. (URL: GET xuất báo cáo người dùng)
+- **`ai_chat`**: Xử lý trò chuyện AI, lưu tin nhắn, và trả về phản hồi JSON. (URL: POST trò chuyện AI)
+- **`get_chat_messages`**: Trả về JSON 20 tin nhắn AI gần nhất của người dùng. (URL: GET tin nhắn AI)
+"

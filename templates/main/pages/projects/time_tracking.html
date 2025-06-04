@@ -18,7 +18,7 @@
           <i class="bi bi-clock me-2"></i>Time Tracking
         </h1>
         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createTimeEntryModal">
-          <i class="fas fa-plus me-1"></i>Thêm Time Entry
+          <i class="fas fa-plus me-1"></i>Bắt đầu thực hiện công việc
         </button>
       </div>
 
@@ -27,7 +27,7 @@
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="createTimeEntryModalLabel">Thêm Time Entry</h5>
+              <h5 class="modal-title" id="createTimeEntryModalLabel">Bắt đầu thực hiện công việc</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="createTimeEntryForm" method="POST" data-create-url="{% url 'projects:create_time_entry' %}">
@@ -123,13 +123,12 @@
                 <table id="timeEntriesTable" class="table table-hover align-items-center mb-0">
                   <thead>
                     <tr>
-                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Task</th>
-                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Vai trò</th>
-                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Trạng thái</th>
-                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Bắt đầu</th>
-                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Kết thúc</th>
-                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Thời gian (giờ)</th>
-                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Hành động</th>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-6">Task</th>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-6">Vai trò</th>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-6">Trạng thái</th>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-6">Bắt đầu</th>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-6">Kết thúc</th>
+                      <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-6">Thời gian (giờ)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -167,11 +166,6 @@
                       </td>
                       <td>
                         <span class="text-xs font-weight-bold">{{ entry.duration|floatformat:2|default:"0.00" }}</span>
-                      </td>
-                      <td>
-                        <button class="btn btn-outline-primary btn-sm edit-entry">Chỉnh sửa</button>
-                        <button class="btn btn-primary btn-sm save-entry d-none">Lưu</button>
-                        <button class="btn btn-secondary btn-sm cancel-entry d-none">Hủy</button>
                       </td>
                     </tr>
                     {% empty %}

@@ -14,6 +14,8 @@ env = environ.Env(
 env_file = BASE_DIR / ".env"
 if env_file.exists():
     env.read_env(str(env_file))
+else:
+    environ.Env.read_env()
 
 SECRET_KEY = env("SECRET_KEY")
 
@@ -29,6 +31,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.humanize",
     "storages",
     "users",
     "projects",

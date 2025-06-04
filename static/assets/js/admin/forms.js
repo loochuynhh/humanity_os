@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Tải thư viện Marked.js nếu chưa có
             if (!window.marked) {
                 const markedScript = document.createElement('script');
-                markedScript.src = 'https://cdn.jsdelivr.net/npm/marked@4.0.18/marked.min.js';
+                markedScript.src = '{% static "assets/js/marked.min.js" %}';
                 document.head.appendChild(markedScript);
                 
                 // Đợi đến khi thư viện được load xong

@@ -57,7 +57,7 @@
       <!-- Tasks -->
       <li class="nav-item">
         <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#tasksSubmenu" aria-expanded="{% if request.resolver_match.url_name in 'all_tasks,my_tasks,task_detail,time_tracking' %}true{% else %}false{% endif %}">
-          <i class="bi bi-check2-square me-2"></i>Công việc
+          <i class="bi bi-check2-square me-2"></i>Công việc 
           <i class="bi bi-chevron-down float-end mt-1 toggle-icon"></i>
         </a>
         <div class="collapse {% if request.resolver_match.url_name in 'all_tasks,my_tasks,task_detail,time_tracking' %}show{% endif %}" id="tasksSubmenu">
@@ -151,7 +151,6 @@
 .sidebar .nav-link:hover {
   background: var(--hover-bg);
   color: #ffffff;
-  transform: translateX(5px);
 }
 
 .sidebar .nav-link.active {
@@ -189,7 +188,6 @@
 
 .user-info-wrapper:hover {
   background: var(--hover-bg);
-  transform: translateY(-2px);
 }
 
 .sidebar .nav-item .collapse {

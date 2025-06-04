@@ -1,4 +1,5 @@
 {% load static %}
+{% load report_tags %}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -169,18 +170,18 @@
         <p>{% now "d/m/Y" %}</p>
     </div>
 
-    <!-- Mục lục -->
-    <div class="toc">
-        <h2>Mục lục</h2>
-        <ul>
-            <li><a href="#thong-tin-nhan-vien">1. Thông tin nhân viên</a><span>3</span></li>
-            <li><a href="#tom-tat-hieu-suat">2. Tóm tắt hiệu suất</a><span>4</span></li>
-            <li><a href="#thong-ke-diem-danh">3. Thống kê điểm danh</a><span>5</span></li>
-            <li><a href="#cong-viec-du-an">4. Công việc & Dự án</a><span>7</span></li>
-            <li><a href="#kpis">5. Chỉ số hiệu suất (KPIs)</a><span>9</span></li>
-            <li><a href="#danh-gia">6. Đánh giá</a><span>11</span></li>
-            <li><a href="#nhan-xet-chung">7. Nhận xét chung</a><span>12</span></li>
-        </ul>
+    <!-- Bỏ mục lục và thêm tổng quan nhanh -->
+    <div class="page-break"></div>
+    <div class="section" id="tong-quan">
+        <h2>Tổng quan hiệu suất</h2>
+        <p>Báo cáo này trình bày tổng quan về hiệu suất làm việc của nhân viên trong {{ period_display }}, bao gồm các chỉ số về điểm danh, công việc, dự án và KPI.</p>
+        
+        <table class="summary-table">
+            <tr><td>Tỷ lệ đi làm</td><td>{{ attendance.attendance_rate }}% ({{ attendance.present_days }}/{{ attendance.total_days }} ngày)</td></tr>
+            <tr><td>Tỷ lệ hoàn thành công việc</td><td>{{ tasks.completion_rate }}% ({{ tasks.completed }}/{{ tasks.total }} tác vụ)</td></tr>
+            <tr><td>Tỷ lệ đạt KPI</td><td>{{ kpis.completion_rate }}% ({{ kpis.achieved }}/{{ kpis.total }} KPI)</td></tr>
+            <tr><td>Điểm đánh giá trung bình</td><td>{% if evaluations.feedback_score != None %}{{ evaluations.feedback_score|floatformat:1 }}/5{% else %}Chưa có đánh giá{% endif %}</td></tr>
+        </table>
     </div>
 
     <!-- Thông tin nhân viên -->
@@ -336,12 +337,11 @@
                     <td>{{ data.completed }}</td>
                     <td>{{ data.time }}</td>
                     <td>
-                        {% with progress=data.completed|floatformat:0|divisibleby:data.total %}
-                        <div class="progress-container">
-                            <div class="progress-bar" style="width: {{ progress }}%;"></div>
-                        </div>
-                        <span class="text-muted">{{ progress }}%</span>
-                        {% endwith %}
+                        {% if data.total > 0 %}
+                            {% widthratio data.completed data.total 100 %}%
+                        {% else %}
+                            0%
+                        {% endif %}
                     </td>
                 </tr>
                 {% empty %}
@@ -403,9 +403,9 @@
         <h2>6. Đánh giá</h2>
         <h3>Tóm tắt</h3>
         <table class="summary-table">
-            <tr><td>Điểm trung bình</td><td>{% if evaluations.feedback_score %}{{ evaluations.feedback_score|floatformat:1 }}/5{% else %}N/A{% endif %}</td></tr>
-            <tr><td>Điểm cao nhất</td><td>{% if evaluations.highest_score %}{{ evaluations.highest_score|floatformat:1 }}{% else %}N/A{% endif %}</td></tr>
-            <tr><td>Điểm thấp nhất</td><td>{% if evaluations.lowest_score %}{{ evaluations.lowest_score|floatformat:1 }}{% else %}N/A{% endif %}</td></tr>
+            <tr><td>Điểm trung bình</td><td>{% if evaluations.feedback_score != None %}{{ evaluations.feedback_score|floatformat:1 }}/5{% else %}Chưa có đánh giá{% endif %}</td></tr>
+            <tr><td>Điểm cao nhất</td><td>{% if evaluations.highest_score != None %}{{ evaluations.highest_score|floatformat:1 }}{% else %}Chưa có đánh giá{% endif %}</td></tr>
+            <tr><td>Điểm thấp nhất</td><td>{% if evaluations.lowest_score != None %}{{ evaluations.lowest_score|floatformat:1 }}{% else %}Chưa có đánh giá{% endif %}</td></tr>
         </table>
         <h3>Chi tiết</h3>
         <table>
@@ -433,32 +433,14 @@
     <!-- Nhận xét chung -->
     <div class="section" id="nhan-xet-chung">
         <h2>7. Nhận xét chung</h2>
-        {% with completion_rate=tasks.completion_rate|add:kpis.completion_rate|add:time_tracking.productivity_rate|add:attendance.attendance_rate|divisibleby:4 %}
-        <p><strong>Điểm hiệu suất tổng hợp:</strong> {{ completion_rate|floatformat:2 }}%</p>
-        <div style="margin: 10px 0;">
-            <div class="progress-container" style="width: 200px;">
-                <div class="progress-bar" style="width: {{ completion_rate }}%;"></div>
+        <p><strong>Đánh giá tổng thể:</strong></p>
+        {% if ai_evaluation %}
+            <div class="ai-evaluation">
+                {{ ai_evaluation|safe }}
             </div>
-        </div>
-        <p><strong>Đánh giá tổng thể:</strong>
-            {% if completion_rate >= 90 %}
-                Xuất sắc: Nhân viên có hiệu suất vượt trội, hoàn thành xuất sắc các KPI và công việc được giao.
-            {% elif completion_rate >= 75 %}
-                Tốt: Nhân viên hoàn thành tốt các nhiệm vụ, đạt được hầu hết các KPI đề ra.
-            {% elif completion_rate >= 60 %}
-                Đạt yêu cầu: Nhân viên hoàn thành công việc ở mức chấp nhận được, cần cải thiện một số khía cạnh.
-            {% else %}
-                Cần cải thiện: Nhân viên cần nỗ lực hơn để đạt các mục tiêu và KPI.
-            {% endif %}
-        </p>
-        <p><strong>Nhận xét chi tiết:</strong></p>
-        <ul>
-            <li><strong>Điểm danh:</strong> Tỷ lệ đi làm {{ attendance.attendance_rate }}%, với {{ attendance.present_days }} ngày đi làm trong tổng số {{ attendance.total_days }} ngày. {% if attendance.attendance_rate < 80 %}Cần cải thiện tính đều đặn trong việc đi làm.{% else %}Tính đều đặn được duy trì tốt.{% endif %}</li>
-            <li><strong>Công việc:</strong> Hoàn thành {{ tasks.completion_rate }}% công việc ({{ tasks.completed }}/{{ tasks.total }}). {% if tasks.late > 0 %}Có {{ tasks.late }} công việc trễ hạn, cần cải thiện quản lý thời gian.{% endif %}</li>
-            <li><strong>KPI:</strong> Đạt {{ kpis.completion_rate }}% KPI ({{ kpis.achieved }}/{{ kpis.total }}). {% if kpis.completion_rate < 70 %}Cần tập trung cải thiện các KPI chưa đạt.{% endif %}</li>
-            <li><strong> Francesca:</strong> Điểm trung bình {{ evaluations.feedback_score|floatformat:1|default:"N/A" }}/5. {% if evaluations.feedback_score and evaluations.feedback_score < 3 %}Cần chú ý đến chất lượng công việc và phản hồi từ đồng nghiệp.{% endif %}</li>
-        </ul>
-        {% endwith %}
+        {% else %}
+            <p>Chưa có đánh giá từ hệ thống AI.</p>
+        {% endif %}
     </div>
 
     <!-- Chân trang -->

@@ -24,6 +24,7 @@ from .views import (
     update_time_entry,
     update_assignment_status,
     suggest_user_for_task,
+    suggest_time_for_task,
 )
 
 urlpatterns = [
@@ -60,4 +61,5 @@ urlpatterns = [
 
     # API
     path("api/suggest-user-for-task/", suggest_user_for_task, name="suggest_user_for_task"),
+    path("api/suggest-time-for-task/", suggest_time_for_task, name="suggest_time_for_task"),
 ]

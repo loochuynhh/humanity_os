@@ -4,14 +4,45 @@ from .models import Users, UserFaceImage, CheckInCheckOut
 from django.utils.html import format_html
 
 class CustomUserAdmin(UserAdmin):
-    list_display = ("username", "email", "phone", "department", "fixed_location", "is_staff", "is_superuser")
-    list_filter = ("is_staff", "is_superuser", "department")
-    search_fields = ("username", "email", "phone")
+    list_display = (
+        "username",
+        "email",
+        "first_name",
+        "last_name",
+        "phone",
+        "department",
+        "role",
+        "status",
+        "fixed_location",
+        "date_of_joining",
+        "is_staff",
+        "is_superuser",
+        "is_active",
+    )
+    list_filter = ("is_staff", "is_superuser", "is_active", "department", "role", "status")
+    search_fields = ("username", "email", "first_name", "last_name", "phone", "department")
     ordering = ("username",)
 
     fieldsets = (
         (None, {"fields": ("username", "password")}),
-        ("Personal info", {"fields": ("email", "avatar", "phone", "department", "fixed_location")}),
+        (
+            "Personal Info",
+            {
+                "fields": (
+                    "first_name",
+                    "last_name",
+                    "email",
+                    "avatar",
+                    "phone",
+                    "department",
+                    "role",
+                    "status",
+                    "date_of_joining",
+                    "fixed_location",
+                    "bio",
+                )
+            },
+        ),
         (
             "Permissions",
             {
@@ -22,7 +53,15 @@ class CustomUserAdmin(UserAdmin):
                 )
             },
         ),
-        ("Important dates", {"fields": ("last_login", "date_joined")}),
+        (
+            "Important Dates",
+            {
+                "fields": (
+                    "last_login",
+                    "date_joined",
+                )
+            },
+        ),
     )
 
     add_fieldsets = (
@@ -33,23 +72,35 @@ class CustomUserAdmin(UserAdmin):
                 "fields": (
                     "username",
                     "email",
+                    "first_name",
+                    "last_name",
                     "password1",
                     "password2",
+                    "phone",
                     "department",
+                    "role",
+                    "status",
+                    "date_of_joining",
                     "fixed_location",
+                    "bio",
                     "is_staff",
                     "is_superuser",
+                    "is_active",
                 ),
             },
         ),
     )
+    def avatar_preview(self, obj):
+            if obj.avatar:
+                return format_html('<img src="{}" width="50" height="50" style="border-radius: 50%;" />', obj.avatar_url)
+            return "No avatar"
 
+    avatar_preview.short_description = "Avatar"
 
 class UserFaceImageAdmin(admin.ModelAdmin):
     list_display = ('user', 'uploaded_at')
     list_filter = ('uploaded_at',)
     search_fields = ('user__username', 'user__email')
-
 
 class CheckInCheckOutAdmin(admin.ModelAdmin):
     list_display = ('user', 'date', 'checkin_time', 'checkout_time', 'checkin_location_status',
@@ -179,6 +230,18 @@ class CheckInCheckOutAdmin(admin.ModelAdmin):
 
     view_checkout_image.short_description = 'Ảnh check-out'
 
+    def has_add_permission(self, request):
+        return False
+        
+    def has_delete_permission(self, request, obj=None):
+        return False
+    
+    # Chỉ cho phép chỉnh sửa is_valid_checkin và is_valid_checkout
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return [f.name for f in obj._meta.fields if f.name not in ['is_valid_checkin', 'is_valid_checkout']]
+        return []
+
 class AIChatMessageAdmin(admin.ModelAdmin):
     list_display = ('user', 'role', 'content_preview', 'timestamp')
     list_filter = ('role', 'timestamp', 'user__department')
@@ -195,6 +258,18 @@ class AIChatMessageAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         """Đặt các trường chỉ đọc để tránh chỉnh sửa trực tiếp."""
         return ('user', 'role', 'content', 'timestamp')
+    
+    def has_add_permission(self, request):
+        return False
+        
+    def has_delete_permission(self, request, obj=None):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
+        
+    def has_view_permission(self, request, obj=None):
+        return False
     
 admin.site.register(Users, CustomUserAdmin)
 admin.site.register(UserFaceImage, UserFaceImageAdmin)

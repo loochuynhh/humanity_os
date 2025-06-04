@@ -23,6 +23,167 @@ $(document).ready(function() {
         }
     });
 
+    console.log("Task detail JS đã tải thành công");
+    console.log("Bootstrap version:", typeof bootstrap !== 'undefined' ? 'Đã tải' : 'Chưa tải');
+    
+    // Kiểm tra modal element trong DOM
+    const modalElement = document.getElementById('aiTimeEstimationModal');
+    console.log("Modal element:", modalElement);
+    
+    // Lưu trữ tham chiếu đến modal
+    let aiTimeEstimationModalElement = modalElement;
+    let aiTimeEstimationModal = null;
+    
+    // Đảm bảo bootstrap đã tải trước khi khởi tạo modal
+    function initializeModal() {
+        if (!aiTimeEstimationModalElement) {
+            console.error('Không tìm thấy phần tử modal với ID "aiTimeEstimationModal"');
+            return false;
+        }
+        
+        if (typeof bootstrap === 'undefined') {
+            console.error('Bootstrap chưa được tải');
+            return false;
+        }
+        
+        try {
+            // Thử khởi tạo modal với bootstrap
+            aiTimeEstimationModal = new bootstrap.Modal(aiTimeEstimationModalElement);
+            console.log('Modal khởi tạo thành công (Bootstrap)');
+            return true;
+        } catch (error) {
+            console.error('Lỗi khởi tạo modal với Bootstrap:', error);
+            try {
+                // Thử khởi tạo với jQuery nếu Bootstrap thất bại
+                console.log('Thử khởi tạo với jQuery...');
+                $(aiTimeEstimationModalElement).modal({backdrop: 'static', keyboard: false});
+                console.log('Modal khởi tạo thành công (jQuery)');
+                // Tạo wrapper function để gọi show/hide dễ dàng
+                aiTimeEstimationModal = {
+                    show: function() {
+                        $(aiTimeEstimationModalElement).modal('show');
+                    },
+                    hide: function() {
+                        $(aiTimeEstimationModalElement).modal('hide');
+                    }
+                };
+                return true;
+            } catch (jqError) {
+                console.error('Lỗi khởi tạo modal với jQuery:', jqError);
+                return false;
+            }
+        }
+    }
+    
+    // Lưu trữ HTML ban đầu của form để khôi phục sau khi hủy
+    const originalFormHtml = $('#taskUpdateForm').html();
+    
+    // Xử lý sự kiện click vào nút đề xuất thời gian
+    $(document).on('click', '.suggest-time-btn', function(e) {
+        e.preventDefault();
+        console.log('Đã nhấp nút đề xuất thời gian');
+        
+        // Kiểm tra và khởi tạo modal nếu chưa
+        if (!aiTimeEstimationModal) {
+            const initialized = initializeModal();
+            if (!initialized) {
+                console.error("Không thể khởi tạo modal");
+                alert('Không thể mở modal đề xuất. Vui lòng tải lại trang.');
+                return;
+            }
+        }
+        
+        const taskId = $(this).data('task-id');
+        const estimatedTimeInput = $(this).closest('.input-group').find('input');
+        const userId = estimatedTimeInput.attr('name').replace('estimated_time_', '');
+        
+        console.log("Task ID:", taskId);
+        console.log("User ID:", userId);
+        
+        // Reset modal state
+        $('#aiTimeEstimationContent').addClass('d-none');
+        $('#aiTimeEstimationLoading').removeClass('d-none');
+        $('#aiTimeEstimationError').addClass('d-none');
+        
+        // Thử khởi tạo hoặc hiển thị modal với nhiều cách
+        try {
+            console.log("Đang mở modal...");
+            
+            // Phương án 1: Sử dụng Bootstrap modal instance
+            if (aiTimeEstimationModal && typeof aiTimeEstimationModal.show === 'function') {
+                aiTimeEstimationModal.show();
+            } 
+            // Phương án 2: Sử dụng jQuery modal
+            else if ($.fn.modal) {
+                $(aiTimeEstimationModalElement).modal('show');
+            } 
+            // Phương án 3: Hiện modal bằng cách thay đổi class
+            else {
+                $(aiTimeEstimationModalElement).addClass('show').css('display', 'block');
+                $('body').addClass('modal-open').append('<div class="modal-backdrop fade show"></div>');
+            }
+            
+            console.log("Modal đã được mở");
+        } catch (modalError) {
+            console.error("Lỗi khi mở modal:", modalError);
+            alert('Không thể mở modal đề xuất. Vui lòng tải lại trang.');
+            return;
+        }
+        
+        // Gọi API để lấy đề xuất thời gian
+        $.ajax({
+            url: '/projects/api/suggest-time-for-task/',
+            type: 'POST',
+            data: JSON.stringify({
+                task_id: taskId,
+                user_id: userId
+            }),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(data) {
+                console.log("Nhận phản hồi API thành công:", data);
+                
+                // Ẩn loading
+                $('#aiTimeEstimationLoading').addClass('d-none');
+                
+                if (data.error) {
+                    // Hiển thị lỗi
+                    $('#timeErrorMessage').text(data.error);
+                    $('#aiTimeEstimationError').removeClass('d-none');
+                } else {
+                    // Hiển thị kết quả
+                    $('#suggestedTime').text(data.suggested_time + ' giờ');
+                    $('#timeEstimationReasoning').html(data.reasoning);
+                    $('#aiTimeEstimationContent').removeClass('d-none');
+                    
+                    // Xử lý nút áp dụng
+                    $('#applyTimeEstimation').off('click').on('click', function() {
+                        estimatedTimeInput.val(data.suggested_time);
+                        
+                        // Đóng modal
+                        if (aiTimeEstimationModal && typeof aiTimeEstimationModal.hide === 'function') {
+                            aiTimeEstimationModal.hide();
+                        } else if ($.fn.modal) {
+                            $(aiTimeEstimationModalElement).modal('hide');
+                        } else {
+                            $(aiTimeEstimationModalElement).removeClass('show').css('display', 'none');
+                            $('body').removeClass('modal-open');
+                            $('.modal-backdrop').remove();
+                        }
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Lỗi API:', xhr.responseText);
+                // Ẩn loading và hiển thị lỗi
+                $('#aiTimeEstimationLoading').addClass('d-none');
+                $('#timeErrorMessage').text('Không thể kết nối với máy chủ. Vui lòng thử lại sau.');
+                $('#aiTimeEstimationError').removeClass('d-none');
+                console.error('Error:', error);
+            }
+        });
+    });
+
     // Toggle edit mode
     $('#editTaskBtn').click(function() {
         $('#taskInfoView').addClass('d-none');
@@ -31,6 +192,9 @@ $(document).ready(function() {
     });
 
     $('#cancelEditBtn').click(function() {
+        // Khôi phục HTML ban đầu của form trước khi ẩn nó
+        $('#taskUpdateForm').html(originalFormHtml);
+        
         $('#taskInfoView').removeClass('d-none');
         $('#taskUpdateForm').addClass('d-none');
         $('#editTaskBtn').removeClass('d-none');
@@ -332,4 +496,11 @@ $(document).ready(function() {
 
     // Khởi tạo tooltips
     $('[data-bs-toggle="tooltip"]').tooltip();
+
+    // Kiểm tra vị trí của modal trong DOM sau khi trang tải xong
+    setTimeout(function() {
+        console.log("Kiểm tra modal sau 1 giây:");
+        const modalCheck = document.getElementById('aiTimeEstimationModal');
+        console.log("Modal element tồn tại:", !!modalCheck);
+    }, 1000);
 });

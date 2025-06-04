@@ -481,11 +481,11 @@ def update_time_entry(request):
 
         return JsonResponse({
             'success': True,
-            'message': 'Cập nhật time entry thành công!',
+            'message': 'Cập nhật thông tin thực hiện công việc thành công!',
             'duration': entry.duration if entry.duration else 0
         })
     except ObjectDoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Time entry không tồn tại hoặc không có quyền'}, status=404)
+        return JsonResponse({'success': False, 'error': 'Thông tin thực hiện công việc không tồn tại hoặc không có quyền'}, status=404)
     except ValueError:
         return JsonResponse({'success': False, 'error': 'Dữ liệu không hợp lệ'}, status=400)
     except Exception as e:
@@ -1014,6 +1014,308 @@ def get_ai_suggestion(prompt):
                     'suggested_user_id': None,
                     'suggested_user_name': 'Không thể đề xuất',
                     'reasoning': '<ul><li>Không thể phân tích phản hồi từ AI</li><li>Vui lòng thử lại hoặc chọn thủ công</li></ul>'
+                }
+            
+            return None
+            
+    except Exception as e:
+        import traceback
+        print(f"Lỗi khi gọi API Gemini: {str(e)}")
+        print(traceback.format_exc())
+        return None
+
+
+@login_required
+@require_POST
+def suggest_time_for_task(request):
+    """
+    API endpoint để đề xuất thời gian ước lượng cho một task
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Yêu cầu đăng nhập.'}, status=401)
+    
+    try:
+        # Đọc dữ liệu từ JSON body thay vì form data
+        try:
+            data = json.loads(request.body)
+            task_id = data.get('task_id')
+            user_id = data.get('user_id')
+        except json.JSONDecodeError:
+            # Fallback cho form data nếu không phải JSON
+            task_id = request.POST.get('task_id')
+            user_id = request.POST.get('user_id')
+        
+        if not task_id:
+            return JsonResponse({'error': 'Thiếu task_id trong yêu cầu.'}, status=400)
+        
+        task = Tasks.objects.get(id=task_id)
+        
+        # Chỉ cho phép người dùng đề xuất cho task của họ
+        if not task.task_assignments.filter(user=request.user).exists() and not request.user.is_superuser:
+            return JsonResponse({'error': 'Bạn không có quyền thực hiện thao tác này.'}, status=403)
+        
+        # Thu thập thông tin chi tiết cho AI gợi ý
+        ai_suggestion_prompt = build_time_estimation_prompt(task, request.user)
+        
+        # Gọi AI để đề xuất thời gian
+        suggestion_result = get_time_estimation(ai_suggestion_prompt)
+        
+        if not suggestion_result:
+            return JsonResponse({'error': 'Không thể lấy đề xuất từ AI.'}, status=500)
+        
+        return JsonResponse(suggestion_result)
+        
+    except Tasks.DoesNotExist:
+        return JsonResponse({'error': 'Không tìm thấy task.'}, status=404)
+    except Exception as e:
+        import traceback
+        print(f"Lỗi trong suggest_time_for_task: {str(e)}")
+        print(traceback.format_exc())
+        return JsonResponse({'error': f'Đã xảy ra lỗi: {str(e)}'}, status=500)
+
+
+def build_time_estimation_prompt(task, user):
+    """
+    Xây dựng prompt cho AI để đề xuất thời gian ước lượng cho task
+    """
+    today = timezone.now().date()
+    
+    # Lấy thông tin chi tiết về task
+    task_info = {
+        'id': task.id,
+        'title': task.title,
+        'description': task.description,
+        'deadline': task.deadline.strftime('%Y-%m-%d %H:%M') if task.deadline else 'Chưa có deadline',
+        'status': task.status,
+        'difficulty': task.difficulty,
+        'estimated_time': f"{task.estimated_time} giờ" if task.estimated_time else 'Chưa ước tính',
+        'github_link': task.github_link or 'Không có',
+        'notes': task.notes or 'Không có',
+        'start_date': task.start_date.strftime('%Y-%m-%d %H:%M') if task.start_date else 'Chưa bắt đầu',
+        'total_time': f"{task.total_time} giờ" if task.total_time else 'Chưa có',
+    }
+    
+    # Lấy thông tin về project
+    project = task.project
+    project_info = {
+        'id': project.id,
+        'name': project.name,
+        'description': project.description or 'Không có',
+        'start_date': project.start_date.strftime('%Y-%m-%d %H:%M'),
+        'end_date': project.end_date.strftime('%Y-%m-%d %H:%M'),
+        'manager': project.manager.get_full_name() if project.manager else 'Chưa có quản lý',
+    }
+    
+    # Lấy thông tin về người dùng
+    user_info = {
+        'id': user.id,
+        'username': user.username,
+        'full_name': user.get_full_name() or user.username,
+        'role': user.role,
+        'department': user.department or 'Chưa xác định',
+    }
+    
+    # Lấy lịch sử công việc của người dùng
+    user_tasks = TaskAssignments.objects.filter(
+        user=user, 
+        task__difficulty=task.difficulty
+    ).select_related('task')
+    
+    similar_tasks_info = []
+    for assignment in user_tasks:
+        if assignment.estimated_time and assignment.actual_time:
+            similar_tasks_info.append({
+                'task_title': assignment.task.title,
+                'difficulty': assignment.task.difficulty,
+                'estimated_time': assignment.estimated_time,
+                'actual_time': assignment.actual_time,
+                'accuracy': round((assignment.estimated_time / assignment.actual_time) * 100, 2) if assignment.actual_time > 0 else 0,
+                'status': assignment.status
+            })
+    
+    # Lấy tổng số task đã làm của user
+    total_completed_tasks = TaskAssignments.objects.filter(
+        user=user, 
+        status='Completed'
+    ).count()
+    
+    # Lấy thông tin về tất cả task trong project có cùng độ khó
+    similar_project_tasks = Tasks.objects.filter(
+        project=project,
+        difficulty=task.difficulty
+    ).exclude(id=task.id)
+    
+    similar_project_tasks_info = []
+    for stask in similar_project_tasks:
+        assignments = stask.task_assignments.all()
+        for assignment in assignments:
+            if assignment.estimated_time and assignment.actual_time:
+                similar_project_tasks_info.append({
+                    'task_title': stask.title,
+                    'user': assignment.user.get_full_name(),
+                    'estimated_time': assignment.estimated_time,
+                    'actual_time': assignment.actual_time,
+                    'accuracy': round((assignment.estimated_time / assignment.actual_time) * 100, 2) if assignment.actual_time > 0 else 0
+                })
+    
+    prompt = f"""
+Tôi cần bạn đề xuất thời gian ước lượng cho một công việc, dựa trên dữ liệu chi tiết về công việc và lịch sử của người dùng. Vai trò của bạn là một chuyên gia về quản lý dự án và ước lượng thời gian.
+
+## Thông tin Công việc
+- **Tiêu đề**: {task_info['title']}
+- **Mô tả**: {task_info['description']}
+- **Độ khó**: {task_info['difficulty']}
+- **Deadline**: {task_info['deadline']}
+- **Ghi chú**: {task_info['notes']}
+- **Ước lượng tổng của công việc**: {task_info['estimated_time']}
+- **Tổng thời gian đã sử dụng**: {task_info['total_time']}
+
+## Thông tin Dự án
+- **Tên**: {project_info['name']}
+- **Mô tả**: {project_info['description']}
+- **Thời gian**: {project_info['start_date']} đến {project_info['end_date']}
+
+## Thông tin Người dùng
+- **Tên**: {user_info['full_name']}
+- **Vai trò**: {user_info['role']}
+- **Số công việc đã hoàn thành**: {total_completed_tasks}
+
+## Lịch sử công việc tương tự của người dùng
+{json.dumps(similar_tasks_info, indent=2, ensure_ascii=False) if similar_tasks_info else "Người dùng chưa có công việc tương tự."}
+
+## Công việc tương tự trong dự án
+{json.dumps(similar_project_tasks_info, indent=2, ensure_ascii=False) if similar_project_tasks_info else "Không có công việc tương tự trong dự án."}
+
+## Yêu cầu
+1. Đề xuất thời gian ước lượng hợp lý cho công việc này (tính bằng giờ).
+2. QUAN TRỌNG: Thời gian đề xuất PHẢI LỚN HƠN 0 và phù hợp với độ khó của công việc và không quá ít, có thể dài hơn để cho chắc chắn.
+3. Hướng dẫn ước lượng theo độ khó:
+   - Easy: thường từ 2-8 giờ
+   - Medium: thường từ 5-15 giờ
+   - Hard: thường từ 10-30 giờ
+
+4. Giữ phân tích NGẮN GỌN và SÚC TÍCH dưới 200 từ. Mỗi mục chỉ nên có 2-3 điểm quan trọng nhất.
+
+5. Trả về JSON với định dạng sau:
+{{{{
+  "suggested_time": [thời gian đề xuất, là một số thực lớn hơn 0],
+  "reasoning": "<ul>
+    <li><strong>Lý do chính:</strong> [1-2 lý do quan trọng nhất, tối đa 2 câu]</li>
+    <li><strong>Dựa trên lịch sử:</strong> [Phân tích ngắn gọn về lịch sử công việc tương tự]</li>
+    <li><strong>Độ khó và phạm vi:</strong> [Nhận xét về độ phức tạp và phạm vi công việc]</li>
+    <li><strong>Khuyến nghị:</strong> [1 gợi ý cụ thể để hoàn thành công việc hiệu quả]</li>
+  </ul>"
+}}}}
+
+QUAN TRỌNG: 
+1. Phản hồi của bạn PHẢI LÀ MỘT JSON HỢP LỆ, không có markdown hoặc chú thích khác.
+2. Thời gian đề xuất PHẢI là một số dương (> 0).
+3. Giữ phân tích NGẮN GỌN, thông tin CỐT LÕI, không dài dòng.
+4. Không bao gồm thông tin không liên quan hoặc lặp lại.
+"""
+    
+    return prompt
+
+
+def get_time_estimation(prompt):
+    """
+    Gọi API Gemini để lấy đề xuất thời gian ước lượng
+    """
+    try:
+        genai.configure(api_key=settings.GEMINI_API_KEY)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        generation_config = {
+            "temperature": 0.2,
+            "top_p": 0.8,
+            "top_k": 16,
+            "max_output_tokens": 2048,
+            "response_mime_type": "application/json",  
+        }
+        
+        safety_settings = [
+            {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+            }
+        ]
+        
+        response = model.generate_content(
+            prompt,
+            generation_config=generation_config,
+            safety_settings=safety_settings
+        )
+        
+        response_text = response.text
+        
+        cleaned_response = response_text.strip()
+        if cleaned_response.startswith('```json'):
+            cleaned_response = cleaned_response[7:]
+        elif cleaned_response.startswith('```'):
+            cleaned_response = cleaned_response[3:]
+            
+        if cleaned_response.endswith('```'):
+            cleaned_response = cleaned_response[:-3]
+            
+        cleaned_response = cleaned_response.strip()
+        
+        print(f"Time estimation response từ AI: {cleaned_response[:100]}...")
+        
+        try:
+            estimation = json.loads(cleaned_response)
+            
+            if not isinstance(estimation, dict) or 'suggested_time' not in estimation:
+                raise ValueError("Phản hồi từ AI không đúng định dạng JSON")
+                
+            try:
+                suggested_time = estimation.get('suggested_time')
+                if isinstance(suggested_time, list) and len(suggested_time) > 0:
+                    estimation['suggested_time'] = suggested_time[0]
+                else:
+                    estimation['suggested_time'] = 13.0
+            except (ValueError, TypeError):
+                estimation['suggested_time'] = 3.0
+                
+            return estimation
+            
+        except json.JSONDecodeError as e:
+            print(f"Lỗi khi phân tích JSON từ phản hồi AI: {str(e)}")
+            
+            try:
+                start_pos = response_text.find('{')
+                end_pos = response_text.rfind('}') + 1
+                
+                if start_pos >= 0 and end_pos > start_pos:
+                    json_content = response_text[start_pos:end_pos]
+                    estimation = json.loads(json_content)
+                    
+                    if not isinstance(estimation, dict) or 'suggested_time' not in estimation:
+                        raise ValueError("Phản hồi từ AI không đúng định dạng JSON")
+                        
+                    try:
+                        estimation['suggested_time'] = float(estimation['suggested_time'])
+                        if estimation['suggested_time'] <= 0:
+                            estimation['suggested_time'] = 0.5
+                    except (ValueError, TypeError):
+                        estimation['suggested_time'] = 1.0
+                        
+                    return estimation
+            except:
+                return {
+                    'suggested_time': 1.0,
+                    'reasoning': '<ul><li><strong>Lý do chính:</strong> Không thể phân tích phản hồi từ AI. Sử dụng giá trị ước lượng mặc định.</li><li><strong>Khuyến nghị:</strong> Vui lòng ước tính thời gian thủ công dựa trên kinh nghiệm của bạn.</li></ul>'
                 }
             
             return None

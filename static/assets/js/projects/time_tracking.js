@@ -54,7 +54,7 @@ $(document).ready(function() {
                     Swal.fire({
                         icon: 'success',
                         title: 'Thành công',
-                        text: 'Tạo time entry thành công!',
+                        text: 'Tạo thời gian thực hiện công việc thành công!',
                         confirmButtonColor: '#007bff',
                         timer: 3000
                     }).then(() => {
@@ -83,15 +83,14 @@ $(document).ready(function() {
 
     // Xử lý chỉnh sửa Time Entry
     $('.edit-entry').click(function() {
-        const $row = $(this).closest('tr');
-        $row.find('.editable').each(function() {
-            const $span = $(this);
-            const $input = $span.next('input');
-            $span.hide();
-            $input.removeClass('d-none').val($span.text().trim());
+        // Loại bỏ chức năng chỉnh sửa - không còn cho phép chỉnh sửa thời gian
+        Swal.fire({
+            icon: 'info',
+            title: 'Thông báo',
+            text: 'Bạn chỉ có thể thay đổi trạng thái công việc. Các thông tin khác không thể chỉnh sửa trực tiếp.',
+            confirmButtonColor: '#007bff',
+            timer: 3000
         });
-        $row.find('.edit-entry').hide();
-        $row.find('.save-entry, .cancel-entry').removeClass('d-none');
     });
 
     $('.cancel-entry').click(function() {
@@ -109,46 +108,25 @@ $(document).ready(function() {
     $('.save-entry').click(function() {
         const $row = $(this).closest('tr');
         const entryId = $row.data('entry-id');
-        const startTime = $row.find('input[name="start_time"]').val();
-        const endTime = $row.find('input[name="end_time"]').val();
-
-        $.ajax({
-            url: '/projects/update_time_entry/',
-            method: 'POST',
-            data: {
-                entry_id: entryId,
-                start_time: startTime,
-                end_time: endTime
-            },
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Thành công',
-                        text: 'Cập nhật time entry thành công!',
-                        confirmButtonColor: '#007bff',
-                        timer: 3000
-                    }).then(() => {
-                        location.reload();
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Lỗi',
-                        text: response.error,
-                        confirmButtonColor: '#007bff'
-                    });
-                }
-            },
-            error: function(xhr) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Lỗi',
-                    text: xhr.status === 403 ? 'Không có quyền thực hiện hành động này' : 'Có lỗi xảy ra, vui lòng thử lại!',
-                    confirmButtonColor: '#007bff'
-                });
-            }
+        
+        // Không cho phép lưu thay đổi thời gian
+        Swal.fire({
+            icon: 'info',
+            title: 'Thông báo',
+            text: 'Bạn chỉ có thể thay đổi trạng thái công việc. Các thông tin khác không thể chỉnh sửa trực tiếp.',
+            confirmButtonColor: '#007bff',
+            timer: 3000
         });
+        
+        // Ẩn các nút lưu/hủy
+        $row.find('.editable').each(function() {
+            const $span = $(this);
+            const $input = $span.next('input');
+            $span.show();
+            $input.addClass('d-none');
+        });
+        $row.find('.edit-entry').show();
+        $row.find('.save-entry, .cancel-entry').addClass('d-none');
     });
 
     // Xử lý thay đổi trạng thái TaskAssignment

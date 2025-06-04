@@ -503,7 +503,7 @@ def generate_user_report(request):
     html_string = render_to_string('main/pages/users/user_report_pdf.html', report_data)
     
     # Generate PDF
-    html = HTML(string=html_string)
+    html = HTML(string=html_string, base_url=request.build_absolute_uri('/'))
     pdf = html.write_pdf()
     
     # Create HTTP response with PDF

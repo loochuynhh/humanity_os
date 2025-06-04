@@ -78,10 +78,20 @@
         </div>
     </div>
 
+    <!-- Custom modals block -->
+    {% block modals %}{% endblock %}
+
     <!-- Scripts -->
     <script src="{% static 'assets/js/core/jquery-3.7.1.min.js' %}"></script>
     <script src="{% static 'assets/js/core/popper.min.js' %}"></script>
     <script src="{% static 'assets/js/core/bootstrap.min.js' %}"></script>
+    <script>
+        // Kiểm tra xem Bootstrap đã tải thành công chưa
+        console.log("Bootstrap version:", typeof bootstrap !== 'undefined' ? bootstrap.Tooltip.VERSION : "not loaded");
+        
+        // Kiểm tra xem jQuery đã tải thành công chưa
+        console.log("jQuery version:", jQuery.fn.jquery);
+    </script>
     <script src="{% static 'assets/js/plugin/sweetalert/sweetalert2.all.min.js' %}"></script>
     <script src="{% static 'assets/js/plugin/chart.js/chart.min.js' %}"></script>
     <script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>

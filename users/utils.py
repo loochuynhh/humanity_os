@@ -14,6 +14,9 @@ import numpy as np
 import os
 from math import sin, cos, sqrt, atan2, radians
 import time
+import google.generativeai as genai
+from django.conf import settings
+import re
 
 def get_task_counts(user_id, as_json=False):
     task_counts = TaskAssignments.objects.filter(user_id=user_id).values('status').annotate(count=Count('id'))
@@ -538,7 +541,7 @@ def generate_user_report_data(user, period='monthly'):
     time_entries = TimeEntries.objects.filter(
         task_assignment__user=user,
         start_time__range=[start_date, end_date]
-    ).select_related('task_assignment__task')  # Sửa từ 'task' thành 'task_assignment__task'
+    ).select_related('task_assignment__task')
     
     total_hours = time_entries.aggregate(total=Sum('duration'))['total'] or 0
     
@@ -553,13 +556,13 @@ def generate_user_report_data(user, period='monthly'):
     
     # Time by project
     task_assignments = TaskAssignments.objects.filter(user=user)
-    tasks = Tasks.objects.filter(task_assignments__in=task_assignments)
-    projects = Projects.objects.filter(tasks__in=tasks).distinct()
+    tasks_with_assignments = Tasks.objects.filter(task_assignments__in=task_assignments)
+    projects = Projects.objects.filter(tasks__in=tasks_with_assignments).distinct()
     
     time_by_project = {}
     for project in projects:
         project_time = time_entries.filter(
-            task_assignment__task__project=project  # Sửa từ task__project thành task_assignment__task__project
+            task_assignment__task__project=project
         ).aggregate(total=Sum('duration'))['total'] or 0
         if project_time > 0:
             time_by_project[project.name] = round(project_time, 2)
@@ -588,7 +591,7 @@ def generate_user_report_data(user, period='monthly'):
     # Group tasks by project for the report
     projects_with_tasks = {}
     for project in projects:
-        project_tasks = tasks.filter(project=project)
+        project_tasks = tasks_with_assignments.filter(project=project)
         if project_tasks.exists():
             projects_with_tasks[project] = {
                 'tasks': project_tasks,
@@ -644,8 +647,220 @@ def generate_user_report_data(user, period='monthly'):
         'evaluations': evaluation_metrics
     }
     
+    # Thêm đánh giá từ AI
+    try:
+        ai_evaluation = get_ai_performance_evaluation(user, report_data)
+        report_data['ai_evaluation'] = ai_evaluation
+    except Exception as e:
+        print(f"Không thể tạo đánh giá AI: {str(e)}")
+        report_data['ai_evaluation'] = None
+    
     return report_data
 
+def get_ai_performance_evaluation(user, report_data):
+    """
+    Sử dụng AI để tạo đánh giá hiệu suất nhân viên dựa trên dữ liệu báo cáo
+    
+    Args:
+        user: Đối tượng user cần đánh giá
+        report_data: Dữ liệu báo cáo hiệu suất đã được tạo từ generate_user_report_data
+    
+    Returns:
+        Phần đánh giá HTML được định dạng
+    """
+    import google.generativeai as genai
+    from django.conf import settings
+    import re
+    
+    try:
+        # Chuẩn bị prompt cho AI
+        prompt = build_performance_evaluation_prompt(user, report_data)
+        
+        # Cấu hình và gọi Gemini API
+        genai.configure(api_key=settings.GEMINI_API_KEY)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        generation_config = genai.types.GenerationConfig(
+            temperature=0.2,          # Giảm tính ngẫu nhiên để có đánh giá khách quan
+            top_p=0.8,                # Lọc theo xác suất cao
+            top_k=40,                 # Lọc theo xếp hạng
+            max_output_tokens=1500,   # Giới hạn độ dài phản hồi
+        )
+        
+        safety_settings = [
+            {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+            }
+        ]
+        
+        response = model.generate_content(
+            prompt,
+            generation_config=generation_config,
+            safety_settings=safety_settings
+        )
+        
+        # Xóa tiêu đề nếu có
+        evaluation_text = response.text
+        lines = evaluation_text.strip().split('\n')
+        if len(lines) > 2 and not lines[0].startswith('**') and not '**' in lines[0]:
+            # Có thể đây là tiêu đề báo cáo, bỏ qua dòng đầu
+            evaluation_text = '\n'.join(lines[1:])
+        
+        # Định dạng phản hồi dạng HTML
+        # 1. Chuyển đổi markdown sang HTML
+        # Thay thế các dấu **text** thành <strong>text</strong> (định dạng Markdown cho in đậm)
+        evaluation_html = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', evaluation_text)
+
+        # 2. Xử lý định dạng đặc biệt như "Điểm mạnh:**" -> "Điểm mạnh:<strong>"
+        evaluation_html = re.sub(r'([^*]+)\*\*', r'\1<strong>', evaluation_html)
+        
+        # 3. Chuyển đổi xuống dòng kép thành đoạn văn mới
+        evaluation_html = evaluation_html.replace('\n\n', '</p><p>')
+        
+        # 4. Chuyển đổi xuống dòng đơn thành <br>
+        evaluation_html = evaluation_html.replace('\n', '<br>')
+        
+        # 5. Đảm bảo toàn bộ nội dung được bọc trong thẻ <p>
+        if not evaluation_html.startswith('<p>'):
+            evaluation_html = f'<p>{evaluation_html}</p>'
+        
+        # 6. Xử lý các trường hợp đặc biệt còn lại
+        evaluation_html = evaluation_html.replace('<p><strong>', '<p><strong>')
+        evaluation_html = evaluation_html.replace('</strong></p>', '</strong></p>')
+        evaluation_html = evaluation_html.replace('</strong><br>', '</strong><br>')
+        evaluation_html = evaluation_html.replace('<br><strong>', '<br><strong>')
+        
+        # 7. Định dạng cho danh sách nếu có
+        evaluation_html = re.sub(r'<br>(\d+)\.\s+', r'<br><strong>\1.</strong> ', evaluation_html)
+        
+        return evaluation_html
+        
+    except Exception as e:
+        import traceback
+        print(f"Lỗi khi tạo đánh giá hiệu suất AI: {str(e)}")
+        print(traceback.format_exc())
+        return f"<p>Không thể tạo đánh giá tự động. Lỗi: {str(e)}</p>"
+
+def build_performance_evaluation_prompt(user, report_data):
+    """
+    Xây dựng prompt chi tiết cho đánh giá hiệu suất
+    
+    Args:
+        user: Đối tượng user
+        report_data: Dữ liệu báo cáo
+    
+    Returns:
+        Prompt cho Gemini AI
+    """
+    # Thông tin cá nhân
+    user_info = report_data.get('user_info', {})
+    full_name = user_info.get('full_name', user.get_full_name())
+    role = user_info.get('role', user.get_role_display())
+    department = user_info.get('department', 'Chưa xác định')
+    
+    # Khoảng thời gian
+    period_display = report_data.get('period_display', 'Không xác định')
+    start_date = report_data.get('start_date', None)
+    end_date = report_data.get('end_date', None)
+    start_date_str = start_date.strftime('%d/%m/%Y') if start_date else 'Không xác định'
+    end_date_str = end_date.strftime('%d/%m/%Y') if end_date else 'Không xác định'
+    
+    # Dữ liệu điểm danh
+    attendance = report_data.get('attendance', {})
+    present_days = attendance.get('present_days', 0)
+    total_days = attendance.get('total_days', 0)
+    attendance_rate = attendance.get('attendance_rate', 0)
+    valid_checkins = attendance.get('valid_checkins', 0)
+    valid_checkouts = attendance.get('valid_checkouts', 0)
+    
+    # Dữ liệu công việc
+    tasks = report_data.get('tasks', {})
+    total_tasks = tasks.get('total', 0)
+    completed_tasks = tasks.get('completed', 0)
+    in_progress = tasks.get('in_progress', 0)
+    late_tasks = tasks.get('late', 0)
+    completion_rate = tasks.get('completion_rate', 0)
+    
+    # Dữ liệu KPI
+    kpis = report_data.get('kpis', {})
+    total_kpis = kpis.get('total', 0)
+    achieved_kpis = kpis.get('achieved', 0)
+    kpi_completion_rate = kpis.get('completion_rate', 0)
+    
+    # Dữ liệu đánh giá
+    evaluations = report_data.get('evaluations', {})
+    feedback_score = evaluations.get('feedback_score', None)
+    feedback_score_str = f"{feedback_score:.1f}/5" if feedback_score is not None else "Chưa có"
+    
+    # Dữ liệu về thời gian làm việc
+    time_tracking = report_data.get('time_tracking', {})
+    total_hours = time_tracking.get('total_hours', 0)
+    productivity_rate = time_tracking.get('productivity_rate', 0)
+    avg_daily_hours = time_tracking.get('avg_daily_hours', 0)
+    
+    # Dữ liệu dự án
+    projects = report_data.get('projects', {})
+    project_count = projects.get('count', 0)
+    
+    # Tạo prompt cho AI
+    prompt = f"""
+    Bạn là một trợ lý AI chuyên nghiệp đánh giá hiệu suất nhân viên. Hãy tạo một báo cáo đánh giá tổng thể ngắn gọn, khách quan và chi tiết cho nhân viên dựa trên các dữ liệu sau. Báo cáo nên chỉ ra điểm mạnh, điểm cần cải thiện và đề xuất cho sự phát triển trong tương lai.
+
+    # THÔNG TIN NHÂN VIÊN
+    - Họ và tên: {full_name}
+    - Vai trò: {role}
+    - Phòng ban: {department}
+    - Khoảng thời gian đánh giá: {period_display} ({start_date_str} đến {end_date_str})
+
+    # DỮ LIỆU HIỆU SUẤT
+
+    ## Điểm danh và thời gian làm việc
+    - Số ngày làm việc: {present_days}/{total_days} ngày ({attendance_rate}%)
+    - Check-in hợp lệ: {valid_checkins}/{present_days}
+    - Check-out hợp lệ: {valid_checkouts}/{present_days}
+    - Tổng số giờ làm việc: {total_hours} giờ
+    - Giờ làm việc trung bình mỗi ngày: {avg_daily_hours} giờ
+    - Hiệu suất thời gian: {productivity_rate}%
+
+    ## Công việc và dự án
+    - Số dự án tham gia: {project_count}
+    - Tổng số công việc: {total_tasks}
+    - Hoàn thành: {completed_tasks} ({completion_rate}%)
+    - Đang thực hiện: {in_progress}
+    - Trễ hạn: {late_tasks}
+
+    ## KPI và đánh giá
+    - KPI đạt được: {achieved_kpis}/{total_kpis} ({kpi_completion_rate}%)
+    - Điểm đánh giá trung bình: {feedback_score_str}
+
+    # YÊU CẦU ĐÁNH GIÁ
+    1. Tạo một đánh giá tổng thể ngắn gọn (1-3 đoạn) dưới 200 từ, khách quan về hiệu suất làm việc của nhân viên dựa trên các số liệu trên.
+    2. Sau đó, dưới tiêu đề "**Điểm mạnh:**", liệt kê các điểm mạnh (sử dụng chính xác định dạng "**Điểm mạnh:**")
+    3. Dưới tiêu đề "**Điểm cần cải thiện:**", liệt kê các điểm cần cải thiện (sử dụng chính xác định dạng "**Điểm cần cải thiện:**")
+    4. Dưới tiêu đề "**Đề xuất:**", đưa ra 2-3 đề xuất cụ thể để nhân viên cải thiện hiệu suất (đánh số 1., 2., 3.)
+    5. Ở cuối đánh giá, đưa ra đánh giá mức hiệu suất tổng thể (Xuất sắc, Tốt, Đạt yêu cầu, hoặc Cần cải thiện).
+    6. Viết bằng tiếng Việt, chuyên nghiệp, có định dạng rõ ràng.
+    7. KHÔNG bao gồm tiêu đề hay mở đầu kiểu "Đánh giá hiệu suất cho" hoặc kết thúc kiểu "Kết luận"
+    8. Giới hạn đánh giá trong khoảng 200-300 từ.
+    9. Đảm bảo định dạng markdown rõ ràng và nhất quán.
+    
+    Hãy viết đánh giá hiệu suất theo định dạng yêu cầu.
+    """
+    
+    return prompt
 
 def summarize_chat(user_msg, max_length=250):
     """
