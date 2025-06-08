@@ -172,17 +172,6 @@
 
     <!-- Bỏ mục lục và thêm tổng quan nhanh -->
     <div class="page-break"></div>
-    <div class="section" id="tong-quan">
-        <h2>Tổng quan hiệu suất</h2>
-        <p>Báo cáo này trình bày tổng quan về hiệu suất làm việc của nhân viên trong {{ period_display }}, bao gồm các chỉ số về điểm danh, công việc, dự án và KPI.</p>
-        
-        <table class="summary-table">
-            <tr><td>Tỷ lệ đi làm</td><td>{{ attendance.attendance_rate }}% ({{ attendance.present_days }}/{{ attendance.total_days }} ngày)</td></tr>
-            <tr><td>Tỷ lệ hoàn thành công việc</td><td>{{ tasks.completion_rate }}% ({{ tasks.completed }}/{{ tasks.total }} tác vụ)</td></tr>
-            <tr><td>Tỷ lệ đạt KPI</td><td>{{ kpis.completion_rate }}% ({{ kpis.achieved }}/{{ kpis.total }} KPI)</td></tr>
-            <tr><td>Điểm đánh giá trung bình</td><td>{% if evaluations.feedback_score != None %}{{ evaluations.feedback_score|floatformat:1 }}/5{% else %}Chưa có đánh giá{% endif %}</td></tr>
-        </table>
-    </div>
 
     <!-- Thông tin nhân viên -->
     <div class="section" id="thong-tin-nhan-vien">
@@ -403,9 +392,9 @@
         <h2>6. Đánh giá</h2>
         <h3>Tóm tắt</h3>
         <table class="summary-table">
-            <tr><td>Điểm trung bình</td><td>{% if evaluations.feedback_score != None %}{{ evaluations.feedback_score|floatformat:1 }}/5{% else %}Chưa có đánh giá{% endif %}</td></tr>
-            <tr><td>Điểm cao nhất</td><td>{% if evaluations.highest_score != None %}{{ evaluations.highest_score|floatformat:1 }}{% else %}Chưa có đánh giá{% endif %}</td></tr>
-            <tr><td>Điểm thấp nhất</td><td>{% if evaluations.lowest_score != None %}{{ evaluations.lowest_score|floatformat:1 }}{% else %}Chưa có đánh giá{% endif %}</td></tr>
+            <tr><td>Điểm trung bình</td><td>{% if evaluations.feedback_score is not None %}{{ evaluations.feedback_score|floatformat:1 }}/5{% else %}Chưa có đánh giá{% endif %}</td></tr>
+            <tr><td>Điểm cao nhất</td><td>{% if evaluations.highest_score is not None %}{{ evaluations.highest_score|floatformat:1 }}/5{% else %}Chưa có đánh giá{% endif %}</td></tr>
+            <tr><td>Điểm thấp nhất</td><td>{% if evaluations.lowest_score is not None %}{{ evaluations.lowest_score|floatformat:1 }}/5{% else %}Chưa có đánh giá{% endif %}</td></tr>
         </table>
         <h3>Chi tiết</h3>
         <table>
@@ -418,11 +407,13 @@
             </thead>
             <tbody>
                 {% for response in evaluations.responses %}
+                {% if response.answer_type == "numeric" %}
                 <tr>
                     <td>{{ response.created_at|date:"d/m/Y" }}</td>
-                    <td>{{ response.form.type }}</td>
-                    <td>{{ response.score|floatformat:1 }}</td>
+                    <td>{{ response.form.type|capfirst }}</td>
+                    <td>{{ response.answer|floatformat:1 }}/5</td>
                 </tr>
+                {% endif %}
                 {% empty %}
                 <tr><td colspan="3" class="text-center">Không có dữ liệu đánh giá</td></tr>
                 {% endfor %}

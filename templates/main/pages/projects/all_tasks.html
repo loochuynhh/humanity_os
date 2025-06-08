@@ -1,6 +1,6 @@
 {% extends 'main/layouts/base.html' %}
 {% load static %}
-{% block title %}Tất cả Tasks - Humanity OS{% endblock %}
+{% block title %}Tất cả công việc - Humanity OS{% endblock %}
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'assets/css/projects/tasks.css' %}">
@@ -14,11 +14,11 @@
     <main class="col-12 col-md-9 ms-sm-auto col-lg-10 px-md-4 content-wrapper">
       <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
         <h1 class="h2 fw-bold">
-          <i class="fas fa-tasks me-2"></i>Tất cả Tasks
+          <i class="fas fa-tasks me-2"></i>Tất cả công việc
         </h1>
         <div class="btn-toolbar mb-2 mb-md-0">
           <a href="{% url 'projects:my_tasks' %}" class="btn btn-outline-primary me-2">
-            <i class="fas fa-user me-1"></i> Task của tôi
+            <i class="fas fa-user me-1"></i> Công việc của tôi
           </a>
         </div>
       </div>

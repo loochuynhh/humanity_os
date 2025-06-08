@@ -27,8 +27,8 @@ EXIT;
 
 backup database
 mysqldump -u root -p humanity_os > humanity_os_backup.sql
-docker-compose exec -T db mysql -u root -plocubmysql humanity_os < humanity_os_backup.sql
-docker-compose exec db mysqldump -u root -plocubtmysql humanity_os > humanity_os_backup.sql
+docker-compose exec -T db mysql -u root -p humanity_os < humanity_os_backup.sql
+docker-compose exec db mysqldump -u root -p humanity_os > humanity_os_backup.sql
 
 
 prompt structure web:

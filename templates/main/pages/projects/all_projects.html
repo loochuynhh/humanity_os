@@ -8,6 +8,39 @@
 <link rel="stylesheet" href="{% static 'assets/css/projects/tasks.css' %}">
 <link rel="stylesheet" href="{% static 'assets/css/projects/my_tasks.css' %}">
 <link rel="stylesheet" href="{% static 'assets/css/projects/all_projects.css' %}">
+<style>
+    .markdown-content {
+        line-height: 1.6;
+        font-size: 0.9rem;
+    }
+    .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+        font-weight: bold;
+        margin: 0.5rem 0;
+    }
+    .markdown-content ul, .markdown-content ol {
+        margin: 0.5rem 0;
+        padding-left: 1.5rem;
+    }
+    .markdown-content code {
+        background-color: #f8f9fa;
+        padding: 2px 4px;
+        border-radius: 4px;
+    }
+    .markdown-content pre {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 4px;
+        overflow-x: auto;
+    }
+    .project-card .markdown-content {
+        max-height: 5em; /* Giới hạn 2 dòng */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -20,30 +53,20 @@
         <h1 class="h2 fw-bold">
           <i class="bi bi-folder2-open me-2"></i>Quản lý dự án
         </h1>
-        <!-- <div class="btn-toolbar mb-2 mb-md-0">
-          <div class="btn-group me-2">
-            <button type="button" class="btn btn-sm btn-outline-primary" id="btnCreateProject" data-bs-toggle="modal" data-bs-target="#createProjectModal">
-              <i class="bi bi-plus-circle me-1"></i>Thêm dự án
-            </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnExportData">
-              <i class="bi bi-file-earmark-excel me-1"></i>Xuất dữ liệu
-            </button>
-          </div>
-        </div> -->
       </div>
 
       <!-- Bộ lọc -->
       <div class="project-filters mb-4 fade-in-up">
         <div class="row g-3">
-          <div class="col-md-3">
-            <label class="filter-label">Trạng thái</label>
-            <select id="statusFilter" class="form-select filter-control">
-              <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Tất cả trạng thái</option>
-              <option value="not_started" {% if status_filter == 'not_started' %}selected{% endif %}>Chưa thực hiện</option>
-              <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>Đang thực hiện</option>
-              <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Đã hoàn thành</option>
-            </select>
-          </div>
+            <div class="col-md-3">
+                <label class="filter-label">Trạng thái</label>
+                <select id="statusFilter" class="form-select filter-control">
+                  <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Tất cả trạng thái</option>
+                  <option value="chưa thực hiện" {% if status_filter == 'chưa thực hiện' %}selected{% endif %}>Chưa thực hiện</option>
+                  <option value="đang thực hiện" {% if status_filter == 'đang thực hiện' %}selected{% endif %}>Đang thực hiện</option>
+                  <option value="đã hoàn thành" {% if status_filter == 'đã hoàn thành' %}selected{% endif %}>Đã hoàn thành</option>
+                </select>
+              </div>
           <div class="col-md-3">
             <label class="filter-label">Phân loại</label>
             <select id="viewFilter" class="form-select filter-control">
@@ -70,62 +93,6 @@
             </div>
           </div>
         </div>
-
-        <!-- <div class="row mt-3">
-        <div class="col-12">
-            <button class="btn btn-sm btn-link text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#advancedFilters" aria-expanded="false" aria-controls="advancedFilters">
-              <i class="bi bi-sliders me-1"></i>Tìm kiếm nâng cao
-            </button>
-          </div>
-        </div>
-
-        <div class="collapse mt-3" id="advancedFilters">
-          <div class="card card-body">
-              <div class="row g-3">
-                <div class="col-md-4">
-                <label class="filter-label">Thời gian</label>
-                <select class="form-select filter-control" id="timeFilter">
-                  <option value="all">Tất cả thời gian</option>
-                  <option value="this-week">Tuần này</option>
-                  <option value="this-month">Tháng này</option>
-                  <option value="this-quarter">Quý này</option>
-                  <option value="this-year">Năm nay</option>
-                  <option value="custom">Tùy chỉnh...</option>
-                </select>
-              </div>
-              <div class="col-md-4">
-                <label class="filter-label">Phòng ban/Nhóm</label>
-                <select class="form-select filter-control" id="departmentFilter">
-                  <option value="all">Tất cả phòng ban</option>
-                  <option value="sales">Kinh doanh</option>
-                  <option value="marketing">Marketing</option>
-                  <option value="it">CNTT</option>
-                  <option value="hr">Nhân sự</option>
-                </select>
-              </div>
-              <div class="col-md-4">
-                <label class="filter-label">Tiến độ</label>
-                <select class="form-select filter-control" id="progressFilter">
-                  <option value="all">Tất cả tiến độ</option>
-                  <option value="not-started">Chưa bắt đầu (0%)</option>
-                  <option value="early">Mới bắt đầu (1-25%)</option>
-                  <option value="mid">Đang tiến hành (26-75%)</option>
-                  <option value="late">Gần hoàn thành (76-99%)</option>
-                  <option value="completed">Hoàn thành (100%)</option>
-                  </select>
-                </div>
-
-              <div class="col-12 mt-3">
-                <button type="button" class="btn btn-primary" id="applyAdvancedFilters">
-                  <i class="bi bi-funnel me-1"></i>Áp dụng bộ lọc
-                </button>
-                <button type="button" class="btn btn-outline-secondary ms-2" id="resetFilters">
-                  <i class="bi bi-arrow-counterclockwise me-1"></i>Đặt lại
-                  </button>
-              </div>
-            </div>
-          </div>
-        </div> -->
       </div>
 
       <!-- Chế độ xem -->
@@ -147,7 +114,7 @@
       <div id="gridView" class="fade-in-up">
         <div class="project-grid">
           {% for project in projects %}
-          <div class="project-card card" data-id="{{ project.id }}" data-status="{{ project.status }}" data-view="{% if project.is_member %}my{% else %}all{% endif %}" data-manager="{% if project.is_manager %}managed{% else %}all{% endif %}">
+          <div class="project-card card" data-id="{{ project.id }}" data-status="{{ project.status }}" data-view="{% if project.is_member %}my{% else %}all{% endif %}" data-manager="{% if project.is_manager %}managed{% else %}all{% endif %}" data-description="{{ project.description|escapejs }}">
             <div class="card-header d-flex justify-content-between">
               <h5 class="mb-0 text-truncate">{{ project.name }}</h5>
               <div class="dropdown">
@@ -165,11 +132,11 @@
             <!-- Phần sửa đổi cho hiển thị lưới -->
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                <span class="badge {% if project.status == 'completed' %}bg-success{% elif project.status == 'not_started' %}bg-secondary{% else %}bg-primary{% endif %}">
-                    {{ project.status_display }}
-                </span>
+                    <span class="badge {% if project.status == 'đã hoàn thành' %}bg-success{% elif project.status == 'chưa thực hiện' %}bg-secondary{% else %}bg-primary{% endif %}">
+                        {{ project.status_display }}
+                    </span>
                 </div>
-                <p class="card-text small mb-3 text-truncate-2">{{ project.description }}</p>
+                <div class="markdown-content small mb-3" data-content="{{ project.description|escapejs }}"></div>
                 <!-- Hiển thị cả ngày bắt đầu và kết thúc -->
                 <div class="dates-container mb-3">
                 <div class="small text-muted">
@@ -206,9 +173,6 @@
                     <button class="btn btn-sm btn-primary view-details" data-bs-toggle="modal" data-bs-target="#projectDetailModal" data-id="{{ project.id }}">
                     <i class="bi bi-eye me-1"></i>Chi tiết
                     </button>
-                    <!-- <a href="{% url 'projects:project_statistics' %}?project_id={{ project.id }}" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-graph-up me-1"></i>Tiến độ
-                    </a> -->
                 </div>
                 </div>
             </div>
@@ -245,19 +209,18 @@
                   </thead>
                   <tbody>
                     {% for project in projects %}
-                  <tr data-id="{{ project.id }}" data-status="{{ project.status }}" data-view="{% if project.is_member %}my{% else %}all{% endif %}" data-manager="{% if project.is_manager %}managed{% else %}all{% endif %}">
+                    <tr data-id="{{ project.id }}" data-status="{{ project.status }}" data-view="{% if project.is_member %}my{% else %}all{% endif %}" data-manager="{% if project.is_manager %}managed{% else %}all{% endif %}" data-description="{{ project.description|escapejs }}">
                     <td>
                       <div class="d-flex align-items-center">
                         <div>
                           <h6 class="mb-0">{{ project.name }}</h6>
-                          <small class="text-muted text-truncate d-inline-block" style="max-width: 250px;">{{ project.description }}</small>
                         </div>
                       </div>
                     </td>
                     <td>
-                      <span class="badge {% if project.status == 'completed' %}bg-success{% elif project.status == 'not_started' %}bg-secondary{% else %}bg-primary{% endif %}">
-                        {{ project.status_display }}
-                      </span>
+                        <span class="badge {% if project.status == 'đã hoàn thành' %}bg-success{% elif project.status == 'chưa thực hiện' %}bg-secondary{% else %}bg-primary{% endif %}">
+                            {{ project.status_display }}
+                        </span>
                     </td>
                     <td>
                       <div class="d-flex align-items-center">
@@ -300,9 +263,6 @@
                         <button type="button" class="btn btn-sm btn-primary view-details" data-bs-toggle="modal" data-bs-target="#projectDetailModal" data-id="{{ project.id }}">
                           <i class="bi bi-eye">Xem chi tiết</i>
                         </button>
-                        <!-- <a href="{% url 'projects:project_statistics' %}?project_id={{ project.id }}" class="btn btn-sm btn-outline-primary">
-                          <i class="bi bi-graph-up"></i>
-                        </a> -->
                       </div>
                     </td>
                   </tr>
@@ -311,10 +271,6 @@
                   <td colspan="7" class="text-center py-5">
                     <i class="bi bi-folder2-open display-4 text-muted mb-3"></i>
                     <h5 class="text-muted">Chưa có dự án nào</h5>
-                    <!-- <p class="text-muted">Nhấn "Thêm dự án" để tạo dự án mới</p>
-                    <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#createProjectModal">
-                      <i class="bi bi-plus-circle me-2"></i>Thêm dự án mới
-                    </button> -->
                     </td>
                   </tr>
                   {% endfor %}
@@ -386,19 +342,13 @@
   </div>
 </div>
 
-<!-- Thêm dự án Modal -->
 <div class="modal fade" id="createProjectModal" tabindex="-1" aria-labelledby="createProjectModalLabel" aria-hidden="true">
-  <!-- Form thêm dự án giữ nguyên -->
 </div>
 
-<!-- Chỉnh sửa dự án Modal -->
 <div class="modal fade" id="editProjectModal" tabindex="-1" aria-labelledby="editProjectModalLabel" aria-hidden="true">
-  <!-- Form chỉnh sửa dự án giữ nguyên -->
 </div>
 
-<!-- Xóa dự án Modal -->
 <div class="modal fade" id="deleteProjectModal" tabindex="-1" aria-labelledby="deleteProjectModalLabel" aria-hidden="true">
-  <!-- Form xóa dự án giữ nguyên -->
 </div>
 {% endblock %}
 
@@ -406,7 +356,34 @@
 <script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
 <script>
 $(document).ready(function() {
-    // Khởi tạo DataTables cho hiển thị danh sách
+    marked.setOptions({
+        breaks: true,
+        gfm: true
+    });
+
+    function renderProjectDescriptions() {
+        $('.markdown-content').each(function() {
+            let content = $(this).data('content') || '';
+            try {
+                content = decodeURIComponent(escape(atob(btoa(unescape(encodeURIComponent(content))))))
+                    .replace(/\\r\\n|\\n|\\u000A|\\u000D/g, '\n');
+            } catch (e) {
+                content = content.replace(/\\r\\n|\\n|\\u000A|\\u000D/g, '\n');
+            }
+            if ($(this).closest('.project-card').length) {
+                const shortContent = content.length > 100 ? content.substring(0, content.lastIndexOf(' ', 100)) + '...' : content;
+                $(this).html(marked.parse(shortContent));
+            } else if ($(this).closest('#projectOverview').length) {
+                $(this).html(marked.parse(content));
+            } else {
+                const shortContent = content.length > 100 ? content.substring(0, content.lastIndexOf(' ', 100)) + '...' : content;
+                $(this).html(marked.parse(shortContent));
+            }
+        });
+    }
+
+    renderProjectDescriptions();
+
     var projectTable = $('#projectsTable').DataTable({
       language: {
         url: "/static/assets/js/plugin/datatables/i18n/Vietnamese.json"
@@ -420,99 +397,92 @@ $(document).ready(function() {
       lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "Tất cả"]]
     });
 
-    // Chuyển đổi giữa chế độ xem lưới và danh sách
     $('#gridViewBtn').click(function() {
-      $(this).addClass('active').removeClass('btn-outline-primary').addClass('btn-primary');
-      $('#listViewBtn').removeClass('active').removeClass('btn-primary').addClass('btn-outline-primary');
-      $('#gridView').show();
-      $('#listView').hide();
+        $(this).addClass('active').removeClass('btn-outline-primary').addClass('btn-primary');
+        $('#listViewBtn').removeClass('active').removeClass('btn-primary').addClass('btn-outline-primary');
+        $('#gridView').show();
+        $('#listView').hide();
+        renderProjectDescriptions();
     });
 
     $('#listViewBtn').click(function() {
-      $(this).addClass('active').removeClass('btn-outline-primary').addClass('btn-primary');
-      $('#gridViewBtn').removeClass('active').removeClass('btn-primary').addClass('btn-outline-primary');
-      $('#gridView').hide();
-      $('#listView').show();
+        $(this).addClass('active').removeClass('btn-outline-primary').addClass('btn-primary');
+        $('#gridViewBtn').removeClass('active').removeClass('btn-primary').addClass('btn-outline-primary');
+        $('#gridView').hide();
+        $('#listView').show();
+        renderProjectDescriptions();
     });
 
-    // Bộ lọc trạng thái
     $('#statusFilter').change(function() {
-      var status = $(this).val();
-      filterProjects();
+    filterProjects();
     });
 
-    // Bộ lọc phân loại
     $('#viewFilter').change(function() {
-      var view = $(this).val();
-      filterProjects();
+    filterProjects();
     });
 
-    // Bộ lọc sắp xếp
+    $('#searchInput').on('keyup change', function() {
+    filterProjects();
+    });
+
     $('#sortFilter').change(function() {
       var sort = $(this).val();
       sortProjects(sort);
     });
 
-    // Tìm kiếm
-    $('#searchInput').keyup(function() {
-      var searchTerm = $(this).val().toLowerCase();
-      filterBySearch(searchTerm);
-    });
-
-    // Hàm lọc dự án
     function filterProjects() {
-      var status = $('#statusFilter').val();
-      var view = $('#viewFilter').val();
-      var searchTerm = $('#searchInput').val().toLowerCase();
+        var status = $('#statusFilter').val().toLowerCase();
+        var view = $('#viewFilter').val();
+        var searchTerm = $('#searchInput').val().toLowerCase().trim();
 
-      // Lọc trong chế độ xem lưới
-      $('.project-card').each(function() {
-        var projectStatus = $(this).data('status').toLowerCase();
-        var projectView = $(this).data('view');
-        var projectManager = $(this).data('manager');
-        var projectName = $(this).find('.card-header h5').text().toLowerCase();
-        var projectDesc = $(this).find('.card-text').text().toLowerCase();
+        $('.project-card').each(function() {
+            var projectStatus = $(this).data('status').toString().toLowerCase();
+            var projectView = $(this).data('view').toString();
+            var projectName = $(this).find('.card-header h5').text().toLowerCase();
+            var projectDesc = $(this).data('description').toString().toLowerCase().replace(/\\r\\n|\\n|\\u000A|\\u000D/g, '\n');
 
-        var statusMatch = status === 'all' || projectStatus === status;
-        var viewMatch = view === 'all' ||
-                       (view === 'my' && projectView === 'my') ||
-                       (view === 'managed' && projectManager === 'managed');
-        var searchMatch = projectName.includes(searchTerm) || projectDesc.includes(searchTerm);
+            var statusMatch = status === 'all' || projectStatus === status;
+            var viewMatch = view === 'all' || (view === 'my' && projectView === 'my');
+            var searchMatch = !searchTerm || projectName.includes(searchTerm) || projectDesc.includes(searchTerm);
 
-        if (statusMatch && viewMatch && searchMatch) {
-          $(this).show();
-        } else {
-          $(this).hide();
-        }
-      });
+            if (statusMatch && viewMatch && searchMatch) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
 
-      // Lọc trong chế độ xem danh sách
-      projectTable.draw();
+        projectTable.search(searchTerm).rows().every(function() {
+            var row = this.node();
+            var projectStatus = $(row).data('status').toString().toLowerCase();
+            var projectView = $(row).data('view').toString();
+            var projectName = $(row).find('h6').text().toLowerCase();
+            var projectDesc = $(row).data('description').toString().toLowerCase().replace(/\\r\\n|\\n|\\u000A|\\u000D/g, '\n');
+            var statusMatch = status === 'all' || projectStatus === status;
+            var viewMatch = view === 'all' || (view === 'my' && projectView === 'my');
+            var searchMatch = !searchTerm || projectName.includes(searchTerm) || projectDesc.includes(searchTerm);
+            this.nodes().to$().toggle(statusMatch && viewMatch && searchMatch);
+        }).draw();
+
+        $('#visibleProjects').text($('.project-card:visible').length);
     }
 
-    // Hàm sắp xếp dự án
     function sortProjects(sort) {
       var $grid = $('.project-grid');
       var $projects = $grid.find('.project-card');
 
       $projects.sort(function(a, b) {
         if (sort === 'date-desc') {
-          // Sắp xếp theo ngày giảm dần
           return $(b).data('date') - $(a).data('date');
         } else if (sort === 'date-asc') {
-          // Sắp xếp theo ngày tăng dần
           return $(a).data('date') - $(b).data('date');
         } else if (sort === 'alpha-asc') {
-          // Sắp xếp theo tên A-Z
           return $(a).find('.card-header h5').text().localeCompare($(b).find('.card-header h5').text());
         } else if (sort === 'alpha-desc') {
-          // Sắp xếp theo tên Z-A
           return $(b).find('.card-header h5').text().localeCompare($(a).find('.card-header h5').text());
         } else if (sort === 'progress-asc') {
-          // Sắp xếp theo tiến độ tăng dần
           return parseFloat($(a).find('.progress-bar').css('width')) - parseFloat($(b).find('.progress-bar').css('width'));
         } else if (sort === 'progress-desc') {
-          // Sắp xếp theo tiến độ giảm dần
           return parseFloat($(b).find('.progress-bar').css('width')) - parseFloat($(a).find('.progress-bar').css('width'));
         }
       });
@@ -520,44 +490,23 @@ $(document).ready(function() {
       $grid.append($projects);
     }
 
-    // Hàm lọc theo từ khóa tìm kiếm
-    function filterBySearch(searchTerm) {
-      // Lọc trong chế độ xem lưới
-      $('.project-card').each(function() {
-        var projectName = $(this).find('.card-header h5').text().toLowerCase();
-        var projectDesc = $(this).find('.card-text').text().toLowerCase();
-
-        if (projectName.includes(searchTerm) || projectDesc.includes(searchTerm)) {
-          $(this).show();
-        } else {
-          $(this).hide();
-        }
-      });
-
-      // Lọc trong chế độ xem danh sách
-      projectTable.search(searchTerm).draw();
-    }
-
-    // Lấy dữ liệu chi tiết dự án
     $('.view-details').click(function() {
       var projectId = $(this).data('id');
 
-      // Gọi API để lấy dữ liệu chi tiết dự án
       $.ajax({
         url: `/projects/projects/${projectId}/`,
         method: 'GET',
         success: function(data) {
-          // Cập nhật tab Tổng quan
           var overviewHtml = `
             <div class="p-3">
               <div class="d-flex justify-content-between mb-3">
                 <h4>${data.project.name}</h4>
                 <span class="badge ${data.project.status === 'completed' ? 'bg-success' : data.project.status === 'not_started' ? 'bg-secondary' : 'bg-primary'}">${data.project.status === 'completed' ? 'Đã hoàn thành' : data.project.status === 'not_started' ? 'Chưa thực hiện' : 'Đang thực hiện'}</span>
               </div>
-              <div class="mb-3">
-                <h6 class="text-muted">Mô tả</h6>
-                <p>${data.project.description}</p>
-              </div>
+                <div class="mb-3">
+                    <h6 class="text-muted">Mô tả</h6>
+                    <div class="markdown-content" data-content="${data.project.description.replace(/"/g, '"')}">${marked.parse(data.project.description)}</div>
+                </div>
               <div class="row mb-3">
                 <div class="col-md-6">
                   <h6 class="text-muted">Ngày bắt đầu</h6>
@@ -585,7 +534,6 @@ $(document).ready(function() {
           `;
           $('#projectOverview').html(overviewHtml);
 
-          // Cập nhật tab Thành viên
           var membersHtml = '';
           data.members.forEach(function(member) {
             membersHtml += `
@@ -604,7 +552,6 @@ $(document).ready(function() {
           });
           $('#projectMembers').html(membersHtml);
 
-          // Cập nhật tab Công việc
           var tasksHtml = '';
           if (data.tasks && data.tasks.length > 0) {
             tasksHtml = `
@@ -653,7 +600,6 @@ $(document).ready(function() {
           }
           $('#projectTasks').html(tasksHtml);
 
-          // Cập nhật tab Trạng thái
           var statusHtml = `
             <div class="p-3">
               <div class="project-status-item">
@@ -681,7 +627,6 @@ $(document).ready(function() {
           `;
           $('#projectStatus').html(statusHtml);
 
-          // Cập nhật link Xem tiến độ
           $('#viewProjectStatistics').attr('href', `/projects/project-statistics/?project_id=${projectId}`);
         },
         error: function(error) {

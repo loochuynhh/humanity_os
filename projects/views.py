@@ -39,13 +39,19 @@ def all_projects(request):
 
     if filter_type == 'my':
         projects = my_projects
-    elif filter_type == 'managed':
-        projects = managed_projects
     else:
         projects = all_projects
 
     if search_term:
         projects = projects.filter(Q(name__icontains=search_term) | Q(description__icontains=search_term))
+
+    if status_filter != 'all':
+        status_map = {
+            'not_started': 'To-do',
+            'in_progress': 'In progress',
+            'completed': 'Completed'
+        }
+        projects = projects.filter(status=status_map.get(status_filter, status_filter))
 
     projects_with_data = []
     today = timezone.now().date()
@@ -61,13 +67,10 @@ def all_projects(request):
 
         status, status_display = get_project_status(project)
 
-        if status_filter != 'all' and status != status_filter:
-            continue
-
         project_data = {
             'id': project.id,
             'name': project.name,
-            'description': project.description,
+            'description': project.description.replace('\r\n', '\n').replace('\u000A', '\n').replace('\u000D', ''),  # Làm sạch mô tả
             'start_date': project.start_date,
             'end_date': project.end_date,
             'manager': project.manager,
@@ -77,7 +80,7 @@ def all_projects(request):
             'completed_tasks': completed_tasks,
             'in_progress_tasks': in_progress_tasks,
             'late_tasks': late_tasks,
-            'status': status,
+            'status': status_display.lower(), 
             'status_display': status_display,
             'is_member': request.user in project.team_members.all(),
             'is_manager': request.user == project.manager,

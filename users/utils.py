@@ -603,8 +603,8 @@ def generate_user_report_data(user, period='monthly'):
     # Evaluations data if available
     from evaluations.models import FormResponses
     from evaluations.utils import calculate_feedback_metrics, get_staff_feedback_queryset
-    
-    evaluations = get_staff_feedback_queryset(user, is_received=True)
+
+    evaluations = get_staff_feedback_queryset(user, is_received=True, start_date=start_date, end_date=end_date)
     evaluation_metrics = calculate_feedback_metrics(evaluations)
     
     # Combine all data
