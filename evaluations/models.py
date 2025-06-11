@@ -36,7 +36,7 @@ class FormQuestions(models.Model):
         choices=[("rating", "Rating"), ("text", "Text")],
         default="text",
     )
-    max_score = models.IntegerField(null=True, blank=True)  # For rating questions
+    max_score = models.IntegerField(null=True, blank=True) 
 
     class Meta:
         db_table = "form_questions"

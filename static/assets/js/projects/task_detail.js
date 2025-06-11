@@ -22,13 +22,9 @@ $(document).ready(function() {
             }
         }
     });
-
-    console.log("Task detail JS đã tải thành công");
-    console.log("Bootstrap version:", typeof bootstrap !== 'undefined' ? 'Đã tải' : 'Chưa tải');
     
     // Kiểm tra modal element trong DOM
     const modalElement = document.getElementById('aiTimeEstimationModal');
-    console.log("Modal element:", modalElement);
     
     // Lưu trữ tham chiếu đến modal
     let aiTimeEstimationModalElement = modalElement;
@@ -49,15 +45,12 @@ $(document).ready(function() {
         try {
             // Thử khởi tạo modal với bootstrap
             aiTimeEstimationModal = new bootstrap.Modal(aiTimeEstimationModalElement);
-            console.log('Modal khởi tạo thành công (Bootstrap)');
             return true;
         } catch (error) {
             console.error('Lỗi khởi tạo modal với Bootstrap:', error);
             try {
                 // Thử khởi tạo với jQuery nếu Bootstrap thất bại
-                console.log('Thử khởi tạo với jQuery...');
                 $(aiTimeEstimationModalElement).modal({backdrop: 'static', keyboard: false});
-                console.log('Modal khởi tạo thành công (jQuery)');
                 // Tạo wrapper function để gọi show/hide dễ dàng
                 aiTimeEstimationModal = {
                     show: function() {
@@ -81,7 +74,6 @@ $(document).ready(function() {
     // Xử lý sự kiện click vào nút đề xuất thời gian
     $(document).on('click', '.suggest-time-btn', function(e) {
         e.preventDefault();
-        console.log('Đã nhấp nút đề xuất thời gian');
         
         // Kiểm tra và khởi tạo modal nếu chưa
         if (!aiTimeEstimationModal) {
@@ -96,9 +88,7 @@ $(document).ready(function() {
         const taskId = $(this).data('task-id');
         const estimatedTimeInput = $(this).closest('.input-group').find('input');
         const userId = estimatedTimeInput.attr('name').replace('estimated_time_', '');
-        
-        console.log("Task ID:", taskId);
-        console.log("User ID:", userId);
+    
         
         // Reset modal state
         $('#aiTimeEstimationContent').addClass('d-none');
@@ -107,7 +97,6 @@ $(document).ready(function() {
         
         // Thử khởi tạo hoặc hiển thị modal với nhiều cách
         try {
-            console.log("Đang mở modal...");
             
             // Phương án 1: Sử dụng Bootstrap modal instance
             if (aiTimeEstimationModal && typeof aiTimeEstimationModal.show === 'function') {
@@ -123,7 +112,6 @@ $(document).ready(function() {
                 $('body').addClass('modal-open').append('<div class="modal-backdrop fade show"></div>');
             }
             
-            console.log("Modal đã được mở");
         } catch (modalError) {
             console.error("Lỗi khi mở modal:", modalError);
             alert('Không thể mở modal đề xuất. Vui lòng tải lại trang.');
@@ -141,7 +129,6 @@ $(document).ready(function() {
             contentType: 'application/json',
             dataType: 'json',
             success: function(data) {
-                console.log("Nhận phản hồi API thành công:", data);
                 
                 // Ẩn loading
                 $('#aiTimeEstimationLoading').addClass('d-none');
@@ -499,8 +486,6 @@ $(document).ready(function() {
 
     // Kiểm tra vị trí của modal trong DOM sau khi trang tải xong
     setTimeout(function() {
-        console.log("Kiểm tra modal sau 1 giây:");
         const modalCheck = document.getElementById('aiTimeEstimationModal');
-        console.log("Modal element tồn tại:", !!modalCheck);
     }, 1000);
 });

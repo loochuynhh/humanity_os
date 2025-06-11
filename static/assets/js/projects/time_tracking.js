@@ -137,7 +137,7 @@ $(document).ready(function() {
         const originalStatus = $select.data('original-status');
 
         $.ajax({
-            url: '/projects/update_assignment_status/',
+            url: "/projects/update_assignment_status/",
             method: 'POST',
             data: {
                 task_id: taskId,
@@ -176,8 +176,6 @@ $(document).ready(function() {
     });
 
     function createProductivityTimelineChart() {
-        console.log('Creating productivity timeline chart with data:', timeByDayData);
-    
         // Kiểm tra nếu không có dữ liệu
         if (!timeByDayData || !Array.isArray(timeByDayData) || timeByDayData.length === 0) {
             console.warn('Không có dữ liệu thời gian theo ngày, bỏ qua việc tạo biểu đồ 1');
@@ -383,7 +381,6 @@ $(document).ready(function() {
     }
 
     function createTaskTimeEfficiencyChart() {
-        console.log('Creating task time efficiency chart with data:', timeByTaskData);
     
         // Kiểm tra nếu không có dữ liệu
         if (!timeByTaskData || !Array.isArray(timeByTaskData) || timeByTaskData.length === 0) {
@@ -579,10 +576,6 @@ $(document).ready(function() {
         timeByDayData = Array.isArray(timeByDayData) ? timeByDayData : [];
         timeByTaskData = Array.isArray(timeByTaskData) ? timeByTaskData : [];
 
-        console.log('Dữ liệu biểu đồ:', {
-            timeByDayData,
-            timeByTaskData
-        });
 
         // Tạo biểu đồ 1 nếu có canvas
         if (document.getElementById('timeByDayChart')) {

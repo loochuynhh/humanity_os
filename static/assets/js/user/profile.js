@@ -19,15 +19,11 @@
       // Xử lý form cập nhật hồ sơ
       $('#profileForm').on('submit', function (e) {
           e.preventDefault();
-          console.log('Form submitted');
 
           var $form = $(this);
           var formData = new FormData(this);
           var updateUrl = $form.attr('action');
           var csrfToken = $form.find('input[name="csrfmiddlewaretoken"]').val();
-
-          console.log('Update URL:', updateUrl);
-          console.log('CSRF Token:', csrfToken);
 
           if (!csrfToken || !updateUrl) {
               console.error('Missing CSRF token or update URL');
@@ -51,7 +47,6 @@
                   'X-CSRFToken': csrfToken
               },
               success: function (response) {
-                  console.log('Server response:', response);
                   if (response.success) {
                       Swal.fire({
                           icon: 'success',
@@ -104,15 +99,11 @@
       // Xử lý form đổi mật khẩu
       $('#changePasswordForm').on('submit', function (e) {
           e.preventDefault();
-          console.log('Change password form submitted');
 
           var $form = $(this);
           var formData = $form.serialize();
           var updateUrl = $form.attr('action');
           var csrfToken = $form.find('input[name="csrfmiddlewaretoken"]').val();
-
-          console.log('Update URL:', updateUrl);
-          console.log('CSRF Token:', csrfToken);
 
           if (!csrfToken || !updateUrl) {
               console.error('Missing CSRF token or update URL');
@@ -134,7 +125,6 @@
                   'X-CSRFToken': csrfToken
               },
               success: function (response) {
-                  console.log('Server response:', response);
                   if (response.success) {
                       Swal.fire({
                           icon: 'success',
@@ -187,15 +177,11 @@
       // Xử lý form tải lên ảnh khuôn mặt
       $('#faceImageForm').on('submit', function (e) {
           e.preventDefault();
-          console.log('Face image form submitted');
 
           var $form = $(this);
           var formData = new FormData(this);
           var uploadUrl = $form.attr('action');
           var csrfToken = $form.find('input[name="csrfmiddlewaretoken"]').val();
-
-          console.log('Upload URL:', uploadUrl);
-          console.log('CSRF Token:', csrfToken);
 
           if (!csrfToken || !uploadUrl) {
               console.error('Missing CSRF token or upload URL');
@@ -219,7 +205,6 @@
                   'X-CSRFToken': csrfToken
               },
               success: function (response) {
-                  console.log('Server response:', response);
                   if (response.success) {
                       Swal.fire({
                           icon: 'success',

@@ -57,7 +57,7 @@
                             <div class="card shadow-sm">
                                 <div class="card-body text-center">
                                     <h6 class="text-muted">Điểm trung bình</h6>
-                                    <h4 class="text-info">{{ average_score|floatformat:1 }}</h4>
+                                    <h4 class="text-info">{{ feedback_score|floatformat:1 }}</h4>
                                 </div>
                             </div>
                         </div>
@@ -314,9 +314,6 @@
                                                         {% endif %}
                                                     </td>
                                                     <td>
-                                                        {% if form.id not in completed_forms %}
-                                                            <button class="btn btn-outline-primary btn-sm submit-form">Điền</button>
-                                                        {% endif %}
                                                         <button class="btn btn-primary btn-sm new-evaluation">Đánh giá Mới</button>
                                                     </td>
                                                 </tr>

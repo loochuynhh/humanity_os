@@ -1,12 +1,12 @@
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpRequest, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
 import json
 from django.views.decorators.http import require_POST
-from .models import Tasks, Projects, TimeEntries, TeamProjectMembership, DeadlineExtensionRequest, TaskAssignments
+from .models import Tasks, Projects, TimeEntries, DeadlineExtensionRequest, TaskAssignments
 from datetime import timedelta, datetime
 from kpis.models import EmployeeKPIs
 from users.models import CheckInCheckOut
@@ -14,7 +14,6 @@ import google.generativeai as genai
 from django.conf import settings
 from django.db.models import Avg
 from .utils import (
-    calculate_team_member_data,
     calculate_time_totals,
     filter_tasks,
     get_project_progress,
@@ -30,7 +29,6 @@ from .utils import (
 def all_projects(request):
     all_projects = Projects.objects.all().prefetch_related('team_members', 'manager')
     my_projects = Projects.objects.filter(Q(team_members=request.user) | Q(manager=request.user)).distinct()
-    managed_projects = Projects.objects.filter(manager=request.user).distinct()
 
     filter_type = request.GET.get('filter', 'all')
     status_filter = request.GET.get('status', 'all')
@@ -54,7 +52,7 @@ def all_projects(request):
         projects = projects.filter(status=status_map.get(status_filter, status_filter))
 
     projects_with_data = []
-    today = timezone.now().date()
+    today = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).date()
 
     for project in projects:
         progress = get_project_progress(project)
@@ -70,7 +68,7 @@ def all_projects(request):
         project_data = {
             'id': project.id,
             'name': project.name,
-            'description': project.description.replace('\r\n', '\n').replace('\u000A', '\n').replace('\u000D', ''),  # Làm sạch mô tả
+            'description': project.description.replace('\r\n', '\n').replace('\u000A', '\n').replace('\u000D', ''), 
             'start_date': project.start_date,
             'end_date': project.end_date,
             'manager': project.manager,
@@ -227,7 +225,7 @@ def all_tasks(request):
         'tasks': tasks,
         'projects': projects,
         'status_choices': Tasks.STATUS_CHOICES,
-        'now': timezone.now().date()
+        'now': timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).date()
     })
 
 @login_required
@@ -252,7 +250,7 @@ def my_tasks(request):
         'tasks_with_details': tasks_with_details,
         'status_choices': Tasks.STATUS_CHOICES,
         'difficulty_choices': Tasks.DIFFICULTY_CHOICES,
-        'now': timezone.now().date(),
+        'now': timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).date(),
         'projects': projects,
     })
 
@@ -280,84 +278,6 @@ def task_detail(request, task_id):
         'time_entries': time_entries,
     }
     return render(request, 'main/pages/projects/task_detail.html', context)
-
-@require_POST
-@login_required
-def update_status(request):
-    try:
-        task_id = request.POST.get('task_id')
-        status = request.POST.get('status')
-        assignment = TaskAssignments.objects.get(task_id=task_id, user=request.user)
-        if status not in dict(Tasks.STATUS_CHOICES):
-            return JsonResponse({'success': False, 'error': 'Trạng thái không hợp lệ'}, status=400)
-        
-        assignment.status = status
-        if task.deadline.date() < timezone.now().date() and status != "Completed":
-            assignment.status = "Late"
-        assignment.save()
-        assignment.task.update_status_from_assignments()
-        return JsonResponse({
-            'success': True,
-            'new_status': assignment.status
-        })
-    except ObjectDoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Task assignment không tồn tại hoặc không có quyền'}, status=404)
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=400)
-
-@require_POST
-@login_required
-def toggle_time(request: HttpRequest) -> JsonResponse:
-    try:
-        task_id = request.POST.get('task_id')
-        action = request.POST.get('action')
-        if not task_id or not action:
-            return JsonResponse({'success': False, 'error': 'Thiếu tham số'}, status=400)
-        
-        assignment = TaskAssignments.objects.get(task_id=task_id, user=request.user)
-        task = assignment.task
-
-        if action == 'start':
-            active_entries = TimeEntries.objects.filter(task_assignment__user=request.user, end_time__isnull=True)
-            if active_entries.exists():
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Bạn đang tracking một task khác. Hãy dừng nó trước.'
-                }, status=400)
-            
-            time_entry = TimeEntries.objects.create(
-                task_assignment=assignment,
-                start_time=timezone.now()
-            )
-            task.is_tracking = True
-            task.update_start_date()
-            if assignment.status == "To-do":
-                assignment.status = "In progress"
-                assignment.save()
-                task.update_status_from_assignments()
-            task.save()
-            return JsonResponse({
-                'success': True,
-                'action': 'started',
-                'entry_id': time_entry.id
-            })
-            
-        elif action == 'stop':
-            entry = TimeEntries.objects.get(task_assignment=assignment, end_time__isnull=True)
-            entry.end_time = timezone.now()
-            entry.save()
-            assignment.update_actual_time()
-            task.is_tracking = False
-            task.save()
-            return JsonResponse({
-                'success': True,
-                'action': 'stopped',
-                'duration': entry.duration
-            })
-    except ObjectDoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Không tìm thấy task hoặc entry'}, status=404)
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 @require_POST
 @login_required
@@ -418,33 +338,6 @@ def request_deadline_extension(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
-@require_POST
-@login_required
-def extend_deadline(request, task_id):
-    try:
-        task = Tasks.objects.get(id=task_id)
-        if not task.project.manager == request.user and not request.user.is_superuser:
-            return JsonResponse({'success': False, 'error': 'Chỉ quản lý hoặc admin có thể gia hạn deadline'}, status=403)
-        
-        new_deadline = request.POST.get('new_deadline')
-        if not new_deadline:
-            return JsonResponse({'success': False, 'error': 'Vui lòng chọn ngày gia hạn'}, status=400)
-        
-        task.deadline = timezone.make_aware(datetime.fromisoformat(new_deadline.replace('T', ' ')))
-        task.save()
-        task.update_status_from_assignments()
-        return JsonResponse({
-            'success': True,
-            'new_deadline': task.deadline.strftime('%d/%m/%Y'),
-            'new_status': task.status
-        })
-    except ObjectDoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Task không tồn tại'}, status=404)
-    except ValueError:
-        return JsonResponse({'success': False, 'error': 'Ngày không hợp lệ'}, status=400)
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=400)
-
 @login_required
 def time_tracking(request):
     assignments = TaskAssignments.objects.filter(user=request.user).select_related('task__project')
@@ -458,41 +351,12 @@ def time_tracking(request):
         'total_time_today': time_totals['today'],
         'total_time_week': time_totals['week'],
         'total_time_month': time_totals['month'],
-        'time_by_day': json.dumps(time_by_day),  # Serialize to JSON string
-        'time_by_task': json.dumps(time_by_task),  # Serialize to JSON string
+        'time_by_day': json.dumps(time_by_day),  
+        'time_by_task': json.dumps(time_by_task), 
         'status_choices': Tasks.STATUS_CHOICES,
         'assignments': assignments
     }
     return render(request, 'main/pages/projects/time_tracking.html', context)
-
-
-@require_POST
-@login_required
-def update_time_entry(request):
-    try:
-        entry_id = request.POST.get('entry_id')
-        start_time = request.POST.get('start_time')
-        end_time = request.POST.get('end_time')
-        if not entry_id or not start_time:
-            return JsonResponse({'success': False, 'error': 'Thiếu tham số'}, status=400)
-
-        entry = TimeEntries.objects.get(id=entry_id, task_assignment__user=request.user)
-        entry.start_time = timezone.make_aware(datetime.fromisoformat(start_time.replace('T', ' ')))
-        entry.end_time = timezone.make_aware(datetime.fromisoformat(end_time.replace('T', ' '))) if end_time else None
-        entry.save()
-        entry.task_assignment.update_actual_time()
-
-        return JsonResponse({
-            'success': True,
-            'message': 'Cập nhật thông tin thực hiện công việc thành công!',
-            'duration': entry.duration if entry.duration else 0
-        })
-    except ObjectDoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Thông tin thực hiện công việc không tồn tại hoặc không có quyền'}, status=404)
-    except ValueError:
-        return JsonResponse({'success': False, 'error': 'Dữ liệu không hợp lệ'}, status=400)
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 @require_POST
 @login_required
@@ -524,8 +388,8 @@ def project_calendar(request):
     user_projects = get_user_projects(request.user)
     context = {
         'projects': user_projects,
-        'current_month': timezone.now().month,
-        'current_year': timezone.now().year
+        'current_month': timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).month,
+        'current_year': timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).year
     }
     return render(request, 'main/pages/projects/project_calendar.html', context)
 
@@ -539,7 +403,7 @@ def project_calendar_events(request):
         start_date = timezone.make_aware(datetime.fromisoformat(start_date.replace('Z', '')))
         end_date = timezone.make_aware(datetime.fromisoformat(end_date.replace('Z', '')))
     except (ValueError, TypeError):
-        today = timezone.now()
+        today = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420))
         start_date = timezone.datetime(today.year, today.month, 1)
         end_date = start_date + timedelta(days=31)
 
@@ -588,90 +452,6 @@ def project_calendar_events(request):
     return JsonResponse({'events': events}, safe=False)
 
 @login_required
-def project_statistics(request):
-    user_projects = get_user_projects(request.user)
-    context = {'projects': user_projects, 'today': timezone.now().date()}
-    return render(request, 'main/pages/projects/project_statistics.html', context)
-
-@login_required
-def project_statistics_data(request):
-    project_id = request.GET.get('project_id')
-    if not project_id:
-        return JsonResponse({'success': False, 'error': 'Thiếu project_id'}, status=400)
-
-    try:
-        project = Projects.objects.get(id=project_id)
-        today = timezone.now().date()
-        tasks = project.tasks.all()
-        total_tasks = tasks.count()
-        completed_tasks = tasks.filter(status='Completed').count()
-        in_progress_tasks = tasks.filter(status='In progress').count()
-        late_tasks = tasks.filter(status='Late').count()
-        progress = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
-        status = get_project_status(project)[0]
-        total_time = TaskAssignments.objects.filter(task__project=project).aggregate(total=Sum('actual_time'))['total'] or 0
-
-        user_statistics = []
-        memberships = TeamProjectMembership.objects.filter(project=project).select_related('user')
-        for membership in memberships:
-            user = membership.user
-            assignments = TaskAssignments.objects.filter(task__project=project, user=user)
-            user_tasks = tasks.filter(task_assignments__in=assignments).distinct()
-            user_time = assignments.aggregate(total=Sum('actual_time'))['total'] or 0
-            user_completed = assignments.filter(status='Completed').count()
-            user_progress = (user_completed / assignments.count() * 100) if assignments.count() > 0 else 0
-
-            user_statistics.append({
-                'user_id': user.id,
-                'user_name': f"{user.first_name} {user.last_name}",
-                'role': 'Quản lý' if user == project.manager else assignments.first().role if assignments.exists() else 'Thành viên',
-                'tasks_count': user_tasks.count(),
-                'completed_tasks': user_completed,
-                'total_time': round(user_time, 2),
-                'progress': round(user_progress, 1)
-            })
-
-        task_status_distribution = {
-            'Completed': completed_tasks,
-            'In progress': in_progress_tasks,
-            'Late': late_tasks,
-            'To-do': total_tasks - completed_tasks - in_progress_tasks - late_tasks
-        }
-
-        month_start = today.replace(day=1)
-        tasks_by_date = {}
-        for i in range(31):
-            date = month_start + timedelta(days=i)
-            if date > today:
-                break
-            completed_by_date = tasks.filter(status='Completed', completed_date__date__lte=date).count()
-            progress_by_date = (completed_by_date / total_tasks * 100) if total_tasks > 0 else 0
-            tasks_by_date[date.strftime('%d/%m')] = round(progress_by_date, 1)
-
-        return JsonResponse({
-            'success': True,
-            'project_name': project.name,
-            'project_description': project.description,
-            'start_date': project.start_date.strftime('%d/%m/%Y'),
-            'end_date': project.end_date.strftime('%d/%m/%Y'),
-            'status': status,
-            'progress': round(progress, 1),
-            'total_tasks': total_tasks,
-            'completed_tasks': completed_tasks,
-            'in_progress_tasks': in_progress_tasks,
-            'late_tasks': late_tasks,
-            'total_time': round(total_time, 2),
-            'task_status_distribution': task_status_distribution,
-            'user_statistics': user_statistics,
-            'progress_by_date': tasks_by_date
-        })
-    except Projects.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Dự án không tồn tại'}, status=404)
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
-    
-
-@login_required
 def create_time_entry(request):
     if request.method == 'POST':
         task_assignment_id = request.POST.get('task_assignment')
@@ -718,12 +498,10 @@ def suggest_user_for_task(request):
         return JsonResponse({'error': 'Yêu cầu đăng nhập.'}, status=401)
     
     try:
-        # Đọc dữ liệu từ JSON body thay vì form data
         try:
             data = json.loads(request.body)
             task_id = data.get('task_id')
         except json.JSONDecodeError:
-            # Fallback cho form data nếu không phải JSON
             task_id = request.POST.get('task_id')
         
         if not task_id:
@@ -735,16 +513,13 @@ def suggest_user_for_task(request):
         if not project:
             return JsonResponse({'error': 'Task không thuộc dự án nào.'}, status=400)
         
-        # Lấy danh sách thành viên trong dự án
         team_members = project.team_members.all()
         
         if not team_members.exists():
             return JsonResponse({'error': 'Không có thành viên nào trong dự án.'}, status=400)
             
-        # Thu thập thông tin chi tiết cho AI gợi ý
         ai_suggestion_prompt = build_ai_suggestion_prompt(task, project, team_members)
         
-        # Gọi AI để đề xuất người dùng phù hợp
         suggestion_result = get_ai_suggestion(ai_suggestion_prompt)
         
         if not suggestion_result:
@@ -760,15 +535,13 @@ def suggest_user_for_task(request):
         print(traceback.format_exc())
         return JsonResponse({'error': f'Đã xảy ra lỗi: {str(e)}'}, status=500)
 
-
 def build_ai_suggestion_prompt(task, project, team_members):
     """
     Xây dựng prompt cho AI để đề xuất người dùng phù hợp
     """
-    today = timezone.now().date()
+    today = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).date()
     one_month_ago = today - timezone.timedelta(days=30)
     
-    # Tạo thông tin chi tiết về task
     task_info = {
         'id': task.id,
         'title': task.title,
@@ -782,7 +555,6 @@ def build_ai_suggestion_prompt(task, project, team_members):
         'start_date': task.start_date.strftime('%Y-%m-%d %H:%M') if task.start_date else 'Chưa bắt đầu',
     }
     
-    # Tạo thông tin chi tiết về dự án
     project_info = {
         'id': project.id,
         'name': project.name,
@@ -793,11 +565,9 @@ def build_ai_suggestion_prompt(task, project, team_members):
         'total_team_members': project.team_members.count(),
     }
     
-    # Thu thập thông tin về tất cả thành viên trong dự án
     members_data = []
     
     for user in team_members:
-        # Thông tin cơ bản
         user_data = {
             'id': user.id,
             'username': user.username,
@@ -808,7 +578,6 @@ def build_ai_suggestion_prompt(task, project, team_members):
             'date_of_joining': user.date_of_joining.strftime('%Y-%m-%d') if user.date_of_joining else 'Không có thông tin',
         }
         
-        # Thông tin công việc hiện tại
         current_tasks = Tasks.objects.filter(
             task_assignments__user=user, 
             status__in=['To-do', 'In progress']
@@ -816,7 +585,6 @@ def build_ai_suggestion_prompt(task, project, team_members):
         
         user_data['current_tasks_count'] = current_tasks
         
-        # Thống kê công việc đã hoàn thành trong 1 tháng qua
         completed_tasks = Tasks.objects.filter(
             task_assignments__user=user,
             status='Completed',
@@ -825,7 +593,6 @@ def build_ai_suggestion_prompt(task, project, team_members):
         
         user_data['completed_tasks_last_month'] = completed_tasks
         
-        # Thời gian làm việc theo dõi trong 1 tuần qua
         week_start = today - timezone.timedelta(days=today.weekday())
         time_entries = TimeEntries.objects.filter(
             task_assignment__user=user,
@@ -835,7 +602,6 @@ def build_ai_suggestion_prompt(task, project, team_members):
         total_hours = time_entries.aggregate(total=Sum('duration'))['total'] or 0
         user_data['hours_worked_this_week'] = round(total_hours, 2)
         
-        # Điểm danh hôm nay
         attendance_today = CheckInCheckOut.objects.filter(
             user=user, 
             date=today
@@ -843,13 +609,11 @@ def build_ai_suggestion_prompt(task, project, team_members):
         
         user_data['checked_in_today'] = attendance_today is not None and attendance_today.checkin_time is not None
         
-        # KPI và đánh giá
         user_kpis = EmployeeKPIs.objects.filter(user=user)
         avg_kpi = user_kpis.aggregate(avg=Avg('achieved_percentage'))['avg'] or 0
         
         user_data['avg_kpi_percentage'] = round(avg_kpi, 2)
         
-        # Đánh giá năng lực dựa trên công việc tương tự
         similar_tasks = Tasks.objects.filter(
             Q(difficulty=task.difficulty) |
             Q(title__icontains=task.title) |
@@ -864,10 +628,8 @@ def build_ai_suggestion_prompt(task, project, team_members):
         
         user_data['similar_tasks_completed'] = similar_task_performance
         
-        # Tổng hợp
         members_data.append(user_data)
     
-    # Xây dựng prompt
     prompt = f"""
 Tôi cần bạn đề xuất người dùng phù hợp nhất để gán cho một nhiệm vụ trong dự án, dựa trên dữ liệu chi tiết về người dùng và yêu cầu nhiệm vụ. Vai trò của bạn là một trợ lý AI chuyên nghiệp về phân bổ nguồn lực dự án.
 
@@ -929,13 +691,12 @@ def get_ai_suggestion(prompt):
         genai.configure(api_key=settings.GEMINI_API_KEY)
         model = genai.GenerativeModel('gemini-1.5-flash')
         
-        # Cấu hình parameters
         generation_config = {
-            "temperature": 0.1,  # Giảm temperature để có kết quả nhất quán hơn
+            "temperature": 0.1, 
             "top_p": 0.8,
             "top_k": 16,
             "max_output_tokens": 8192,
-            "response_mime_type": "application/json",  # Yêu cầu phản hồi dạng JSON
+            "response_mime_type": "application/json",
         }
         
         safety_settings = [
@@ -963,11 +724,8 @@ def get_ai_suggestion(prompt):
             safety_settings=safety_settings
         )
         
-        # Lấy phản hồi dạng văn bản
         response_text = response.text
         
-        # Xử lý phản hồi để loại bỏ các tag markdown và làm sạch JSON
-        # Loại bỏ ```json hoặc ``` hoặc kí tự không cần thiết từ đầu và cuối
         cleaned_response = response_text.strip()
         if cleaned_response.startswith('```json'):
             cleaned_response = cleaned_response[7:]
@@ -979,14 +737,11 @@ def get_ai_suggestion(prompt):
             
         cleaned_response = cleaned_response.strip()
         
-        # Log phản hồi cho debugging
         print(f"Response từ AI (đã làm sạch): {cleaned_response[:100]}...")
         
-        # Parse JSON từ kết quả trả về
         try:
             suggestion = json.loads(cleaned_response)
             
-            # Kiểm tra định dạng phản hồi
             if not isinstance(suggestion, dict) or 'suggested_user_id' not in suggestion:
                 raise ValueError("Phản hồi từ AI không đúng định dạng JSON")
                 
@@ -995,24 +750,19 @@ def get_ai_suggestion(prompt):
         except json.JSONDecodeError as e:
             print(f"Lỗi khi phân tích JSON từ phản hồi AI: {str(e)}")
             print(f"Phản hồi gốc: {response_text}")
-            # Thử phân tích lại sau khi làm sạch triệt để hơn
             try:
-                # Tìm vị trí bắt đầu của JSON (tìm dấu { đầu tiên)
                 start_pos = response_text.find('{')
-                # Tìm vị trí kết thúc của JSON (tìm dấu } cuối cùng)
                 end_pos = response_text.rfind('}') + 1
                 
                 if start_pos >= 0 and end_pos > start_pos:
                     json_content = response_text[start_pos:end_pos]
                     suggestion = json.loads(json_content)
                     
-                    # Kiểm tra định dạng phản hồi
                     if not isinstance(suggestion, dict) or 'suggested_user_id' not in suggestion:
                         raise ValueError("Phản hồi từ AI không đúng định dạng JSON")
                         
                     return suggestion
             except:
-                # Nếu tất cả cách khác đều thất bại, thử cung cấp một phản hồi phòng hờ
                 return {
                     'suggested_user_id': None,
                     'suggested_user_name': 'Không thể đề xuất',
@@ -1027,7 +777,6 @@ def get_ai_suggestion(prompt):
         print(traceback.format_exc())
         return None
 
-
 @login_required
 @require_POST
 def suggest_time_for_task(request):
@@ -1038,13 +787,11 @@ def suggest_time_for_task(request):
         return JsonResponse({'error': 'Yêu cầu đăng nhập.'}, status=401)
     
     try:
-        # Đọc dữ liệu từ JSON body thay vì form data
         try:
             data = json.loads(request.body)
             task_id = data.get('task_id')
             user_id = data.get('user_id')
         except json.JSONDecodeError:
-            # Fallback cho form data nếu không phải JSON
             task_id = request.POST.get('task_id')
             user_id = request.POST.get('user_id')
         
@@ -1053,14 +800,11 @@ def suggest_time_for_task(request):
         
         task = Tasks.objects.get(id=task_id)
         
-        # Chỉ cho phép người dùng đề xuất cho task của họ
         if not task.task_assignments.filter(user=request.user).exists() and not request.user.is_superuser:
             return JsonResponse({'error': 'Bạn không có quyền thực hiện thao tác này.'}, status=403)
         
-        # Thu thập thông tin chi tiết cho AI gợi ý
         ai_suggestion_prompt = build_time_estimation_prompt(task, request.user)
         
-        # Gọi AI để đề xuất thời gian
         suggestion_result = get_time_estimation(ai_suggestion_prompt)
         
         if not suggestion_result:
@@ -1076,14 +820,12 @@ def suggest_time_for_task(request):
         print(traceback.format_exc())
         return JsonResponse({'error': f'Đã xảy ra lỗi: {str(e)}'}, status=500)
 
-
 def build_time_estimation_prompt(task, user):
     """
     Xây dựng prompt cho AI để đề xuất thời gian ước lượng cho task
     """
-    today = timezone.now().date()
+    today = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).date()
     
-    # Lấy thông tin chi tiết về task
     task_info = {
         'id': task.id,
         'title': task.title,
@@ -1098,7 +840,6 @@ def build_time_estimation_prompt(task, user):
         'total_time': f"{task.total_time} giờ" if task.total_time else 'Chưa có',
     }
     
-    # Lấy thông tin về project
     project = task.project
     project_info = {
         'id': project.id,
@@ -1109,7 +850,6 @@ def build_time_estimation_prompt(task, user):
         'manager': project.manager.get_full_name() if project.manager else 'Chưa có quản lý',
     }
     
-    # Lấy thông tin về người dùng
     user_info = {
         'id': user.id,
         'username': user.username,
@@ -1118,7 +858,6 @@ def build_time_estimation_prompt(task, user):
         'department': user.department or 'Chưa xác định',
     }
     
-    # Lấy lịch sử công việc của người dùng
     user_tasks = TaskAssignments.objects.filter(
         user=user, 
         task__difficulty=task.difficulty
@@ -1136,13 +875,11 @@ def build_time_estimation_prompt(task, user):
                 'status': assignment.status
             })
     
-    # Lấy tổng số task đã làm của user
     total_completed_tasks = TaskAssignments.objects.filter(
         user=user, 
         status='Completed'
     ).count()
     
-    # Lấy thông tin về tất cả task trong project có cùng độ khó
     similar_project_tasks = Tasks.objects.filter(
         project=project,
         difficulty=task.difficulty
@@ -1172,6 +909,7 @@ Tôi cần bạn đề xuất thời gian ước lượng cho một công việc
 - **Ghi chú**: {task_info['notes']}
 - **Ước lượng tổng của công việc**: {task_info['estimated_time']}
 - **Tổng thời gian đã sử dụng**: {task_info['total_time']}
+- **Ngày hôm nay theo giờ Việt Nam**: {today}
 
 ## Thông tin Dự án
 - **Tên**: {project_info['name']}
@@ -1218,7 +956,6 @@ QUAN TRỌNG:
 """
     
     return prompt
-
 
 def get_time_estimation(prompt):
     """

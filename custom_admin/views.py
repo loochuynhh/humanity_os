@@ -32,10 +32,10 @@ def index(request):
         project_count = Projects.objects.count()
         
         active_projects = Projects.objects.filter(
-            end_date__gt=timezone.now()
+            end_date__gt=timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420))
         ).order_by('-id')[:5]
         
-        now = timezone.now()
+        now = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420))
         completed_projects = Projects.objects.filter(end_date__lt=now).count()
         ongoing_projects = project_count - completed_projects
         
@@ -140,7 +140,7 @@ def index(request):
     months_data = []
     labels = []
     
-    now = timezone.now()
+    now = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420))
     for i in range(5, -1, -1):
         month_start = (now - relativedelta(months=i)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         month_end = (month_start + relativedelta(months=1) - timedelta(seconds=1))

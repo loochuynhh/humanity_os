@@ -4,7 +4,7 @@ from django.utils import timezone
 from projects.models import Projects
 
 def get_period_dates(period):
-    today = timezone.now()
+    today = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420))
     if period == 'Weekly':
         start = today - timedelta(days=today.weekday())
         start = start.replace(hour=0, minute=0, second=0, microsecond=0)

@@ -97,7 +97,9 @@ prompt structure web:
 │
 └── scripts/                    # Script SQL, seed, migration
     └── migrate_and_seed.py
-"; "➜  humanity_os git:(main) find . -path "./.venv" -prune -o -type f -name "urls.py" -exec echo "===== {} =====" \; -exec cat {} \;
+";
+
+➜  humanity_os git:(main) find . -path "./.venv" -prune -o -type f -name "urls.py" -exec echo "===== {} =====" \; -exec cat {} \;
 ===== ./kpis/urls.py =====
 from django.urls import path
 from . import views
@@ -106,9 +108,7 @@ app_name = 'kpis'
 
 urlpatterns = [
     path('performance-dashboard/', views.performance_dashboard, name='performance_dashboard'),
-    path('update/', views.update_kpi, name='update_kpi'),
     path('kpi-detail/<int:kpi_id>/', views.kpi_detail, name='kpi_detail'),
-    path('generate-pdf/', views.generate_pdf, name='generate_pdf'),
 ]===== ./evaluations/urls.py =====
 from django.urls import path
 from . import views
@@ -125,61 +125,36 @@ from .views import (
     all_tasks,
     my_tasks,
     task_detail,
-    update_status,
-    toggle_time,
     update_task_details,
     request_deadline_extension,
-    extend_deadline,
     time_tracking,
-    update_time_entry,
     update_assignment_status,
-    team_members_data,
     project_calendar,
     project_calendar_events,
-    project_statistics,
-    project_statistics_data,
-    project_progress,
-    project_progress_data,
     create_time_entry,
-    update_time_entry,
     update_assignment_status,
     suggest_user_for_task,
+    suggest_time_for_task,
 )
 
 urlpatterns = [
-    # Các route dự án
     path("projects/", all_projects, name="all_projects"),
     path("projects/<int:project_id>/", project_detail, name="project_detail"),
-    path("project-statistics/", project_statistics, name="project_statistics"),
-    path("project-statistics-data/", project_statistics_data, name="project_statistics_data"),
-    path("project-progress/", project_progress, name="project_progress"),
-    path("project-progress-data/", project_progress_data, name="project_progress_data"),
-    path("team-members-data/", team_members_data, name="team_members_data"),
-
-    # Calendar
     path("project-calendar/", project_calendar, name="project_calendar"),
     path("project-calendar-events/", project_calendar_events, name="project_calendar_events"),
 
-    # Các route task
     path("tasks/", all_tasks, name="all_tasks"),
     path("my-tasks/", my_tasks, name="my_tasks"),
     path("task/<int:task_id>/", task_detail, name="task_detail"),
-    path("update-status/", update_status, name="update_status"),
-    path("toggle-time/", toggle_time, name="toggle_time"),
     path("update-task-details/", update_task_details, name="update_task_details"),
     path("request-deadline-extension/", request_deadline_extension, name="request_deadline_extension"),
-    path("extend-deadline/<int:task_id>/", extend_deadline, name="extend_deadline"),
 
-    # Thời gian làm việc
     path("time-tracking/", time_tracking, name="time_tracking"),
-    path("update-time-entry/", update_time_entry, name="update_time_entry"),
     path("update-assignment-status/", update_assignment_status, name="update_assignment_status"),
     path('create_time_entry/', create_time_entry, name='create_time_entry'),
-    path('update_time_entry/', update_time_entry, name='update_time_entry'),
-    path('update_assignment_status/', update_assignment_status, name='update_assignment_status'),
 
-    # API
     path("api/suggest-user-for-task/", suggest_user_for_task, name="suggest_user_for_task"),
+    path("api/suggest-time-for-task/", suggest_time_for_task, name="suggest_time_for_task"),
 ]
 ===== ./humanity_os/urls.py =====
 """humanity_os URL Configuration"""
@@ -227,8 +202,6 @@ from .views import (
     check_out,
     profile,
     update_profile,
-    upload_face_image,
-    update_fixed_location,
     attendance,
     get_current_work_time,
     generate_user_report,
@@ -248,16 +221,13 @@ urlpatterns = [
     path('profile/', profile, name='profile'),
     path('profile/update/', update_profile, name='update_profile'),
     path('attendance/', attendance, name='attendance'),
-    path('profile/upload-face-image/', upload_face_image, name='upload_face_image'),
-    path('update-fixed-location/', update_fixed_location, name='update_fixed_location'),
     path('api/current-work-time/', get_current_work_time, name='get_current_work_time'),
     path('report/', generate_user_report, name='generate_user_report'),
     path('api/ai_chat/', ai_chat, name='ai_chat'),
     path('api/get_chat_messages/', get_chat_messages, name='get_chat_messages'),
 ]
-➜  humanity_os git:(main) 
-"; "➜  humanity_os git:(main) find . -path "./.venv" -prune -o -type f -name "models.py" -exec echo "===== {} =====" \; -exec cat {} \;
-
+"
+➜  humanity_os git:(main) ✗ find . -path "./.venv" -prune -o -type f -name "models.py" -exec echo "===== {} =====" \; -exec cat {} \;
 ===== ./kpis/models.py =====
 from django.db import models
 from django.db.models import Sum
@@ -361,19 +331,16 @@ class EmployeeKPIs(models.Model):
     def update_from_project(self):
         """Update actual_value based on project data."""
         if self.kpi.project and self.kpi.kpi_type == "Quantitative":
-            # Lấy tất cả task_assignments của user trong project
             task_assignments = self.user.task_assignments.filter(
                 task__project=self.kpi.project
             )
             
-            # Lọc time_entries thông qua task_assignment
             time_entries = TimeEntries.objects.filter(
                 task_assignment__in=task_assignments,
                 start_time__gte=self.start_date,
                 start_time__lte=self.end_date
             )
             
-            # Lấy các task được gán cho user trong khoảng thời gian
             tasks = self.kpi.project.tasks.filter(
                 task_assignments__user=self.user,
                 deadline__gte=self.start_date,
@@ -552,7 +519,6 @@ class Tasks(models.Model):
     
     def update_start_date(self):
         """Cập nhật ngày bắt đầu dựa trên TimeEntry đầu tiên của task"""
-        # Lấy TimeEntry đầu tiên từ tất cả TaskAssignment của task này
         earliest_entry = TimeEntries.objects.filter(
             task_assignment__task=self
         ).order_by('start_time').first()
@@ -562,7 +528,6 @@ class Tasks(models.Model):
 
     def update_total_time(self):
         """Cập nhật tổng thời gian thực tế từ tất cả TaskAssignment"""
-        # Tính tổng thời gian từ tất cả TaskAssignment
         total = TaskAssignments.objects.filter(task=self).aggregate(
             total=Sum('actual_time')
         )['total'] or 0
@@ -636,7 +601,6 @@ class TaskAssignments(models.Model):
         self.actual_time = total
         self.save(update_fields=['actual_time'])
         
-        # Cập nhật tổng thời gian của task
         self.task.update_total_time()
 
 
@@ -664,16 +628,13 @@ class TimeEntries(models.Model):
             raise ValidationError("Thời gian kết thúc phải lớn hơn thời gian bắt đầu.")
             
     def save(self, *args, **kwargs):
-        # Kiểm tra điều kiện trước khi lưu
         self.clean()
         
-        # Tính duration nếu có end_time
         if self.end_time and self.start_time:
             self.duration = (self.end_time - self.start_time).total_seconds() / 3600
             
         super().save(*args, **kwargs)
         
-        # Cập nhật actual_time của TaskAssignment
         if self.task_assignment:
             self.task_assignment.update_actual_time()
 
@@ -713,8 +674,8 @@ class TeamProjectMembership(models.Model):
 
     class Meta:
         db_table = "team_project_memberships"
-        verbose_name = "Team Project Membership"
-        verbose_name_plural = "Team Project Memberships"
+        verbose_name = "Project Member"
+        verbose_name_plural = "Project Members"
         unique_together = ("project", "user")
 
     def __str__(self):
@@ -814,70 +775,5 @@ class AIChatMessage(models.Model):
         verbose_name_plural = "AI Chat Messages"
 
     def __str__(self):
-        return f"{self.role}: {self.content[:50]}"%                                                                                                           ➜  humanity_os git:(main) 
-"; "Dưới đây là tóm tắt ngắn gọn, xúc tích về chức năng của từng hàm trong các file `views.py` của dự án Django, được trình bày để AI dễ hiểu và ánh xạ với các URL tương ứng:
-
-### ./kpis/views.py
-- **`update_kpi`**: Cập nhật giá trị thực tế của KPI, tính toán phần trăm đạt được và đánh giá, trả về JSON kết quả. (URL: POST cập nhật KPI)
-- **`performance_dashboard`**: Hiển thị bảng điều khiển hiệu suất với dữ liệu KPI, task, thời gian làm việc, và biểu đồ KPI theo kỳ và dự án. (URL: GET bảng điều khiển hiệu suất)
-- **`generate_pdf`**: Tạo báo cáo PDF về hiệu suất KPI, task, và thời gian làm việc theo kỳ và dự án. (URL: GET xuất PDF báo cáo hiệu suất)
-- **`kpi_detail`**: Hiển thị chi tiết một KPI cụ thể của người dùng. (URL: GET chi tiết KPI)
-
-### ./evaluations/views.py
-- **`feedback_detail`**: Trả về HTML chi tiết phản hồi đánh giá từ một response_id, kiểm tra quyền truy cập. (URL: GET chi tiết đánh giá)
-- **`submit_form`**: 
-  - GET: Hiển thị form đánh giá với danh sách câu hỏi và người dùng mục tiêu. 
-  - POST: Gửi câu trả lời đánh giá, kiểm tra quyền và loại form. (URL: GET/POST gửi form đánh giá)
-- **`evaluations`**: Hiển thị danh sách đánh giá (nhận/gửi), form mở, và thống kê đánh giá của người dùng. (URL: GET danh sách đánh giá)
-
-### ./projects/views.py
-- **`all_projects`**: Hiển thị danh sách dự án (tất cả/của tôi/quản lý) với tiến độ, số lượng task, và bộ lọc. (URL: GET danh sách dự án)
-- **`project_detail`**: Trả về JSON chi tiết dự án, thành viên, task, và tiến độ, kiểm tra quyền truy cập. (URL: GET chi tiết dự án)
-- **`team_members_data`**: Trả về JSON dữ liệu thành viên dự án (task, thời gian, tiến độ). (URL: GET dữ liệu thành viên)
-- **`project_progress`**: Hiển thị trang tiến độ dự án của người dùng. (URL: GET trang tiến độ dự án)
-- **`project_progress_data`**: Trả về JSON tiến độ dự án, số lượng task, và trạng thái. (URL: GET dữ liệu tiến độ dự án)
-- **`all_tasks`**: Hiển thị danh sách task của các dự án người dùng tham gia, hỗ trợ bộ lọc. (URL: GET danh sách task)
-- **`my_tasks`**: Hiển thị danh sách task được gán cho người dùng, kèm cảnh báo deadline và tiến độ. (URL: GET danh sách task của tôi)
-- **`task_detail`**: Hiển thị chi tiết task, thời gian theo dõi, và tiến độ, kiểm tra quyền truy cập. (URL: GET chi tiết task)
-- **`update_status`**: Cập nhật trạng thái task assignment, kiểm tra quyền và deadline. (URL: POST cập nhật trạng thái task)
-- **`toggle_time`**: Bắt đầu/dừng theo dõi thời gian task, cập nhật trạng thái task. (URL: POST bắt đầu/dừng thời gian)
-- **`update_task_details`**: Cập nhật chi tiết task (tiêu đề, mô tả, độ khó, v.v.), kiểm tra quyền. (URL: POST cập nhật chi tiết task)
-- **`request_deadline_extension`**: Gửi yêu cầu gia hạn deadline cho task. (URL: POST yêu cầu gia hạn)
-- **`extend_deadline`**: Gia hạn deadline task, chỉ dành cho quản lý/admin. (URL: POST gia hạn deadline)
-- **`time_tracking`**: Hiển thị trang theo dõi thời gian với dữ liệu thời gian theo ngày/task. (URL: GET trang theo dõi thời gian)
-- **`update_time_entry`**: Cập nhật thời gian bắt đầu/kết thúc của time entry, kiểm tra quyền. (URL: POST cập nhật time entry)
-- **`project_calendar`**: Hiển thị trang lịch dự án. (URL: GET trang lịch dự án)
-- **`project_calendar_events`**: Trả về JSON sự kiện thời gian task trong khoảng thời gian và dự án. (URL: GET sự kiện lịch dự án)
-- **`project_statistics`**: Hiển thị trang thống kê dự án. (URL: GET trang thống kê dự án)
-- **`project_statistics_data`**: Trả về JSON thống kê dự án (task, thành viên, tiến độ, thời gian). (URL: GET dữ liệu thống kê dự án)
-- **`create_time_entry`**: Tạo time entry mới với thời gian bắt đầu/kết thúc, kiểm tra quyền. (URL: POST tạo time entry)
-- **`suggest_user_for_task`**: Đề xuất người dùng phù hợp cho task dựa trên AI, trả về JSON với lý do. (URL: POST đề xuất người dùng)
-
-### ./humanity_os/views.py
-- **`home`**: Hiển thị trang chủ. (URL: GET trang chủ)
-
-### ./custom_admin/views.py
-- **`logout_view`**: Đăng xuất người dùng và chuyển hướng về trang admin. (URL: GET đăng xuất admin)
-- **`index`**: Hiển thị bảng điều khiển admin với thống kê người dùng, dự án, task, KPI, và hoạt động gần đây. (URL: GET bảng điều khiển admin)
-
-### ./users/views.py
-- **`login_view`**: Xử lý đăng nhập người dùng, hiển thị thông báo thành công/thất bại. (URL: GET/POST đăng nhập)
-- **`logout_view`**: Đăng xuất người dùng và chuyển hướng về trang chủ. (URL: GET đăng xuất)
-- **`forgot_password`**: Gửi email đặt lại mật khẩu khi người dùng quên mật khẩu. (URL: GET/POST quên mật khẩu)
-- **`change_password`**: Thay đổi mật khẩu người dùng, yêu cầu xác nhận mật khẩu hiện tại. (URL: GET/POST đổi mật khẩu)
-- **`reset_password`**: Đặt lại mật khẩu qua liên kết token. (URL: GET/POST đặt lại mật khẩu)
-- **`user_list`**: Hiển thị danh sách người dùng (chỉ admin). (URL: GET danh sách người dùng)
-- **`create_user`**: Tạo người dùng mới (chỉ admin). (URL: GET/POST tạo người dùng)
-- **`check_in`**: Xử lý check-in với vị trí và ảnh, lưu vào hệ thống. (URL: POST check-in)
-- **`check_out`**: Xử lý check-out với vị trí và ảnh, lưu vào hệ thống. (URL: POST check-out)
-- **`index`**: Hiển thị bảng điều khiển người dùng với thông tin task, thời gian, KPI, và dự án. (URL: GET bảng điều khiển người dùng)
-- **`profile`**: Hiển thị hồ sơ người dùng với task gần đây, lịch sử check-in, và dự án. (URL: GET hồ sơ người dùng)
-- **`update_profile`**: Cập nhật thông tin hồ sơ người dùng (tên, điện thoại, v.v.). (URL: POST cập nhật hồ sơ)
-- **`upload_face_image`**: Tải lên ảnh khuôn mặt cho nhận diện. (URL: POST tải ảnh khuôn mặt)
-- **`update_fixed_location`**: Cập nhật vị trí làm việc cố định của người dùng. (URL: POST cập nhật vị trí)
-- **`attendance`**: Hiển thị lịch sử điểm danh 45 ngày gần nhất với thống kê. (URL: GET lịch sử điểm danh)
-- **`get_current_work_time`**: Trả về JSON thời gian làm việc hiện tại (hôm nay/tuần). (URL: GET thời gian làm việc)
-- **`generate_user_report`**: Tạo báo cáo PDF về hiệu suất người dùng theo kỳ. (URL: GET xuất báo cáo người dùng)
-- **`ai_chat`**: Xử lý trò chuyện AI, lưu tin nhắn, và trả về phản hồi JSON. (URL: POST trò chuyện AI)
-- **`get_chat_messages`**: Trả về JSON 20 tin nhắn AI gần nhất của người dùng. (URL: GET tin nhắn AI)
+        return f"{self.role}: {self.content[:50]}"%    
 "

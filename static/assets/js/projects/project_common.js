@@ -97,24 +97,6 @@ function createDataTable(tableId, options = {}) {
   return $(tableId).DataTable(mergedOptions);
 }
 
-// Hàm xuất dữ liệu sang Excel (mock function)
-function exportToExcel(tableId, fileName) {
-  console.log('Exporting table ' + tableId + ' to Excel file: ' + fileName);
-  alert('Tính năng xuất Excel đang được phát triển');
-}
-
-// Hàm xuất dữ liệu sang PDF (mock function)
-function exportToPDF(tableId, fileName) {
-  console.log('Exporting table ' + tableId + ' to PDF file: ' + fileName);
-  alert('Tính năng xuất PDF đang được phát triển');
-}
-
-// Hàm xuất dữ liệu sang CSV (mock function)
-function exportToCSV(tableId, fileName) {
-  console.log('Exporting table ' + tableId + ' to CSV file: ' + fileName);
-  alert('Tính năng xuất CSV đang được phát triển');
-}
-
 // Hàm tạo biểu đồ doughnut tiêu chuẩn
 function createDoughnutChart(canvasId, data, options = {}) {
   const ctx = document.getElementById(canvasId).getContext('2d');

@@ -1,22 +1,30 @@
-from django.db.models import Count, Sum
-from django.utils import timezone
-import json
-from projects.models import Tasks, TaskAssignments, TimeEntries, Projects
-from kpis.models import EmployeeKPIs
-from users.models import Users, CheckInCheckOut, UserFaceImage, AIChatMessage
 import base64
 import io
-from PIL import Image
-from django.core.files.base import ContentFile
-from django.utils.safestring import mark_safe
+import json
+import re
+import time
+from datetime import timedelta
+from math import sin, cos, sqrt, atan2, radians
+
 import face_recognition
 import numpy as np
-import os
-from math import sin, cos, sqrt, atan2, radians
-import time
+from PIL import Image
 import google.generativeai as genai
+
 from django.conf import settings
-import re
+from django.core.files.base import ContentFile
+from django.db import transaction
+from django.db.models import Avg, Count, Sum
+from django.utils import timezone
+from django.utils.safestring import mark_safe
+
+from evaluations.models import FormResponses
+from evaluations.utils import calculate_feedback_metrics, get_staff_feedback_queryset
+from kpis.models import EmployeeKPIs
+from projects.models import Projects, TaskAssignments, Tasks, TimeEntries
+from users.models import CheckInCheckOut, UserFaceImage, Users
+from .models import AIChatMessage
+
 
 def get_task_counts(user_id, as_json=False):
     task_counts = TaskAssignments.objects.filter(user_id=user_id).values('status').annotate(count=Count('id'))
@@ -30,12 +38,8 @@ def get_task_counts(user_id, as_json=False):
     return task_status
 
 def get_time_tracking(user_id, period='today', as_json=False):
-    from users.models import CheckInCheckOut
-    from django.utils import timezone
-    from datetime import timedelta
-
-    today = timezone.now().date()
-    now = timezone.now()
+    today = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).date()
+    now = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420))
     week_start = today - timedelta(days=today.weekday())
 
     if period == 'today':
@@ -77,8 +81,6 @@ def get_time_tracking(user_id, period='today', as_json=False):
         return f"{hours}h {minutes}m"
 
 def get_kpi_snapshot(user_id, metric='completion'):
-    from kpis.models import EmployeeKPIs
-    # Lấy tất cả KPI của user (có thể lọc theo thời gian nếu muốn)
     kpis = EmployeeKPIs.objects.filter(user_id=user_id)
     if not kpis.exists():
         return "0/0" if metric == 'completion' else 0
@@ -123,10 +125,8 @@ def get_recent_tasks(user_id):
     return Tasks.objects.filter(task_assignments__user_id=user_id).select_related('project').order_by('-deadline')[:5]
 
 def get_project_time_allocation(user_id, as_json=False):
-    # Lấy tất cả task_assignments của user
     assignments = TaskAssignments.objects.filter(user_id=user_id)
     
-    # Lấy time_entries thông qua task_assignment
     entries = TimeEntries.objects.filter(
         task_assignment__in=assignments
     ).select_related('task_assignment__task__project')
@@ -138,7 +138,6 @@ def get_project_time_allocation(user_id, as_json=False):
             duration = entry.duration or 0
             project_times[project_name] = project_times.get(project_name, 0) + duration
     
-    # Làm tròn tất cả giá trị thời gian đến 2 chữ số thập phân
     project_times = {k: round(v, 2) for k, v in project_times.items()}
     data = {
         'labels': list(project_times.keys()) or ['Không có dự án'],
@@ -150,7 +149,6 @@ def get_project_time_allocation(user_id, as_json=False):
     return project_times
 
 def get_task_stats(user):
-    from projects.models import Tasks
     tasks = Tasks.objects.filter(task_assignments__user=user).distinct()
     total_tasks = tasks.count()
     completed_tasks = tasks.filter(status='Completed').count()
@@ -160,24 +158,20 @@ def get_task_stats(user):
         'completion_rate': round(completed_tasks / total_tasks * 100, 2) if total_tasks else 0
     }
 
-
 def verify_face(check_image, user):
     """
     So sánh ảnh check-in/check-out với các ảnh khuôn mặt đã đăng ký của user.
     """
     try:
-        # Đọc ảnh check-in/check-out
         check_img = Image.open(check_image)
         check_img = np.array(check_img.convert('RGB'))
 
-        # Tìm khuôn mặt trong ảnh check-in/check-out
         check_encodings = face_recognition.face_encodings(check_img)
 
         if not check_encodings:
             print("Không tìm thấy khuôn mặt trong ảnh check-in/check-out")
             return False
 
-        # Lấy tất cả ảnh khuôn mặt của user
         face_images = UserFaceImage.objects.filter(user=user)
 
         if not face_images:
@@ -194,47 +188,41 @@ def verify_face(check_image, user):
                     print(f"Không tìm thấy khuôn mặt trong ảnh đã đăng ký: {face_image.id}")
                     continue
 
-                # So sánh khuôn mặt
                 results = face_recognition.compare_faces(
                     [known_encodings[0]], check_encodings[0], tolerance=0.6
                 )
 
                 if results and results[0]:
-                    return True  # Khuôn mặt khớp
+                    return True 
             except Exception as e:
                 print(f"Lỗi khi xử lý ảnh đã đăng ký {face_image.id}: {str(e)}")
                 continue
 
-        return False  # Không khớp với bất kỳ ảnh nào
+        return False 
     except Exception as e:
         print(f"Face recognition error: {str(e)}")
         return False
-
 
 def handle_check_in(user, location, image_data):
     """
     Xử lý logic check-in, lưu thông tin và kiểm tra nhận diện khuôn mặt.
     """
     try:
-        today = timezone.now().date()
-        now = timezone.now()
+        today = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).date()
+        now = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420))
 
-        # Xử lý hình ảnh
         image_content = None
         try:
             if ',' in image_data:
                 image_data = image_data.split(',')[1]
 
-            # Giải mã base64
             image_binary = base64.b64decode(image_data)
             img = Image.open(io.BytesIO(image_binary))
 
-            # Kiểm tra định dạng ảnh
             if img.format not in ['JPEG', 'PNG']:
                 print(f"Định dạng ảnh không hỗ trợ: {img.format}")
                 return False, "Định dạng ảnh không hỗ trợ. Vui lòng sử dụng JPEG hoặc PNG."
 
-            # Resize và nén ảnh
             img = img.resize((320, 240), Image.Resampling.LANCZOS)
             buffer = io.BytesIO()
             img.save(buffer, format="JPEG", quality=70)
@@ -248,7 +236,6 @@ def handle_check_in(user, location, image_data):
             print(f"Error processing check-in image: {str(e)}")
             return False, f"Lỗi xử lý hình ảnh: {str(e)}"
 
-        # Kiểm tra vị trí cố định
         is_valid_location = True
         distance = None
 
@@ -257,8 +244,7 @@ def handle_check_in(user, location, image_data):
                 fixed_lat, fixed_lng = map(float, user.fixed_location.split(','))
                 current_lat, current_lng = map(float, location.split(','))
 
-                # Tính khoảng cách bằng công thức Haversine
-                R = 6371  # Bán kính trái đất (km)
+                R = 6371 
                 lat1, lng1 = radians(fixed_lat), radians(fixed_lng)
                 lat2, lng2 = radians(current_lat), radians(current_lng)
                 dlat = lat2 - lat1
@@ -267,7 +253,7 @@ def handle_check_in(user, location, image_data):
                 c = 2 * atan2(sqrt(a), sqrt(1-a))
                 distance = R * c
 
-                is_valid_location = distance <= 0.5  # Cho phép trong vòng 500m
+                is_valid_location = distance <= 0.5 
                 print(f"Location check: Distance={distance:.2f}km, Valid={is_valid_location}")
 
             except Exception as e:
@@ -275,13 +261,9 @@ def handle_check_in(user, location, image_data):
                 is_valid_location = False
                 return False, f"Lỗi kiểm tra vị trí: {str(e)}"
 
-        from django.db import transaction
-
         with transaction.atomic():
-            # Khóa bản ghi của user để ngăn các giao dịch song song
             user_locked = Users.objects.select_for_update().get(id=user.id)
 
-            # Kiểm tra xem đã có check-in hôm nay chưa
             existing_checkin = CheckInCheckOut.objects.filter(
                 user=user_locked,
                 date=today,
@@ -292,10 +274,8 @@ def handle_check_in(user, location, image_data):
                 print(f"Check-in already exists for user {user_locked.username} on {today}, ID={existing_checkin.id}")
                 return False, "Bạn đã check-in hôm nay."
 
-            # Xóa các bản ghi trùng lặp (nếu có) trước khi tạo mới
             CheckInCheckOut.objects.filter(user=user_locked, date=today).delete()
 
-            # Tạo bản ghi check-in mới
             checkin = CheckInCheckOut(
                 user=user_locked,
                 date=today,
@@ -312,11 +292,9 @@ def handle_check_in(user, location, image_data):
                 checkin.is_valid_checkin = False
                 print("No image provided, marking check-in as invalid")
 
-            # Lưu bản ghi
             checkin.save()
             print(f"Check-in record saved: ID={checkin.id}, User={user_locked.username}, Date={today}")
 
-        # Chuẩn bị thông báo trả về
         if not is_valid_location:
             message = f"Check-in không hợp lệ: Vị trí cách quá xa ({distance:.2f}km)."
         elif not is_valid_face:
@@ -329,36 +307,30 @@ def handle_check_in(user, location, image_data):
         return checkin.is_valid_checkin, message
 
     except Exception as e:
-        import traceback
         print(f"Check-in error: {str(e)}")
         print(traceback.format_exc())
         return False, f"Lỗi hệ thống khi check-in: {str(e)}"
-
 
 def handle_check_out(user, location, image_data):
     """
     Xử lý logic check-out, cập nhật thông tin và kiểm tra nhận diện khuôn mặt.
     """
     try:
-        today = timezone.now().date()
-        now = timezone.now()
+        today = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).date()
+        now = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420))
 
-        # Xử lý hình ảnh
         image_content = None
         try:
             if ',' in image_data:
                 image_data = image_data.split(',')[1]
 
-            # Giải mã base64
             image_binary = base64.b64decode(image_data)
             img = Image.open(io.BytesIO(image_binary))
 
-            # Kiểm tra định dạng ảnh
             if img.format not in ['JPEG', 'PNG']:
                 print(f"Định dạng ảnh không hỗ trợ: {img.format}")
                 return False, "Định dạng ảnh không hỗ trợ. Vui lòng sử dụng JPEG hoặc PNG."
 
-            # Resize và nén ảnh
             img = img.resize((320, 240), Image.Resampling.LANCZOS)
             buffer = io.BytesIO()
             img.save(buffer, format="JPEG", quality=70)
@@ -372,7 +344,6 @@ def handle_check_out(user, location, image_data):
             print(f"Error processing check-out image: {str(e)}")
             return False, f"Lỗi xử lý hình ảnh: {str(e)}"
 
-        # Kiểm tra vị trí cố định
         is_valid_location = True
         distance = None
 
@@ -381,8 +352,7 @@ def handle_check_out(user, location, image_data):
                 fixed_lat, fixed_lng = map(float, user.fixed_location.split(','))
                 current_lat, current_lng = map(float, location.split(','))
 
-                # Tính khoảng cách bằng công thức Haversine
-                R = 6371  # Bán kính trái đất (km)
+                R = 6371 
                 lat1, lng1 = radians(fixed_lat), radians(fixed_lng)
                 lat2, lng2 = radians(current_lat), radians(current_lng)
                 dlat = lat2 - lat1
@@ -391,7 +361,7 @@ def handle_check_out(user, location, image_data):
                 c = 2 * atan2(sqrt(a), sqrt(1-a))
                 distance = R * c
 
-                is_valid_location = distance <= 0.5  # Cho phép trong vòng 500m
+                is_valid_location = distance <= 0.5
                 print(f"Location check: Distance={distance:.2f}km, Valid={is_valid_location}")
 
             except Exception as e:
@@ -399,10 +369,7 @@ def handle_check_out(user, location, image_data):
                 is_valid_location = False
                 return False, f"Lỗi kiểm tra vị trí: {str(e)}"
 
-        from django.db import transaction
-
         with transaction.atomic():
-            # Tìm bản ghi check-in hôm nay
             checkin = CheckInCheckOut.objects.filter(user=user, date=today).first()
 
             if not checkin:
@@ -413,7 +380,6 @@ def handle_check_out(user, location, image_data):
                 print(f"Duplicate check-out attempt for {today}")
                 return False, "Bạn đã check-out hôm nay."
 
-            # Cập nhật bản ghi check-out
             checkin.checkout_time = now
             checkin.checkout_location = location
 
@@ -426,11 +392,9 @@ def handle_check_out(user, location, image_data):
                 checkin.is_valid_checkout = False
                 print("No image provided, marking check-out as invalid")
 
-            # Lưu bản ghi
             checkin.save()
             print(f"Check-out record saved: ID={checkin.id}, User={user.username}, Date={today}")
 
-        # Chuẩn bị thông báo trả về
         if not is_valid_location:
             message = f"Check-out không hợp lệ: Vị trí cách quá xa ({distance:.2f}km)."
         elif not is_valid_face:
@@ -443,31 +407,13 @@ def handle_check_out(user, location, image_data):
         return checkin.is_valid_checkout, message
 
     except Exception as e:
-        import traceback
         print(f"Check-out error: {str(e)}")
         print(traceback.format_exc())
         return False, f"Lỗi hệ thống khi check-out: {str(e)}"
 
-
-def get_today_work_hours(user):
-    """
-    Tính số giờ làm việc hôm nay.
-    """
-    today = timezone.now().date()
-    checkin = CheckInCheckOut.objects.filter(user=user, date=today).first()
-    if not checkin:
-        return None
-    if checkin.checkout_time:
-        duration = checkin.checkout_time - checkin.checkin_time
-    else:
-        duration = timezone.now() - checkin.checkin_time
-    hours = duration.total_seconds() / 3600
-    return f"{hours:.2f} giờ"
-
 def generate_user_report_data(user, period='monthly'):
-    today = timezone.now()
+    today = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420))
     
-    # Set date range based on period
     if period == 'monthly':
         start_date = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         if start_date.month == 12:
@@ -475,7 +421,7 @@ def generate_user_report_data(user, period='monthly'):
         else:
             end_date = timezone.datetime(start_date.year, start_date.month + 1, 1) - timezone.timedelta(seconds=1)
         period_display = f"Tháng {start_date.month}/{start_date.year}"
-    else:  # quarterly
+    else: 
         quarter = (today.month - 1) // 3
         start_month = quarter * 3 + 1
         start_date = today.replace(month=start_month, day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -486,7 +432,6 @@ def generate_user_report_data(user, period='monthly'):
         quarter_names = {0: "I", 1: "II", 2: "III", 3: "IV"}
         period_display = f"Quý {quarter_names[quarter]} năm {start_date.year}"
 
-    # Get basic user info
     user_info = {
         'full_name': user.get_full_name(),
         'username': user.username,
@@ -500,7 +445,6 @@ def generate_user_report_data(user, period='monthly'):
         'bio': user.bio or ""
     }
     
-    # Get attendance data
     attendance_records = CheckInCheckOut.objects.filter(
         user=user,
         date__range=[start_date.date(), end_date.date()]
@@ -523,13 +467,11 @@ def generate_user_report_data(user, period='monthly'):
         'attendance_rate': round(present_days / total_days * 100, 2) if total_days > 0 else 0,
     }
     
-    # Get tasks data
     tasks = Tasks.objects.filter(
         task_assignments__user=user,
         deadline__range=[start_date, end_date]
     ).select_related('project')
     
-    # Count tasks by status
     completed_tasks = tasks.filter(status='Completed').count()
     in_progress_tasks = tasks.filter(status='In progress').count()
     todo_tasks = tasks.filter(status='To-do').count()
@@ -537,7 +479,6 @@ def generate_user_report_data(user, period='monthly'):
     
     completion_rate = round(completed_tasks / tasks.count() * 100, 2) if tasks.count() > 0 else 0
     
-    # Time tracking data
     time_entries = TimeEntries.objects.filter(
         task_assignment__user=user,
         start_time__range=[start_date, end_date]
@@ -545,7 +486,6 @@ def generate_user_report_data(user, period='monthly'):
     
     total_hours = time_entries.aggregate(total=Sum('duration'))['total'] or 0
     
-    # Time by day
     time_by_day = {}
     current_date = start_date.date()
     while current_date <= end_date.date():
@@ -554,7 +494,6 @@ def generate_user_report_data(user, period='monthly'):
         time_by_day[current_date.strftime('%d/%m/%Y')] = round(day_total, 2)
         current_date += timezone.timedelta(days=1)
     
-    # Time by project
     task_assignments = TaskAssignments.objects.filter(user=user)
     tasks_with_assignments = Tasks.objects.filter(task_assignments__in=task_assignments)
     projects = Projects.objects.filter(tasks__in=tasks_with_assignments).distinct()
@@ -567,14 +506,11 @@ def generate_user_report_data(user, period='monthly'):
         if project_time > 0:
             time_by_project[project.name] = round(project_time, 2)
     
-    # Calculate productivity metrics
     working_days = len([d for d in time_by_day if time_by_day[d] > 0])
     avg_daily_hours = round(total_hours / working_days, 2) if working_days > 0 else 0
     expected_hours = working_days * 8
     productivity_rate = round((total_hours / expected_hours * 100), 2) if expected_hours > 0 else 0
     
-    # Get KPI data if available
-    from kpis.models import EmployeeKPIs
     kpis = EmployeeKPIs.objects.filter(
         user=user,
         start_date__lte=end_date,
@@ -588,7 +524,6 @@ def generate_user_report_data(user, period='monthly'):
     achieved_kpis = kpis.filter(evaluation__in=['Achieved', 'Exceeded']).count()
     completion_kpi_rate = round(achieved_kpis / total_kpis * 100, 2) if total_kpis > 0 else 0
     
-    # Group tasks by project for the report
     projects_with_tasks = {}
     for project in projects:
         project_tasks = tasks_with_assignments.filter(project=project)
@@ -600,14 +535,9 @@ def generate_user_report_data(user, period='monthly'):
                 'time': time_by_project.get(project.name, 0)
             }
     
-    # Evaluations data if available
-    from evaluations.models import FormResponses
-    from evaluations.utils import calculate_feedback_metrics, get_staff_feedback_queryset
-
     evaluations = get_staff_feedback_queryset(user, is_received=True, start_date=start_date, end_date=end_date)
     evaluation_metrics = calculate_feedback_metrics(evaluations)
     
-    # Combine all data
     report_data = {
         'period': period,
         'period_display': period_display,
@@ -647,7 +577,6 @@ def generate_user_report_data(user, period='monthly'):
         'evaluations': evaluation_metrics
     }
     
-    # Thêm đánh giá từ AI
     try:
         ai_evaluation = get_ai_performance_evaluation(user, report_data)
         report_data['ai_evaluation'] = ai_evaluation
@@ -668,23 +597,18 @@ def get_ai_performance_evaluation(user, report_data):
     Returns:
         Phần đánh giá HTML được định dạng
     """
-    import google.generativeai as genai
-    from django.conf import settings
-    import re
     
     try:
-        # Chuẩn bị prompt cho AI
         prompt = build_performance_evaluation_prompt(user, report_data)
         
-        # Cấu hình và gọi Gemini API
         genai.configure(api_key=settings.GEMINI_API_KEY)
         model = genai.GenerativeModel('gemini-1.5-flash')
         
         generation_config = genai.types.GenerationConfig(
-            temperature=0.2,          # Giảm tính ngẫu nhiên để có đánh giá khách quan
-            top_p=0.8,                # Lọc theo xác suất cao
-            top_k=40,                 # Lọc theo xếp hạng
-            max_output_tokens=1500,   # Giới hạn độ dài phản hồi
+            temperature=0.2,          
+            top_p=0.8,                
+            top_k=40,                
+            max_output_tokens=1500,  
         )
         
         safety_settings = [
@@ -712,44 +636,33 @@ def get_ai_performance_evaluation(user, report_data):
             safety_settings=safety_settings
         )
         
-        # Xóa tiêu đề nếu có
         evaluation_text = response.text
         lines = evaluation_text.strip().split('\n')
         if len(lines) > 2 and not lines[0].startswith('**') and not '**' in lines[0]:
-            # Có thể đây là tiêu đề báo cáo, bỏ qua dòng đầu
+
             evaluation_text = '\n'.join(lines[1:])
         
-        # Định dạng phản hồi dạng HTML
-        # 1. Chuyển đổi markdown sang HTML
-        # Thay thế các dấu **text** thành <strong>text</strong> (định dạng Markdown cho in đậm)
         evaluation_html = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', evaluation_text)
 
-        # 2. Xử lý định dạng đặc biệt như "Điểm mạnh:**" -> "Điểm mạnh:<strong>"
         evaluation_html = re.sub(r'([^*]+)\*\*', r'\1<strong>', evaluation_html)
         
-        # 3. Chuyển đổi xuống dòng kép thành đoạn văn mới
         evaluation_html = evaluation_html.replace('\n\n', '</p><p>')
         
-        # 4. Chuyển đổi xuống dòng đơn thành <br>
         evaluation_html = evaluation_html.replace('\n', '<br>')
         
-        # 5. Đảm bảo toàn bộ nội dung được bọc trong thẻ <p>
         if not evaluation_html.startswith('<p>'):
             evaluation_html = f'<p>{evaluation_html}</p>'
         
-        # 6. Xử lý các trường hợp đặc biệt còn lại
         evaluation_html = evaluation_html.replace('<p><strong>', '<p><strong>')
         evaluation_html = evaluation_html.replace('</strong></p>', '</strong></p>')
         evaluation_html = evaluation_html.replace('</strong><br>', '</strong><br>')
         evaluation_html = evaluation_html.replace('<br><strong>', '<br><strong>')
         
-        # 7. Định dạng cho danh sách nếu có
         evaluation_html = re.sub(r'<br>(\d+)\.\s+', r'<br><strong>\1.</strong> ', evaluation_html)
         
         return evaluation_html
         
     except Exception as e:
-        import traceback
         print(f"Lỗi khi tạo đánh giá hiệu suất AI: {str(e)}")
         print(traceback.format_exc())
         return f"<p>Không thể tạo đánh giá tự động. Lỗi: {str(e)}</p>"
@@ -765,20 +678,18 @@ def build_performance_evaluation_prompt(user, report_data):
     Returns:
         Prompt cho Gemini AI
     """
-    # Thông tin cá nhân
+
     user_info = report_data.get('user_info', {})
     full_name = user_info.get('full_name', user.get_full_name())
     role = user_info.get('role', user.get_role_display())
     department = user_info.get('department', 'Chưa xác định')
     
-    # Khoảng thời gian
     period_display = report_data.get('period_display', 'Không xác định')
     start_date = report_data.get('start_date', None)
     end_date = report_data.get('end_date', None)
     start_date_str = start_date.strftime('%d/%m/%Y') if start_date else 'Không xác định'
     end_date_str = end_date.strftime('%d/%m/%Y') if end_date else 'Không xác định'
     
-    # Dữ liệu điểm danh
     attendance = report_data.get('attendance', {})
     present_days = attendance.get('present_days', 0)
     total_days = attendance.get('total_days', 0)
@@ -786,7 +697,6 @@ def build_performance_evaluation_prompt(user, report_data):
     valid_checkins = attendance.get('valid_checkins', 0)
     valid_checkouts = attendance.get('valid_checkouts', 0)
     
-    # Dữ liệu công việc
     tasks = report_data.get('tasks', {})
     total_tasks = tasks.get('total', 0)
     completed_tasks = tasks.get('completed', 0)
@@ -794,28 +704,23 @@ def build_performance_evaluation_prompt(user, report_data):
     late_tasks = tasks.get('late', 0)
     completion_rate = tasks.get('completion_rate', 0)
     
-    # Dữ liệu KPI
     kpis = report_data.get('kpis', {})
     total_kpis = kpis.get('total', 0)
     achieved_kpis = kpis.get('achieved', 0)
     kpi_completion_rate = kpis.get('completion_rate', 0)
     
-    # Dữ liệu đánh giá
     evaluations = report_data.get('evaluations', {})
     feedback_score = evaluations.get('feedback_score', None)
-    feedback_score_str = f"{feedback_score:.1f}/5" if feedback_score is not None else "Chưa có"
+    feedback_score_str = f"{feedback_score:.1f}/100" if feedback_score is not None else "Chưa có"
     
-    # Dữ liệu về thời gian làm việc
     time_tracking = report_data.get('time_tracking', {})
     total_hours = time_tracking.get('total_hours', 0)
     productivity_rate = time_tracking.get('productivity_rate', 0)
     avg_daily_hours = time_tracking.get('avg_daily_hours', 0)
     
-    # Dữ liệu dự án
     projects = report_data.get('projects', {})
     project_count = projects.get('count', 0)
     
-    # Tạo prompt cho AI
     prompt = f"""
     Bạn là một trợ lý AI chuyên nghiệp đánh giá hiệu suất nhân viên. Hãy tạo một báo cáo đánh giá tổng thể ngắn gọn, khách quan và chi tiết cho nhân viên dựa trên các dữ liệu sau. Báo cáo nên chỉ ra điểm mạnh, điểm cần cải thiện và đề xuất cho sự phát triển trong tương lai.
 
@@ -869,11 +774,9 @@ def summarize_chat(user_msg, max_length=250):
     if len(user_msg) <= max_length:
         return user_msg
     
-    # Tìm dấu câu để cắt tại vị trí phù hợp
     punctuation_marks = ['.', '!', '?', ';']
-    cut_index = max_length - 3  # -3 cho dấu "..."
+    cut_index = max_length - 3  
     
-    # Cố gắng cắt tại dấu câu gần nhất
     for i in range(cut_index, max(0, cut_index - 50), -1):
         if i < len(user_msg) and user_msg[i] in punctuation_marks:
             cut_index = i + 1
@@ -896,56 +799,44 @@ def build_gemini_prompt(user, user_message):
     if not user or not user_message:
         return "Lỗi: Thiếu thông tin người dùng hoặc câu hỏi."
 
-    # Retrieve user's chat history for context
-    chat_history = AIChatMessage.objects.filter(user=user).order_by('-timestamp')[:20]  # Lấy tối đa 10 cặp hội thoại
+    chat_history = AIChatMessage.objects.filter(user=user).order_by('-timestamp')[:20]  
     conversation_context = ""
     
     if chat_history.exists():
-        # Tạo danh sách mới và sắp xếp lại theo thời gian
         chat_messages = list(reversed(chat_history))
         
-        # Nhóm thành cặp hội thoại người dùng-AI
         conversation_pairs = []
         i = 0
         
         while i < len(chat_messages):
-            # Tìm tin nhắn người dùng
             if i < len(chat_messages) and chat_messages[i].role == 'user':
                 user_msg = chat_messages[i].content
                 ai_msg = ""
                 
-                # Tìm phản hồi tương ứng của AI
                 if i + 1 < len(chat_messages) and chat_messages[i + 1].role == 'model':
                     ai_msg = chat_messages[i + 1].content
-                    i += 2  # Tiến tới cặp tiếp theo
+                    i += 2 
                 else:
-                    i += 1  # Chỉ tiến một bước nếu không tìm thấy phản hồi AI
+                    i += 1  
                 
-                # Thêm cặp hội thoại nếu có đủ cả hai phần
                 if user_msg and ai_msg:
                     conversation_pairs.append({
                         'user_msg': user_msg,
                         'ai_msg': ai_msg
                     })
             else:
-                i += 1  # Bỏ qua tin nhắn không phải từ người dùng
+                i += 1 
         
-        # Chỉ giữ lại 5 cặp hội thoại gần nhất
         if conversation_pairs:
-            # Lấy 5 cuộc hội thoại gần nhất
             recent_pairs = conversation_pairs[-5:] if len(conversation_pairs) > 5 else conversation_pairs
             
-            # Tính tổng độ dài của hội thoại
             total_length = sum(len(pair['user_msg']) + len(pair['ai_msg']) for pair in recent_pairs)
-            max_length = 10000  # Giới hạn tổng độ dài
+            max_length = 10000  
             
             conversation_blocks = []
             
-            # Nếu tổng độ dài vượt quá giới hạn, sử dụng phương pháp tóm tắt
             if total_length > max_length:
-                # Giảm dần độ dài tóm tắt dựa trên độ xa của cuộc hội thoại
                 for i, pair in enumerate(recent_pairs[:-1]):
-                    # Cuộc hội thoại càng cũ thì tóm tắt càng ngắn
                     user_max_length = max(100, 300 - (len(recent_pairs) - i - 1) * 50)
                     ai_max_length = max(200, 500 - (len(recent_pairs) - i - 1) * 100)
                     
@@ -955,7 +846,6 @@ def build_gemini_prompt(user, user_message):
                     block = f"### Hội thoại {i+1}\n**Người dùng**: {user_msg}\n\n**Trợ lý**: {ai_msg}"
                     conversation_blocks.append(block)
                 
-                # Giữ nguyên cuộc hội thoại gần nhất hoặc tóm tắt nhẹ nếu quá dài
                 latest = recent_pairs[-1]
                 user_msg = summarize_chat(latest['user_msg'], 400)
                 ai_msg = summarize_chat(latest['ai_msg'], 800)
@@ -963,14 +853,12 @@ def build_gemini_prompt(user, user_message):
                 block = f"### Hội thoại gần nhất\n**Người dùng**: {user_msg}\n\n**Trợ lý**: {ai_msg}"
                 conversation_blocks.append(block)
             else:
-                # Nếu không vượt quá giới hạn, hiển thị đầy đủ
                 for i, pair in enumerate(recent_pairs):
                     block = f"### Hội thoại {i+1}\n**Người dùng**: {pair['user_msg']}\n\n**Trợ lý**: {pair['ai_msg']}"
                     conversation_blocks.append(block)
             
             conversation_context = "## Lịch sử hội thoại gần đây\n\n" + "\n\n".join(conversation_blocks)
 
-    # User Information
     user_info = {
         'username': user.username,
         'full_name': user.get_full_name() or user.username,
@@ -983,13 +871,11 @@ def build_gemini_prompt(user, user_message):
         'fixed_location': user.fixed_location or 'Chưa cài đặt',
     }
 
-    # Attendance Data
-    today = timezone.now().date()
+    today = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).date()
     today_checkin = CheckInCheckOut.objects.filter(user=user, date=today).first()
     checkin_status = "Đã check-in lúc " + today_checkin.checkin_time.strftime('%H:%M:%S') if today_checkin and today_checkin.checkin_time else "Chưa check-in"
     checkout_status = "Đã check-out lúc " + today_checkin.checkout_time.strftime('%H:%M:%S') if today_checkin and today_checkin.checkout_time else "Chưa check-out"
     
-    # Recent check-in history
     checkin_data = CheckInCheckOut.objects.filter(user=user).order_by('-date')[:5]
     checkin_history = [
         {
@@ -1003,15 +889,13 @@ def build_gemini_prompt(user, user_message):
         for c in checkin_data
     ]
 
-    # Tasks data with detailed status
     tasks = Tasks.objects.filter(task_assignments__user=user).select_related('project')[:8]
     overdue_tasks = Tasks.objects.filter(
         task_assignments__user=user,
         status__in=['To-do', 'In progress'],
-        deadline__lt=timezone.now()
+        deadline__lt=timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420))
     )[:5]
     
-    # Detailed task counts by status
     task_stats = get_task_stats(user)
     
     task_list = [
@@ -1038,7 +922,6 @@ def build_gemini_prompt(user, user_message):
         for t in overdue_tasks
     ]
 
-    # Project data with detailed metrics
     projects = Projects.objects.filter(team_members=user).distinct()[:5]
     project_list = []
     for p in projects:
@@ -1047,8 +930,6 @@ def build_gemini_prompt(user, user_message):
         progress = round((completed_tasks / total_tasks * 100), 2) if total_tasks else 0
         team_size = p.team_members.count()
         
-        # Get time spent on this project
-        # Get time spent on this project
         time_entries = TimeEntries.objects.filter(
             task_assignment__user=user,
             task_assignment__task__project=p
@@ -1068,7 +949,6 @@ def build_gemini_prompt(user, user_message):
             'manager': p.manager.get_full_name() if p.manager else 'Chưa phân công',
         })
 
-    # KPI data with more detailed metrics
     kpis = EmployeeKPIs.objects.filter(user=user).order_by('-end_date')[:5]
     kpi_list = []
     for k in kpis:
@@ -1093,10 +973,7 @@ def build_gemini_prompt(user, user_message):
             'time_period': k.time_period,
         })
 
-    # Evaluation data
     try:
-        from evaluations.models import FormResponses
-        from evaluations.utils import calculate_feedback_metrics
         evaluations = FormResponses.objects.filter(target_user=user).order_by('-created_at')[:5]
         evaluation_list = [
             {
@@ -1110,7 +987,6 @@ def build_gemini_prompt(user, user_message):
             for e in evaluations
         ]
         
-        # Get evaluations the user has given to others
         evaluations_given = FormResponses.objects.filter(user=user).order_by('-created_at')[:3]
         evaluations_given_list = [
             {
@@ -1126,19 +1002,16 @@ def build_gemini_prompt(user, user_message):
         evaluation_list = []
         evaluations_given_list = []
 
-    # Time tracking data with more detailed metrics
     today_time = get_time_tracking(user.id, period='today')
     week_time = get_time_tracking(user.id, period='week')
     project_time = get_project_time_allocation(user.id)
     
-    # Calculate average daily hours and productivity metrics
     week_data = json.loads(get_time_tracking(user.id, period='week', as_json=True))
     working_days = len([d for d in week_data if d > 0])
     avg_daily_hours = round(sum(week_data) / working_days, 2) if working_days > 0 else 0
-    expected_hours = working_days * 8  # Assuming 8-hour workday
+    expected_hours = working_days * 8  
     productivity_rate = round((sum(week_data) / expected_hours * 100), 2) if expected_hours > 0 else 0
 
-    # Get AI suggestions for prioritization
     suggestions = get_ai_suggestions(user.id)
     suggestion_list = [
         {
@@ -1149,7 +1022,6 @@ def build_gemini_prompt(user, user_message):
         for s in suggestions
     ]
 
-    # Customize response based on user role
     role_guidance = {
         'Employee': """
         - Vai trò: Nhân viên - tập trung vào hoàn thành công việc, theo dõi KPI cá nhân, và check-in/check-out đúng giờ.
@@ -1169,7 +1041,6 @@ def build_gemini_prompt(user, user_message):
     }
     role_specific = role_guidance.get(user_info['role'], role_guidance['Employee'])
 
-    # Build comprehensive system description
     system_description = """
 # Humanity OS - Hệ thống quản lý nhân sự và công việc toàn diện
 
@@ -1213,7 +1084,6 @@ Humanity OS là một nền tảng quản lý nhân sự và công việc toàn 
 - **Trợ lý AI**: Chatbot hỗ trợ người dùng tương tác với hệ thống
 """
 
-    # Current user status summary
     current_status = f"""
 ## Tổng quan hiện tại
 - **Check-in hôm nay**: {checkin_status}
@@ -1224,7 +1094,6 @@ Humanity OS là một nền tảng quản lý nhân sự và công việc toàn 
 - **Hiệu suất KPI**: {get_kpi_snapshot(user.id, "percentage")}%
 """
 
-    # Build the main prompt
     prompt = f"""
 {system_description}
 
@@ -1310,28 +1179,22 @@ def build_admin_gemini_prompt(user, user_message):
     if not user or not user_message:
         return "Lỗi: Thiếu thông tin người dùng hoặc câu hỏi."
 
-    # Lấy lịch sử chat để tạo ngữ cảnh
-    from .models import AIChatMessage
     chat_history = AIChatMessage.objects.filter(user=user).order_by('-timestamp')[:20]
     conversation_context = ""
     
     if chat_history.exists():
-        # Tạo danh sách mới và sắp xếp lại theo thời gian
         chat_messages = list(reversed(chat_history))
         
-        # Nhóm thành cặp người dùng - AI
         for i in range(0, len(chat_messages) - 1, 2):
             if i + 1 < len(chat_messages):
                 user_msg = chat_messages[i]
                 ai_msg = chat_messages[i + 1]
                 
-                # Giới hạn độ dài để không vượt quá giới hạn token
                 user_content = summarize_chat(user_msg.content, 250)
                 ai_content = summarize_chat(ai_msg.content, 250)
                 
                 conversation_context += f"User: {user_content}\nAI: {ai_content}\n\n"
     
-    # Lấy thông tin người dùng hiện tại
     user_info = f"""
     Thông tin người dùng:
     - Tên: {user.first_name} {user.last_name}
@@ -1341,57 +1204,41 @@ def build_admin_gemini_prompt(user, user_message):
     - Ngày tham gia: {user.date_of_joining.strftime('%d/%m/%Y') if user.date_of_joining else 'Không có thông tin'}
     """
     
-    # Lấy dữ liệu tổng quan về hệ thống
-    from django.db.models import Count, Sum, Avg, Q
-    from django.utils import timezone
-    from datetime import timedelta
-    from users.models import Users, CheckInCheckOut
-    from projects.models import Tasks, TaskAssignments, TimeEntries, Projects
-    from kpis.models import EmployeeKPIs
-    
-    # Khởi tạo các biến mặc định
     system_overview = ""
     priority_messages = ""
     
     try:
-        # Thống kê người dùng
         total_users = Users.objects.count()
         active_users = Users.objects.filter(is_active=True).count()
         admins = Users.objects.filter(is_superuser=True).count()
         staff = Users.objects.filter(is_staff=True).count()
         
-        # Thống kê dự án
         total_projects = Projects.objects.count()
         active_projects = Projects.objects.filter(
-            start_date__lte=timezone.now().date(),
-            end_date__gte=timezone.now().date()
+            start_date__lte=timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).date(),
+            end_date__gte=timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).date()
         ).count()
         
-        # Tính số dự án hoàn thành dựa trên ngày kết thúc đã qua
         completed_projects = Projects.objects.filter(
-            end_date__lt=timezone.now().date()
+            end_date__lt=timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).date()
         ).count()
         
-        # Thống kê công việc
         total_tasks = Tasks.objects.count()
         completed_tasks = Tasks.objects.filter(status='Completed').count()
         overdue_tasks = Tasks.objects.filter(
             status__in=['To-do', 'In progress'], 
-            deadline__lt=timezone.now()
+            deadline__lt=timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420))
         ).count()
         
-        # Thống kê KPI
         avg_kpi = EmployeeKPIs.objects.aggregate(avg=Avg('achieved_percentage'))['avg'] or 0
         
-        # Thống kê thời gian làm việc
-        today = timezone.now().date()
+        today = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).date()
         total_hours_today = TimeEntries.objects.filter(
             start_time__date=today
         ).aggregate(
             total=Sum('duration')
         )['total'] or 0
         
-        # Dữ liệu điểm danh
         checkin_today = CheckInCheckOut.objects.filter(
             date=today,
             checkin_time__isnull=False
@@ -1399,7 +1246,6 @@ def build_admin_gemini_prompt(user, user_message):
         
         checkin_percentage = round((checkin_today / active_users) * 100, 1) if active_users > 0 else 0
         
-        # Thông tin người dùng với nhiều task nhất
         user_tasks = Users.objects.annotate(
             task_count=Count('task_assignments__task', distinct=True)
         ).exclude(task_count=0).order_by('-task_count')
@@ -1415,7 +1261,6 @@ def build_admin_gemini_prompt(user, user_message):
         if least_tasks_user:
             least_tasks_info = f"{least_tasks_user.first_name} {least_tasks_user.last_name}: {least_tasks_user.task_count} tasks"
         
-        # Người có giờ làm nhiều nhất
         most_hours_info = ""
         try:
             most_hours_user = Users.objects.annotate(
@@ -1427,17 +1272,14 @@ def build_admin_gemini_prompt(user, user_message):
         except Exception:
             pass
         
-        # Tìm những vấn đề ưu tiên cần chú ý
         priority_issues = []
         
-        # 1. Dự án sắp hết hạn nhưng tiến độ thấp
         upcoming_deadline_projects = Projects.objects.filter(
             end_date__range=[today, today + timedelta(days=14)]
         )
         
-        for project in upcoming_deadline_projects[:5]:  # Giới hạn 5 dự án để tránh quá tải
+        for project in upcoming_deadline_projects[:5]: 
             try:
-                # Lấy tất cả tasks của project thông qua relationship
                 tasks = Tasks.objects.filter(project=project)
                 total_proj_tasks = tasks.count()
                 if total_proj_tasks > 0:
@@ -1452,19 +1294,15 @@ def build_admin_gemini_prompt(user, user_message):
                             'message': f"Dự án '{project.name}' còn {days_left} ngày nhưng mới hoàn thành {round(progress, 1)}%"
                         })
             except Exception:
-                # Skip projects with issues
                 continue
         
-        # 2. Người dùng với nhiều task quá hạn
         users_with_overdue = []
         try:
-            # Tìm assignments quá hạn
             overdue_assignments = TaskAssignments.objects.filter(
                 task__status__in=['To-do', 'In progress'],
-                task__deadline__lt=timezone.now()
+                task__deadline__lt=timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420))
             ).select_related('user', 'task')
             
-            # Đếm số lượng task quá hạn theo user
             user_overdue_counts = {}
             for assignment in overdue_assignments:
                 user_id = assignment.user_id 
@@ -1475,14 +1313,12 @@ def build_admin_gemini_prompt(user, user_message):
                     }
                 user_overdue_counts[user_id]['count'] += 1
             
-            # Chuyển thành list và sắp xếp
             for user_data in user_overdue_counts.values():
-                if user_data['count'] >= 3:  # Chỉ quan tâm người có >= 3 task quá hạn
+                if user_data['count'] >= 3: 
                     users_with_overdue.append(user_data)
             
             users_with_overdue.sort(key=lambda x: x['count'], reverse=True)
             
-            # Thêm top 5 người dùng có nhiều task quá hạn
             for user_data in users_with_overdue[:5]:
                 u = user_data['user']
                 count = user_data['count']
@@ -1494,17 +1330,14 @@ def build_admin_gemini_prompt(user, user_message):
         except Exception:
             pass
         
-        # 3. Người dùng không check-in/check-out trong 7 ngày qua
         try:
             week_ago = today - timedelta(days=7)
-            # Lấy danh sách người dùng đã check-in trong 7 ngày qua
             checkin_user_ids = set(
                 CheckInCheckOut.objects.filter(
                     date__gte=week_ago
                 ).values_list('user_id', flat=True)
             )
             
-            # Lấy người dùng active nhưng không có trong danh sách check-in
             inactive_users = Users.objects.filter(
                 is_active=True
             ).exclude(
@@ -1513,7 +1346,7 @@ def build_admin_gemini_prompt(user, user_message):
                 is_superuser=True
             ).exclude(
                 is_staff=True
-            )[:5]  # Chỉ lấy 5 người
+            )[:5] 
             
             for u in inactive_users:
                 priority_issues.append({
@@ -1524,7 +1357,6 @@ def build_admin_gemini_prompt(user, user_message):
         except Exception:
             pass
         
-        # Tạo tin nhắn vấn đề ưu tiên
         priority_messages = ""
         if priority_issues:
             priority_messages = "VẤN ĐỀ ƯU TIÊN CẦN CHÚ Ý:\n"
@@ -1532,7 +1364,6 @@ def build_admin_gemini_prompt(user, user_message):
                 severity_symbol = "🔴" if issue['severity'] == 'high' else "🟠" if issue['severity'] == 'medium' else "🟡"
                 priority_messages += f"{severity_symbol} {issue['message']}\n"
         
-        # Thống kê tổng quan
         system_overview = f"""
         TỔNG QUAN HỆ THỐNG HUMANITY OS:
         
@@ -1559,11 +1390,9 @@ def build_admin_gemini_prompt(user, user_message):
         - Người làm việc nhiều giờ nhất: {most_hours_info}
         """
     except Exception as e:
-        # Fallback nếu có lỗi
         system_overview = f"Không thể tải thông tin hệ thống đầy đủ. Lỗi: {str(e)}"
         priority_messages = ""
 
-    # Tạo prompt chính cho AI
     admin_system_prompt = f"""Bạn là Trợ Lý AI Quản Trị của hệ thống Humanity OS - một hệ thống quản lý dự án, công việc và nhân sự. 
     Bạn đang trò chuyện với {user.first_name} {user.last_name}, một {'quản trị viên' if user.is_superuser else 'quản lý'}. 
     Vai trò của bạn là hỗ trợ trong việc quản lý dự án, công việc, và nhân sự, đưa ra thống kê, đánh giá, và đề xuất hành động.
@@ -1590,7 +1419,6 @@ def build_admin_gemini_prompt(user, user_message):
     
     return admin_system_prompt
 
-# users/utils.py
 def get_chat_messages(user, limit=20):
     """
     Hàm tiện ích lấy tin nhắn chat gần nhất của người dùng.
@@ -1599,12 +1427,8 @@ def get_chat_messages(user, limit=20):
         return []
         
     try:
-        # Import để tránh circular import
-        from .models import AIChatMessage
-        
-        # Đảm bảo truy vấn trên mô hình AIChatMessage với user là đối tượng Users
         messages = AIChatMessage.objects.filter(user=user).order_by('-timestamp')[:limit]
-        return list(messages)[::-1]  # Đảo ngược danh sách để hiển thị tin nhắn cũ trước
+        return list(messages)[::-1] 
     except Exception as e:
         print(f"Lỗi khi lấy chat messages: {str(e)}")
         return []

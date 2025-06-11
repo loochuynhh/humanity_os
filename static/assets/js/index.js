@@ -292,7 +292,6 @@ function setupGeolocation(modalId, inputId, loadingId) {
 * Initialize all charts and features
 */
 document.addEventListener('DOMContentLoaded', function () {
-  console.log('DOM content loaded - initializing scripts');
 
   function initChart(elementId, initFunction, expectedType) {
       const element = document.getElementById(elementId);
@@ -308,7 +307,6 @@ document.addEventListener('DOMContentLoaded', function () {
           chartData = element.dataset.chartData;
       }
 
-      console.log(`${elementId} data:`, chartData);
 
       if (!chartData || (typeof chartData === 'string' && (chartData.trim() === '' || chartData === '{' || chartData === '{}'))) {
           console.warn(`Dữ liệu không hợp lệ hoặc rỗng cho ${elementId}`);
@@ -345,8 +343,6 @@ document.addEventListener('DOMContentLoaded', function () {
     initChart('projectTimeChart', initProjectTimeChart, 'object');
   }, 100);
 
-  // Initialize webcam and geolocation
-  console.log('Setting up webcam and geolocation');
   if (document.getElementById('checkInModal')) {
       setupWebcam(
           'checkInModal',
@@ -375,23 +371,17 @@ document.addEventListener('DOMContentLoaded', function () {
       setupGeolocation('checkOutModal', 'checkout_location', 'checkout_location_loading');
   }
 
-  // Xử lý nút check-in
-  console.log('Setting up check-in button handler');
   const checkInBtn = document.getElementById('checkin_submit');
 
   if (checkInBtn) {
-      console.log('Found check-in button:', checkInBtn);
       checkInBtn.addEventListener('click', handleCheckInClick);
   } else {
       console.warn('Check-in button not found!');
   }
 
-  // Xử lý nút check-out
-  console.log('Setting up check-out button handler');
   const checkOutBtn = document.getElementById('checkout_submit');
 
   if (checkOutBtn) {
-      console.log('Found check-out button:', checkOutBtn);
       checkOutBtn.addEventListener('click', handleCheckOutClick);
   } else {
       console.warn('Check-out button not found!');
@@ -401,14 +391,12 @@ document.addEventListener('DOMContentLoaded', function () {
   const checkInModal = document.getElementById('checkInModal');
   if (checkInModal) {
       checkInModal.addEventListener('shown.bs.modal', function() {
-          console.log('Check-in modal shown');
       });
   }
 
   const checkOutModal = document.getElementById('checkOutModal');
   if (checkOutModal) {
       checkOutModal.addEventListener('shown.bs.modal', function() {
-          console.log('Check-out modal shown');
       });
   }
 });
@@ -472,7 +460,6 @@ function handleSuccessfulAttendance(type) {
  * Xử lý sự kiện click nút check-in
  */
 function handleCheckInClick() {
-  console.log('handleCheckInClick called');
 
   const checkInForm = document.getElementById('checkInForm');
   const submitBtn = document.getElementById('checkin_submit');
@@ -486,7 +473,6 @@ function handleCheckInClick() {
 
   // Kiểm tra nếu nút đang bị disable để tránh click liên tục
   if (submitBtn.disabled) {
-    console.log('Submit button is disabled, ignoring click');
     return;
   }
 
@@ -496,13 +482,6 @@ function handleCheckInClick() {
   // Kiểm tra dữ liệu
   const imageData = formData.get('checkin_image');
   const location = formData.get('checkin_location');
-
-  console.log('Check-in data:', {
-    'Has image': !!imageData,
-    'Has location': !!location,
-    'Image data length': imageData ? imageData.length : 0,
-    'Location value': location || 'empty'
-  });
 
   if (!imageData || !location) {
     errorSpan.textContent = 'Vui lòng chụp ảnh và cho phép truy cập vị trí';
@@ -518,7 +497,6 @@ function handleCheckInClick() {
 
   // Gửi request
   const url = checkInForm.getAttribute('action');
-  console.log('Sending check-in request to:', url);
 
   // Thêm CSRF token vào FormData
   const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
@@ -534,14 +512,12 @@ function handleCheckInClick() {
     }
   })
   .then(response => {
-    console.log('Check-in response status:', response.status);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     return response.json();
   })
   .then(data => {
-    console.log('Check-in response data:', data);
     submitBtn.disabled = false;
     submitBtn.innerHTML = originalBtnHtml;
 
@@ -565,7 +541,6 @@ function handleCheckInClick() {
     });
   })
   .catch(error => {
-    console.error('Check-in error:', error);
     submitBtn.disabled = false;
     submitBtn.innerHTML = originalBtnHtml;
 
@@ -587,7 +562,6 @@ function handleCheckInClick() {
  * Xử lý sự kiện click nút check-out
  */
 function handleCheckOutClick() {
-  console.log('handleCheckOutClick called');
 
   const checkOutForm = document.getElementById('checkOutForm');
   const submitBtn = document.getElementById('checkout_submit');
@@ -601,7 +575,6 @@ function handleCheckOutClick() {
 
   // Kiểm tra nếu nút đang bị disable để tránh click liên tục
   if (submitBtn.disabled) {
-    console.log('Submit button is disabled, ignoring click');
     return;
   }
 
@@ -611,13 +584,6 @@ function handleCheckOutClick() {
   // Kiểm tra dữ liệu
   const imageData = formData.get('checkout_image');
   const location = formData.get('checkout_location');
-
-  console.log('Check-out data:', {
-    'Has image': !!imageData,
-    'Has location': !!location,
-    'Image data length': imageData ? imageData.length : 0,
-    'Location value': location || 'empty'
-  });
 
   if (!imageData || !location) {
     errorSpan.textContent = 'Vui lòng chụp ảnh và cho phép truy cập vị trí';
@@ -633,7 +599,6 @@ function handleCheckOutClick() {
 
   // Gửi request
   const url = checkOutForm.getAttribute('action');
-  console.log('Sending check-out request to:', url);
 
   // Thêm CSRF token vào FormData
   const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
@@ -649,14 +614,12 @@ function handleCheckOutClick() {
     }
   })
   .then(response => {
-    console.log('Check-out response status:', response.status);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     return response.json();
   })
   .then(data => {
-    console.log('Check-out response data:', data);
     submitBtn.disabled = false;
     submitBtn.innerHTML = originalBtnHtml;
 

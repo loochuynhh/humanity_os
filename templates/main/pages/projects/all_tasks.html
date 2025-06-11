@@ -4,6 +4,31 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'assets/css/projects/tasks.css' %}">
+    <style>
+        .markdown-content {
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+        .markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4 {
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+        .markdown-content ul, .markdown-content ol {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+        .markdown-content code {
+            background-color: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        .markdown-content pre {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
@@ -143,7 +168,7 @@
             <div class="modal-body task-detail">
                 <div class="mb-4">
                     <h6 class="text-sm text-muted mb-2">Mô tả</h6>
-                    <p class="bg-light p-3 rounded">{{ task.description }}</p>
+                    <div class="markdown-content bg-light p-3 rounded" data-content="{{ task.description|escapejs }}">{{ task.description|default:"Không có mô tả" }}</div>
                 </div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
@@ -203,4 +228,40 @@
 {% block extra_js %}
     <script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>
     <script src="{% static 'assets/js/projects/all_tasks.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            marked.setOptions({
+                breaks: true,
+                gfm: true
+            });
+
+            function renderTaskDescriptions() {
+                $('.markdown-content').each(function() {
+                    let content = $(this).data('content') || '';
+                    try {
+                        content = decodeURIComponent(escape(content.replace(/\\u([\dA-Fa-f]{4})/g, (match, grp) => {
+                            return String.fromCharCode(parseInt(grp, 16));
+                        })))
+                            .replace(/\\r\\n|\\n|\\u000A|\\u000D/g, '\n')
+                            .replace(/&/g, '&')
+                            .replace(/</g, '<')
+                            .replace(/>/g, '>')
+                            .replace(/"/g, '"')
+                            .replace(/'/g, "'");
+                    } catch (e) {
+                        content = content.replace(/\\r\\n|\\n|\\u000A|\\u000D/g, '\n')
+                            .replace(/&/g, '&')
+                            .replace(/</g, '<')
+                            .replace(/>/g, '>')
+                            .replace(/"/g, '"')
+                            .replace(/'/g, "'");
+                    }
+                    $(this).html(marked.parse(content));
+                });
+            }
+
+            renderTaskDescriptions();
+            $('.modal').on('shown.bs.modal', renderTaskDescriptions);
+        });
+    </script>
 {% endblock %}

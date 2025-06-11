@@ -5,6 +5,31 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'assets/css/projects/tasks.css' %}">
+    <style>
+        .markdown-content {
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+        .markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4 {
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+        .markdown-content ul, .markdown-content ol {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+        .markdown-content code {
+            background-color: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        .markdown-content pre {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
@@ -39,21 +64,6 @@
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h5 class="section-title mb-0">Thông tin Task</h5>
                                     <div class="d-flex gap-2">
-                                        {% if request.user == task.project.manager or request.user.is_superuser %}
-                                            {% if task.is_tracking %}
-                                            <button id="stopTaskBtn" class="btn btn-warning btn-sm" 
-                                                    data-task-id="{{ task.id }}" 
-                                                    data-url="{% url 'projects:toggle_time' %}">
-                                                <i class="fas fa-stop me-1"></i>Dừng Task
-                                            </button>
-                                            {% else %}
-                                            <button id="startTaskBtn" class="btn btn-success btn-sm" 
-                                                    data-task-id="{{ task.id }}" 
-                                                    data-url="{% url 'projects:toggle_time' %}">
-                                                <i class="fas fa-play me-1"></i>Thực hiện Task
-                                            </button>
-                                            {% endif %}
-                                        {% endif %}
                                         <button id="editTaskBtn" class="btn btn-outline-primary btn-sm">Chỉnh sửa</button>
                                     </div>
                                 </div>
@@ -63,7 +73,7 @@
                                     <div class="row">
                                         <div class="col-12 mb-3">
                                             <label class="form-label fw-bold">Mô tả</label>
-                                            <p class="text-muted">{{ task.description|default:"Không có mô tả" }}</p>
+                                            <div class="markdown-content text-muted" data-content="{{ task.description|escapejs }}">{{ task.description|default:"Không có mô tả" }}</div>
                                         </div>
                                     </div>
                                     <div class="row">
@@ -158,30 +168,6 @@
                                 <!-- Form chỉnh sửa -->
                                 <form id="taskUpdateForm" method="POST" data-update-url="{% url 'projects:update_task_details' %}" data-task-id="{{ task.id }}" class="d-none">
                                     {% csrf_token %}
-                                    {% if request.user == task.project.manager or request.user.is_superuser %}
-                                        <div class="mb-3">
-                                            <label for="taskTitle" class="form-label">Tiêu đề</label>
-                                            <input type="text" class="form-control" id="taskTitle" name="title" value="{{ task.title }}" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="taskDescription" class="form-label">Mô tả</label>
-                                            <textarea class="form-control" id="taskDescription" name="description" rows="3">{{ task.description }}</textarea>
-                                        </div>
-                                        <div class="row mb-3">
-                                            <div class="col-md-6">
-                                                <label for="taskDifficulty" class="form-label">Độ khó</label>
-                                                <select class="form-select" id="taskDifficulty" name="difficulty">
-                                                    {% for choice in difficulty_choices %}
-                                                    <option value="{{ choice.0 }}" {% if task.difficulty == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label for="taskDeadline" class="form-label">Deadline</label>
-                                                <input type="datetime-local" class="form-control" id="taskDeadline" name="deadline" value="{{ task.deadline|date:'Y-m-d\TH:i' }}" required>
-                                            </div>
-                                        </div>
-                                    {% endif %}
                                     <div class="mb-3">
                                         <label for="taskNotes" class="form-label">Ghi chú</label>
                                         <textarea class="form-control" id="taskNotes" name="notes" rows="3">{{ task.notes|default_if_none:'' }}</textarea>
@@ -331,14 +317,39 @@
 
 {% block extra_js %}
 <script>
-    // Debug info for modal initialization
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM loaded, checking modal elements...');
-        console.log('jQuery version:', typeof $ !== 'undefined' ? 'Đã tải' : 'Chưa tải');
-        console.log('Bootstrap version:', typeof bootstrap !== 'undefined' ? 'Đã tải' : 'Chưa tải');
-        console.log('Modal element exists:', !!document.getElementById('aiTimeEstimationModal'));
-        console.log('Task ID form:', $('#taskUpdateForm').data('task-id'));
-        console.log('Suggest time buttons:', $('.suggest-time-btn').length);
+        marked.setOptions({
+            breaks: true,
+            gfm: true
+        });
+
+        function renderTaskDescriptions() {
+            $('.markdown-content').each(function() {
+                let content = $(this).data('content') || '';
+                try {
+                    content = decodeURIComponent(escape(content.replace(/\\u([\dA-Fa-f]{4})/g, (match, grp) => {
+                        return String.fromCharCode(parseInt(grp, 16));
+                    })))
+                        .replace(/\\r\\n|\\n|\\u000A|\\u000D/g, '\n')
+                        .replace(/&/g, '&')
+                        .replace(/</g, '<')
+                        .replace(/>/g, '>')
+                        .replace(/"/g, '"')
+                        .replace(/'/g, "'");
+                } catch (e) {
+                    content = content.replace(/\\r\\n|\\n|\\u000A|\\u000D/g, '\n')
+                        .replace(/&/g, '&')
+                        .replace(/</g, '<')
+                        .replace(/>/g, '>')
+                        .replace(/"/g, '"')
+                        .replace(/'/g, "'");
+                }
+                $(this).html(marked.parse(content));
+            });
+        }
+
+        renderTaskDescriptions();
+        $('.modal').on('shown.bs.modal', renderTaskDescriptions);
     });
 </script>
 <script src="{% static 'assets/js/projects/task_detail.js' %}"></script>

@@ -100,19 +100,16 @@ class EmployeeKPIs(models.Model):
     def update_from_project(self):
         """Update actual_value based on project data."""
         if self.kpi.project and self.kpi.kpi_type == "Quantitative":
-            # Lấy tất cả task_assignments của user trong project
             task_assignments = self.user.task_assignments.filter(
                 task__project=self.kpi.project
             )
             
-            # Lọc time_entries thông qua task_assignment
             time_entries = TimeEntries.objects.filter(
                 task_assignment__in=task_assignments,
                 start_time__gte=self.start_date,
                 start_time__lte=self.end_date
             )
             
-            # Lấy các task được gán cho user trong khoảng thời gian
             tasks = self.kpi.project.tasks.filter(
                 task_assignments__user=self.user,
                 deadline__gte=self.start_date,

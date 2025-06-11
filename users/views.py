@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.mail import send_mail
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils import timezone
@@ -31,15 +31,6 @@ from .utils import (
 )
 
 
-def admin_required(view_func):
-    @login_required(login_url="users:login")
-    def wrapper(request, *args, **kwargs):
-        if not (request.user.is_staff or request.user.is_superuser):
-            return HttpResponseForbidden("Bạn không có quyền truy cập.")
-        return view_func(request, *args, **kwargs)
-    return wrapper
-
-
 def login_view(request):
     if request.method == "POST":
         username = request.POST.get("username")
@@ -53,13 +44,11 @@ def login_view(request):
             messages.error(request, "Tên đăng nhập hoặc mật khẩu không đúng!")
     return render(request, "main/pages/users/login.html")
 
-
 @login_required(login_url="users:login")
 def logout_view(request):
     logout(request)
     messages.success(request, "Bạn đã đăng xuất!")
     return redirect("home")
-
 
 def forgot_password(request):
     if request.method == "POST":
@@ -86,7 +75,6 @@ def forgot_password(request):
         except Exception as e:
             messages.error(request, "Có lỗi xảy ra! Vui lòng thử lại sau")
     return render(request, "main/pages/users/forgot_password.html")
-
 
 @login_required(login_url="users:login")
 def change_password(request):
@@ -119,7 +107,6 @@ def change_password(request):
 
     return render(request, "main/pages/users/change_password.html")
 
-
 def reset_password(request, uidb64, token):
     if request.method == "POST":
         new_password = request.POST.get("new_password")
@@ -140,32 +127,6 @@ def reset_password(request, uidb64, token):
         except (Users.DoesNotExist, ValueError):
             messages.error(request, "Liên kết không hợp lệ!")
     return render(request, "main/pages/users/reset_password.html")
-
-
-@admin_required
-def user_list(request):
-    users = Users.objects.all()
-    return render(request, "main/pages/users/list.html", {"users": users})
-
-
-@admin_required
-def create_user(request):
-    if request.method == "POST":
-        username = request.POST.get("username")
-        password = request.POST.get("password")
-        email = request.POST.get("email")
-        if Users.objects.filter(username=username).exists():
-            messages.error(request, "Tên đăng nhập đã tồn tại!")
-        elif Users.objects.filter(email=email).exists():
-            messages.error(request, "Email đã tồn tại!")
-        else:
-            user = Users(username=username, email=email)
-            user.set_password(password)
-            user.save()
-            messages.success(request, "Tài khoản đã được tạo!")
-            return redirect("users:user_list")
-    return render(request, "users/create_user.html")
-
 
 @login_required
 @require_POST
@@ -189,8 +150,7 @@ def check_in(request):
                 "message": "Vui lòng chụp ảnh để check-in."
             })
 
-        # Ghi log với thời gian chính xác
-        request_time = timezone.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+        request_time = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).strftime('%Y-%m-%d %H:%M:%S.%f')
         print(f"Check-in request received at {request_time} - User: {request.user.username}, Location: {location[:20]}..., Image data length: {len(image_data)}")
 
         success, message = handle_check_in(request.user, location, image_data)
@@ -207,7 +167,6 @@ def check_in(request):
             "success": False,
             "message": f"Lỗi hệ thống: {str(e)}"
         })
-
 
 @login_required
 @require_POST
@@ -231,7 +190,6 @@ def check_out(request):
                 "message": "Vui lòng chụp ảnh để check-out."
             })
 
-        # Ghi log một lần duy nhất
         print(f"Check-out request received - Location: {location[:20]}..., Image data length: {len(image_data)}")
 
         success, message = handle_check_out(request.user, location, image_data)
@@ -255,12 +213,10 @@ def check_out(request):
             "message": f"Lỗi hệ thống: {str(e)}"
         })
 
-
 @login_required
 def index(request):
     user = request.user
     
-    # Lấy thông tin cơ bản về người dùng
     context = {
         "first_name": user.first_name,
         "last_name": user.last_name,
@@ -268,7 +224,6 @@ def index(request):
     }
 
     try:
-        # Thử lấy các thông tin thống kê từ các hàm tiện ích
         context.update({
             "task_counts": get_task_counts(user.id),
             "task_chart_data": get_task_counts(user.id, as_json=True),
@@ -283,12 +238,10 @@ def index(request):
             "task_stats": get_task_stats(user),
         })
     except Exception as e:
-        # Nếu có lỗi, chỉ hiển thị thông tin cơ bản
         print(f"Error loading dashboard data: {str(e)}")
         messages.warning(request, "Có lỗi khi tải dữ liệu dashboard. Một số thông tin có thể không hiển thị đầy đủ.")
 
     return render(request, "main/pages/index.html", context)
-
 
 @login_required
 def profile(request):
@@ -297,19 +250,16 @@ def profile(request):
     """
     user = request.user
 
-    # Lấy dữ liệu cho trang profile
     recent_tasks = get_recent_tasks(user)
     face_images = UserFaceImage.objects.filter(user=user).order_by('-uploaded_at')
 
-    # Lấy lịch sử check-in/check-out (7 ngày gần nhất)
-    end_date = timezone.now().date()
+    end_date = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).date()
     start_date = end_date - timezone.timedelta(days=7)
     checkin_history = CheckInCheckOut.objects.filter(
         user=user,
         date__range=[start_date, end_date]
     ).order_by('-date')
 
-    # Lấy danh sách dự án tham gia
     projects = get_project_data(user)
 
     context = {
@@ -321,7 +271,6 @@ def profile(request):
     }
 
     return render(request, "main/pages/users/profile.html", context)
-
 
 @login_required
 def update_profile(request):
@@ -344,63 +293,6 @@ def update_profile(request):
             return JsonResponse({"success": False, "error": str(e)})
     return JsonResponse({"success": False, "error": "Invalid request"})
 
-
-@login_required
-@require_POST
-def upload_face_image(request):
-    """
-    Xử lý tải lên ảnh khuôn mặt cho nhận diện.
-    """
-    if 'face_image' not in request.FILES:
-        return JsonResponse({"success": False, "error": "Không có ảnh được tải lên."})
-
-    try:
-        face_image = request.FILES['face_image']
-        UserFaceImage.objects.create(
-            user=request.user,
-            face_image=face_image
-        )
-        return JsonResponse({"success": True, "message": "Tải ảnh khuôn mặt thành công."})
-    except Exception as e:
-        return JsonResponse({"success": False, "error": str(e)})
-
-
-@login_required
-@require_POST
-def update_fixed_location(request):
-    """
-    Cập nhật vị trí cố định của người dùng.
-    """
-    try:
-        fixed_location = request.POST.get('fixed_location', '')
-
-        # Kiểm tra định dạng
-        if fixed_location:
-            try:
-                lat, lng = map(float, fixed_location.split(','))
-                if not (-90 <= lat <= 90 and -180 <= lng <= 180):
-                    return JsonResponse({
-                        "success": False,
-                        "message": "Vị trí không hợp lệ. Vui lòng kiểm tra lại."
-                    })
-            except:
-                return JsonResponse({
-                    "success": False,
-                    "message": "Định dạng vị trí không hợp lệ. Vui lòng sử dụng định dạng: latitude,longitude"
-                })
-
-        # Cập nhật vị trí
-        user = request.user
-        user.fixed_location = fixed_location
-        user.save()
-
-        messages.success(request, "Cập nhật vị trí làm việc thành công.")
-        return redirect('profile')
-    except Exception as e:
-        messages.error(request, f"Lỗi khi cập nhật vị trí: {str(e)}")
-        return redirect('profile')
-
-
 @login_required
 def attendance(request):
     """
@@ -408,11 +300,9 @@ def attendance(request):
     """
     user = request.user
     
-    # Lấy lịch sử check-in/check-out (45 ngày gần nhất)
-    end_date = timezone.now().date()
+    end_date = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).date()
     start_date = end_date - timezone.timedelta(days=45)
 
-    # Lọc theo ngày nếu có
     filter_date = request.GET.get('date')
     if filter_date:
         try:
@@ -433,7 +323,6 @@ def attendance(request):
             date__range=[start_date, end_date]
         ).order_by('-date')
 
-    # Tính toán thống kê
     total_days = (end_date - start_date).days + 1
     present_days = attendance_records.filter(checkin_time__isnull=False).count()
     absent_days = total_days - present_days
@@ -464,11 +353,9 @@ def get_current_work_time(request):
     try:
         user = request.user
 
-        # Lấy thông tin thời gian làm việc
         today_time = get_time_tracking(user.id, period="today")
         week_time = get_time_tracking(user.id, period="week")
 
-        # Trả về dữ liệu dạng JSON
         return JsonResponse({
             "success": True,
             "today_time": today_time,
@@ -492,23 +379,19 @@ def generate_user_report(request):
     if period not in ['monthly', 'quarterly']:
         period = 'monthly'
     
-    # Generate report data
     report_data = generate_user_report_data(request.user, period)
     
-    # Render HTML for PDF
     from django.template.loader import render_to_string
     from weasyprint import HTML
     from django.http import HttpResponse
     
     html_string = render_to_string('main/pages/users/user_report_pdf.html', report_data)
     
-    # Generate PDF
     html = HTML(string=html_string, base_url=request.build_absolute_uri('/'))
     pdf = html.write_pdf()
     
-    # Create HTTP response with PDF
     response = HttpResponse(pdf, content_type='application/pdf')
-    filename = f"performance_report_{request.user.username}_{period}_{timezone.now().strftime('%Y%m%d')}.pdf"
+    filename = f"performance_report_{request.user.username}_{period}_{timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).strftime('%Y%m%d')}.pdf"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     
     return response
@@ -519,7 +402,6 @@ def ai_chat(request):
         user_message = request.POST.get('message')
         user = request.user
 
-        # Lấy lịch sử trò chuyện (10 tin nhắn gần nhất)
         history = AIChatMessage.objects.filter(user=user).order_by('timestamp')[:10]
         contents = []
         for msg in history:
@@ -528,16 +410,12 @@ def ai_chat(request):
                 "parts": [{"text": msg.content}]
             })
 
-        # Xác định xem user có phải admin/superuser không hoặc có đang ở trang admin
         is_admin_context = user.is_superuser or user.is_staff
         is_admin_page = request.META.get('HTTP_REFERER', '').find('/admin/') > -1
 
-        # Xây dựng prompt với thông tin chi tiết tùy theo loại người dùng
         if is_admin_context or is_admin_page:
-            # Sử dụng prompt cho admin/superuser với đầy đủ thông tin hệ thống
             prompt = build_admin_gemini_prompt(user, user_message)
         else:
-            # Sử dụng prompt thông thường cho người dùng bình thường
             prompt = build_gemini_prompt(user, user_message)
 
         contents.append({
@@ -546,26 +424,20 @@ def ai_chat(request):
         })
 
         try:
-            # Cấu hình Gemini với tham số để có phản hồi tốt hơn
             genai.configure(api_key=settings.GEMINI_API_KEY)
             model = genai.GenerativeModel('gemini-1.5-flash')
             
-            # Tạo cấu hình generation
             generation_config = genai.types.GenerationConfig(
-                temperature=0.7,          # Kiểm soát sự ngẫu nhiên
-                top_p=0.95,               # Lọc theo xác suất
-                top_k=40,                 # Lọc theo xếp hạng
-                max_output_tokens=2048,   # Giới hạn độ dài phản hồi
+                temperature=0.7,     
+                top_p=0.95,              
+                top_k=40,                 
+                max_output_tokens=2048,   
             )
             
-            # Kiểm tra xem đây có phải là admin không để điều chỉnh cấu hình phù hợp
             if is_admin_context:
-                # Tăng giới hạn độ dài phản hồi cho admin để có thông tin chi tiết hơn
                 generation_config.max_output_tokens = 4096
-                # Giảm temperature để phản hồi chính xác và ít sáng tạo hơn
                 generation_config.temperature = 0.3
             
-            # Thiết lập safety settings
             safety_settings = [
                 {
                     "category": "HARM_CATEGORY_HARASSMENT",
@@ -585,7 +457,6 @@ def ai_chat(request):
                 }
             ]
             
-            # Tạo phản hồi
             response = model.generate_content(
                 contents,
                 generation_config=generation_config,
@@ -593,21 +464,15 @@ def ai_chat(request):
             )
             ai_response = response.text
 
-            # Đếm tổng số tin nhắn của người dùng (tính theo cặp user-AI)
             message_count = AIChatMessage.objects.filter(user=user).count()
             
-            # Nếu đã vượt quá giới hạn 50 cuộc hội thoại (100 tin nhắn = 50 cặp), xóa các tin nhắn cũ nhất
-            if message_count >= 98:  # 98 tin nhắn = 49 cặp (nếu thêm 2 tin nhắn mới sẽ đủ 50 cặp)
-                # Lấy các tin nhắn cũ nhất (2 tin nhắn cũ nhất = 1 cặp user-AI)
+            if message_count >= 98:  
                 oldest_messages = list(AIChatMessage.objects.filter(user=user).order_by('timestamp')[:2])
                 if oldest_messages:
-                    # Xóa các tin nhắn cũ nhất
                     for msg in oldest_messages:
                         msg.delete()
 
-            # Lưu tin nhắn mới của người dùng
             AIChatMessage.objects.create(user=user, role='user', content=user_message)
-            # Lưu tin nhắn mới của AI
             AIChatMessage.objects.create(user=user, role='model', content=ai_response)
 
             return JsonResponse({'response': ai_response})

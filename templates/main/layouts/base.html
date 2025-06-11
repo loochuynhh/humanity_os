@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/images/favicon.ico' %}">
     <title>{% block title %}Humanity OS{% endblock %}</title>
 
     <!-- Bootstrap CSS -->
@@ -85,13 +86,6 @@
     <script src="{% static 'assets/js/core/jquery-3.7.1.min.js' %}"></script>
     <script src="{% static 'assets/js/core/popper.min.js' %}"></script>
     <script src="{% static 'assets/js/core/bootstrap.min.js' %}"></script>
-    <script>
-        // Kiểm tra xem Bootstrap đã tải thành công chưa
-        console.log("Bootstrap version:", typeof bootstrap !== 'undefined' ? bootstrap.Tooltip.VERSION : "not loaded");
-        
-        // Kiểm tra xem jQuery đã tải thành công chưa
-        console.log("jQuery version:", jQuery.fn.jquery);
-    </script>
     <script src="{% static 'assets/js/plugin/sweetalert/sweetalert2.all.min.js' %}"></script>
     <script src="{% static 'assets/js/plugin/chart.js/chart.min.js' %}"></script>
     <script src="{% static 'assets/js/plugin/datatables/datatables.min.js' %}"></script>

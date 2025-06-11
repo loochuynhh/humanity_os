@@ -248,16 +248,6 @@
                     <h5 class="mb-0"><i class="bi bi-person-bounding-box me-2"></i>Ảnh khuôn mặt</h5>
                   </div>
                   <div class="card-body">
-                    <!-- <form id="faceImageForm" method="POST" enctype="multipart/form-data" action="{% url 'users:upload_face_image' %}">
-                      {% csrf_token %}
-                      <div class="mb-3">
-                        <label for="face_image" class="form-label">Tải lên ảnh khuôn mặt</label>
-                        <input type="file" class="form-control" id="face_image" name="face_image" accept="image/*" required>
-                        <small class="form-text text-muted">Vui lòng tải lên ảnh khuôn mặt rõ ràng để sử dụng cho nhận diện.</small>
-                      </div>
-                      <button type="submit" class="btn btn-primary">Tải lên</button>
-                    </form> -->
-                    <!-- <hr> -->
                     <h6 class="mb-3">Ảnh khuôn mặt đã đăng ký</h6>
                     {% if face_images %}
                       <div class="row g-3">

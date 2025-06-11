@@ -118,7 +118,6 @@ class CheckInCheckOutAdmin(admin.ModelAdmin):
             return format_html('<span class="text-warning">Chưa đăng ký vị trí cố định</span>')
 
         try:
-            # Phân tích vị trí
             fixed_location_parts = user.fixed_location.split(',')
             checkin_location_parts = obj.checkin_location.split(',')
 
@@ -131,9 +130,8 @@ class CheckInCheckOutAdmin(admin.ModelAdmin):
             current_lat = float(checkin_location_parts[0].strip())
             current_lng = float(checkin_location_parts[1].strip())
 
-            # Tính khoảng cách
             from math import sin, cos, sqrt, atan2, radians
-            R = 6371  # Bán kính trái đất (km)
+            R = 6371  
 
             lat1, lng1 = radians(fixed_lat), radians(fixed_lng)
             lat2, lng2 = radians(current_lat), radians(current_lng)
@@ -165,7 +163,6 @@ class CheckInCheckOutAdmin(admin.ModelAdmin):
             return format_html('<span class="text-warning">Chưa đăng ký vị trí cố định</span>')
 
         try:
-            # Phân tích vị trí
             fixed_location_parts = user.fixed_location.split(',')
             checkout_location_parts = obj.checkout_location.split(',')
 
@@ -178,9 +175,8 @@ class CheckInCheckOutAdmin(admin.ModelAdmin):
             current_lat = float(checkout_location_parts[0].strip())
             current_lng = float(checkout_location_parts[1].strip())
 
-            # Tính khoảng cách
             from math import sin, cos, sqrt, atan2, radians
-            R = 6371  # Bán kính trái đất (km)
+            R = 6371 
 
             lat1, lng1 = radians(fixed_lat), radians(fixed_lng)
             lat2, lng2 = radians(current_lat), radians(current_lng)
@@ -236,7 +232,6 @@ class CheckInCheckOutAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
     
-    # Chỉ cho phép chỉnh sửa is_valid_checkin và is_valid_checkout
     def get_readonly_fields(self, request, obj=None):
         if obj:
             return [f.name for f in obj._meta.fields if f.name not in ['is_valid_checkin', 'is_valid_checkout']]

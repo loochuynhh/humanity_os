@@ -392,9 +392,9 @@
         <h2>6. Đánh giá</h2>
         <h3>Tóm tắt</h3>
         <table class="summary-table">
-            <tr><td>Điểm trung bình</td><td>{% if evaluations.feedback_score is not None %}{{ evaluations.feedback_score|floatformat:1 }}/5{% else %}Chưa có đánh giá{% endif %}</td></tr>
-            <tr><td>Điểm cao nhất</td><td>{% if evaluations.highest_score is not None %}{{ evaluations.highest_score|floatformat:1 }}/5{% else %}Chưa có đánh giá{% endif %}</td></tr>
-            <tr><td>Điểm thấp nhất</td><td>{% if evaluations.lowest_score is not None %}{{ evaluations.lowest_score|floatformat:1 }}/5{% else %}Chưa có đánh giá{% endif %}</td></tr>
+            <tr><td>Điểm trung bình</td><td>{% if evaluations.feedback_score is not None %}{{ evaluations.feedback_score|floatformat:1 }}/100{% else %}Chưa có đánh giá{% endif %}</td></tr>
+            <tr><td>Điểm cao nhất</td><td>{% if evaluations.highest_score is not None %}{{ evaluations.highest_score|floatformat:1 }}/100{% else %}Chưa có đánh giá{% endif %}</td></tr>
+            <tr><td>Điểm thấp nhất</td><td>{% if evaluations.lowest_score is not None %}{{ evaluations.lowest_score|floatformat:1 }}/100{% else %}Chưa có đánh giá{% endif %}</td></tr>
         </table>
         <h3>Chi tiết</h3>
         <table>

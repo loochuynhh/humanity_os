@@ -1,8 +1,6 @@
 // Xử lý AI Assistant cho trang Task Assignments
 document.addEventListener('DOMContentLoaded', function() {
-    // Kiểm tra xem có đang ở trang task assignments hay không
     if (document.getElementById('taskassignments_form')) {
-        // Thêm button AI Assistant vào bên cạnh user select
         const userField = document.querySelector('.field-user .related-widget-wrapper');
         if (userField) {
             const aiButton = document.createElement('button');
@@ -88,18 +86,14 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             `;
             
-            // Thêm modal vào DOM
             document.body.insertAdjacentHTML('beforeend', modalHtml);
             
-            // Tải thư viện Marked.js nếu chưa có
             if (!window.marked) {
                 const markedScript = document.createElement('script');
                 markedScript.src = '{% static "assets/js/marked.min.js" %}';
                 document.head.appendChild(markedScript);
                 
-                // Đợi đến khi thư viện được load xong
                 markedScript.onload = function() {
-                    console.log('Marked.js đã được tải thành công');
                     marked.setOptions({
                         breaks: true,
                         gfm: true
@@ -158,16 +152,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Hiển thị kết quả
                         document.getElementById('suggestedUser').textContent = data.suggested_user_name;
                         
-                        // Sử dụng marked để render HTML nếu có thể
                         if (window.marked) {
-                            // Trước tiên đảm bảo nội dung HTML không bị mất
                             const rawHtml = data.reasoning;
                             document.getElementById('suggestionReasoning').innerHTML = rawHtml;
                             
-                            // Áp dụng các style cho các phần tử được render
                             const reasoningEl = document.getElementById('suggestionReasoning');
                             
-                            // Tạo style cho các phần tử trong reasoning
                             reasoningEl.querySelectorAll('ul').forEach(ul => {
                                 ul.classList.add('mb-0', 'ps-3');
                             });
@@ -180,17 +170,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                 strong.classList.add('text-primary');
                             });
                         } else {
-                            // Fallback nếu marked không có sẵn
                             document.getElementById('suggestionReasoning').innerHTML = data.reasoning;
                         }
                         
                         document.getElementById('aiSuggestionContent').classList.remove('d-none');
                         
-                        // Xử lý nút áp dụng
                         document.getElementById('applyUserSuggestion').onclick = function() {
                             const userSelect = document.getElementById('id_user');
                             
-                            // Tìm và chọn option chứa user được đề xuất
                             for (let i = 0; i < userSelect.options.length; i++) {
                                 if (userSelect.options[i].value == data.suggested_user_id) {
                                     userSelect.selectedIndex = i;
@@ -198,13 +185,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }
                             }
                             
-                            // Đóng modal
                             aiSuggestionModal.hide();
                         };
                     }
                 })
                 .catch(error => {
-                    // Ẩn loading và hiển thị lỗi
                     console.error('Error:', error);
                     document.getElementById('aiSuggestionLoading').classList.add('d-none');
                     document.getElementById('errorMessage').textContent = `Không thể kết nối với máy chủ: ${error.message}`;

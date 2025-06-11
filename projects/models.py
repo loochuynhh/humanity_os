@@ -75,15 +75,14 @@ class Tasks(models.Model):
 
     @property
     def is_overdue(self):
-        return self.deadline.date() < timezone.now().date() and self.status != "Completed"
+        return self.deadline.date() < timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).date() and self.status != "Completed"
 
     @property
     def days_until_deadline(self):
-        return (self.deadline.date() - timezone.now().date()).days
+        return (self.deadline.date() - timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420)).date()).days
     
     def update_start_date(self):
         """Cập nhật ngày bắt đầu dựa trên TimeEntry đầu tiên của task"""
-        # Lấy TimeEntry đầu tiên từ tất cả TaskAssignment của task này
         earliest_entry = TimeEntries.objects.filter(
             task_assignment__task=self
         ).order_by('start_time').first()
@@ -93,7 +92,6 @@ class Tasks(models.Model):
 
     def update_total_time(self):
         """Cập nhật tổng thời gian thực tế từ tất cả TaskAssignment"""
-        # Tính tổng thời gian từ tất cả TaskAssignment
         total = TaskAssignments.objects.filter(task=self).aggregate(
             total=Sum('actual_time')
         )['total'] or 0
@@ -114,7 +112,7 @@ class Tasks(models.Model):
         if all(assignment.status == "Completed" for assignment in assignments):
             self.status = "Completed"
             if not self.completed_date:
-                self.completed_date = timezone.now()
+                self.completed_date = timezone.localtime(timezone.now(), timezone=timezone.get_fixed_timezone(420))
         elif self.is_overdue:
             self.status = "Late"
         elif any(assignment.status == "In progress" for assignment in assignments):
@@ -167,7 +165,6 @@ class TaskAssignments(models.Model):
         self.actual_time = total
         self.save(update_fields=['actual_time'])
         
-        # Cập nhật tổng thời gian của task
         self.task.update_total_time()
 
 
@@ -195,16 +192,13 @@ class TimeEntries(models.Model):
             raise ValidationError("Thời gian kết thúc phải lớn hơn thời gian bắt đầu.")
             
     def save(self, *args, **kwargs):
-        # Kiểm tra điều kiện trước khi lưu
         self.clean()
         
-        # Tính duration nếu có end_time
         if self.end_time and self.start_time:
             self.duration = (self.end_time - self.start_time).total_seconds() / 3600
             
         super().save(*args, **kwargs)
         
-        # Cập nhật actual_time của TaskAssignment
         if self.task_assignment:
             self.task_assignment.update_actual_time()
 

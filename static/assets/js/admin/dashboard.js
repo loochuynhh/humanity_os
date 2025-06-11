@@ -315,7 +315,6 @@ document.addEventListener('DOMContentLoaded', function () {
   // Check if we're on the admin dashboard page
   const isDashboardPage = document.querySelector('.container-fluid .row .card .numbers') !== null;
   if (!isDashboardPage) return;
-  console.log('Initializing admin dashboard...');
   
   try {
     // Kiểm tra biến dữ liệu toàn cục
@@ -343,9 +342,7 @@ document.addEventListener('DOMContentLoaded', function () {
           chartData.labels || [], 
           chartData.data || []
         );
-        console.log('Users chart initialized');
       } catch (e) {
-        console.error('Error initializing users chart:', e);
       }
     }
     
@@ -357,9 +354,7 @@ document.addEventListener('DOMContentLoaded', function () {
           chartData.data || [], 
           chartData.colors || []
         );
-        console.log('Task status chart initialized');
       } catch (e) {
-        console.error('Error initializing task status chart:', e);
       }
     }
     
@@ -371,9 +366,7 @@ document.addEventListener('DOMContentLoaded', function () {
           chartData.data || [],
           chartData.colors || []
         );
-        console.log('Project status chart initialized');
-      } catch (e) {
-        console.error('Error initializing project status chart:', e);  
+      } catch (e) { 
       }
     }
     
@@ -385,14 +378,9 @@ document.addEventListener('DOMContentLoaded', function () {
           chartData.data || [],
           chartData.colors || []
         );
-        console.log('Performance chart initialized');
       } catch (e) {
-        console.error('Error initializing performance chart:', e);
       }
     }
-    
-    console.log('Admin dashboard initialization complete');
   } catch (e) {
-    console.error('Error during dashboard initialization:', e);
   }
 }); 
