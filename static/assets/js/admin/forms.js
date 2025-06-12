@@ -108,10 +108,18 @@ document.addEventListener('DOMContentLoaded', function() {
             aiButton.addEventListener('click', function() {
                 const taskSelect = document.getElementById('id_task');
                 const taskId = taskSelect.value;
-                
+                const roleSelect = document.getElementById('id_role');
+                const role = roleSelect ? roleSelect.value : '';
+
                 // Kiểm tra xem task đã được chọn chưa
                 if (!taskId) {
-                    alert('Vui lòng chọn Task trước khi sử dụng tính năng đề xuất.');
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Vui lòng chọn Task',
+                        text: 'Bạn cần chọn một Task trước khi sử dụng tính năng đề xuất AI.',
+                        confirmButtonText: 'Đồng ý',
+                        confirmButtonColor: '#0d6efd'
+                    });
                     return;
                 }
                 
@@ -131,7 +139,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
                     },
                     body: JSON.stringify({
-                        task_id: taskId
+                        task_id: taskId,
+                        role: role
                     })
                 })
                 .then(response => {

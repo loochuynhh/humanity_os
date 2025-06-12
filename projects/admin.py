@@ -6,6 +6,7 @@ class ProjectsAdmin(admin.ModelAdmin):
 
 class TasksAdmin(admin.ModelAdmin):
     list_display = ('title', 'project', 'deadline', 'status', 'difficulty')
+
 class TaskAssignmentsAdmin(admin.ModelAdmin):
     list_display = ('task', 'user', 'role', 'status')
 
@@ -38,6 +39,12 @@ class DeadlineExtensionRequestAdmin(admin.ModelAdmin):
         if obj:
             return [f.name for f in obj._meta.fields if f.name != 'status']
         return []
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if obj.status == "Approved":
+            obj.task.deadline = obj.requested_deadline
+            obj.task.save(update_fields=['deadline'])
 
 class TeamProjectMembershipAdmin(admin.ModelAdmin):
     list_display = ('project', 'user', 'join_date', 'role')

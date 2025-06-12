@@ -501,8 +501,10 @@ def suggest_user_for_task(request):
         try:
             data = json.loads(request.body)
             task_id = data.get('task_id')
+            role = data.get('role')
         except json.JSONDecodeError:
             task_id = request.POST.get('task_id')
+            role = request.POST.get('role')
         
         if not task_id:
             return JsonResponse({'error': 'Thiếu task_id trong yêu cầu.'}, status=400)
@@ -518,7 +520,7 @@ def suggest_user_for_task(request):
         if not team_members.exists():
             return JsonResponse({'error': 'Không có thành viên nào trong dự án.'}, status=400)
             
-        ai_suggestion_prompt = build_ai_suggestion_prompt(task, project, team_members)
+        ai_suggestion_prompt = build_ai_suggestion_prompt(task, project, team_members, role)
         
         suggestion_result = get_ai_suggestion(ai_suggestion_prompt)
         
@@ -535,7 +537,7 @@ def suggest_user_for_task(request):
         print(traceback.format_exc())
         return JsonResponse({'error': f'Đã xảy ra lỗi: {str(e)}'}, status=500)
 
-def build_ai_suggestion_prompt(task, project, team_members):
+def build_ai_suggestion_prompt(task, project, team_members, role=None):
     """
     Xây dựng prompt cho AI để đề xuất người dùng phù hợp
     """
@@ -553,6 +555,7 @@ def build_ai_suggestion_prompt(task, project, team_members):
         'github_link': task.github_link,
         'notes': task.notes,
         'start_date': task.start_date.strftime('%Y-%m-%d %H:%M') if task.start_date else 'Chưa bắt đầu',
+        'role': role or 'Không xác định'
     }
     
     project_info = {
@@ -627,7 +630,7 @@ def build_ai_suggestion_prompt(task, project, team_members):
         ).count()
         
         user_data['similar_tasks_completed'] = similar_task_performance
-        
+        print(f"Task role: {task_info['role']}")
         members_data.append(user_data)
     
     prompt = f"""
@@ -641,6 +644,7 @@ Tôi cần bạn đề xuất người dùng phù hợp nhất để gán cho m�
 - **Độ khó**: {task_info['difficulty']}
 - **Thời gian ước tính**: {task_info['estimated_time']}
 - **Ghi chú**: {task_info['notes'] or 'Không có'}
+- **Vai trò yêu cầu**: {task_info['role']}
 
 ## Thông tin Dự án
 - **Tên**: {project_info['name']}
@@ -655,6 +659,7 @@ Tôi cần bạn đề xuất người dùng phù hợp nhất để gán cho m�
 ## Yêu cầu
 1. Phân tích thông tin của tất cả thành viên và chọn ra người phù hợp nhất để thực hiện nhiệm vụ này.
 2. Cân nhắc các yếu tố sau:
+   - Ưu tiên người thuộc bộ phận (department) phù hợp với vai trò yêu cầu ({task_info['role']}).
    - Kinh nghiệm với các nhiệm vụ tương tự (similar_tasks_completed)
    - Tải công việc hiện tại (current_tasks_count)
    - Hiệu suất KPI (avg_kpi_percentage)
@@ -662,6 +667,7 @@ Tôi cần bạn đề xuất người dùng phù hợp nhất để gán cho m�
    - Hoạt động gần đây (completed_tasks_last_month)
    - Phù hợp với độ khó của nhiệm vụ
    - Khả năng hoàn thành công việc đúng deadline
+   - Phân bổ lượng công việc đồng đều cho thành viên
 
 3. Trả về JSON với định dạng sau:
 {{

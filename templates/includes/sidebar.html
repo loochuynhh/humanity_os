@@ -12,7 +12,7 @@
   <hr class="horizontal dark mt-0 mb-2">
   
   <div class="h-100" id="sidenav-collapse-main">
-    <ul class="navbar-nav mb-3">
+    <ul class="navbar-nav mb-5 pb-5">
       {% if request.user.is_superuser %}
         <li class="nav-item">
           <a class="nav-link py-2" href="{% url 'admin:index' %}" id="admin-home-link" style="color: #ffffff !important;">
@@ -48,7 +48,7 @@
                     <i class="bi bi-folder-fill text-white me-2 fs-6"></i>
                   {% endif %}
                   <span class="nav-link-text text-white fs-7 d-inline-block text-truncate" style="max-width: 160px;">{{ app.label }}</span>
-                  <i class="bi bi-caret-down-fill text-white ms-auto fs-8"></i>
+                  <i class="bi bi-chevron-right text-white ms-auto fs-8 caret-icon" data-collapsed="true"></i>
                 </a>
                 <!-- Model items for the app -->
                 {% if app.models %}
@@ -151,7 +151,6 @@
     position: relative;
   }
 
-  /* Force white text on all nav links */
   .nav-link, .nav-link:hover, .nav-link:focus, .nav-link:active {
     color: #ffffff !important;
   }
@@ -160,10 +159,20 @@
     color: #ffffff !important;
   }
 
-  /* Active styling */
   .nav-link.active, .nav-link:has(.custom-active-indicator) {
     background-color: rgba(255,255,255,0.08) !important;
     font-weight: 500;
+  }
+  .admin-interface.sidenav {
+    height: 100vh !important; 
+    overflow-y: hidden !important; 
+  }
+
+  #sidenav-collapse-main {
+    height: calc(100vh - 60px) !important; 
+    overflow-y: auto !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(255,255,255,0.2) transparent !important;
   }
 </style>
 
@@ -274,15 +283,17 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.sidebar-app-link').forEach(element => {
       const appId = element.getAttribute('href');
       const targetCollapse = document.querySelector(appId);
-      const caretIcon = element.querySelector('.bi-caret-down-fill');
+      const caretIcon = element.querySelector('.caret-icon');
       
       if (targetCollapse && caretIcon) {
         if (targetCollapse.classList.contains('show')) {
-          caretIcon.style.transform = 'rotate(180deg)';
-          caretIcon.style.transition = 'transform 0.2s';
+          caretIcon.classList.remove('bi-chevron-right');
+          caretIcon.classList.add('bi-chevron-down');
+          caretIcon.setAttribute('data-collapsed', 'false');
         } else {
-          caretIcon.style.transform = 'rotate(0deg)';
-          caretIcon.style.transition = 'transform 0.2s';
+          caretIcon.classList.remove('bi-chevron-down');
+          caretIcon.classList.add('bi-chevron-right');
+          caretIcon.setAttribute('data-collapsed', 'true');
         }
       }
     });

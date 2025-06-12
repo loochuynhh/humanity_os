@@ -410,10 +410,9 @@ def ai_chat(request):
                 "parts": [{"text": msg.content}]
             })
 
-        is_admin_context = user.is_superuser or user.is_staff
-        is_admin_page = request.META.get('HTTP_REFERER', '').find('/admin/') > -1
+        is_admin_context = user.is_superuser
 
-        if is_admin_context or is_admin_page:
+        if is_admin_context:
             prompt = build_admin_gemini_prompt(user, user_message)
         else:
             prompt = build_gemini_prompt(user, user_message)
