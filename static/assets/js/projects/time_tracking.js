@@ -29,9 +29,12 @@ $(document).ready(function() {
             "language": {
                 "url": "/static/assets/js/plugin/datatables/i18n/Vietnamese.json"
             },
+            "dom": "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
             "order": [[3, "desc"]],
             "columnDefs": [
-                { "orderable": false, "targets": [1, 2, 6] } // Không sắp xếp cột Vai trò, Trạng thái, Hành động
+                { "orderable": false, "targets": [1, 2, 5] } // Không sắp xếp cột Vai trò, Trạng thái, Thời gian
             ],
             "responsive": true,
             "autoWidth": false

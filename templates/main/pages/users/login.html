@@ -13,15 +13,16 @@
                     <div class="mb-4">
                         <label class="form-label fw-medium text-dark">Tên đăng nhập</label>
                         <div class="input-group">
-                            <!-- <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span> -->
                             <input type="text" name="username" class="form-control border-start-0" required placeholder="Nhập tên đăng nhập">
                         </div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label fw-medium text-dark">Mật khẩu</label>
                         <div class="input-group">
-                            <!-- <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span> -->
-                            <input type="password" name="password" class="form-control border-start-0" required placeholder="Nhập mật khẩu">
+                            <input type="password" name="password" class="form-control border-start-0" required placeholder="Nhập mật khẩu" id="password">
+                            <button class="btn btn-outline-secondary border-start-0 toggle-password" type="button" data-target="password">
+                                <i class="bi bi-eye"></i>
+                            </button>
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary w-100 py-2 fw-medium">
@@ -36,4 +37,23 @@
     </div>
 </div>
 
+{% endblock %}
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('.toggle-password').click(function() {
+        const targetId = $(this).data('target');
+        const input = $('#' + targetId);
+        const icon = $(this).find('i');
+
+        if (input.attr('type') === 'password') {
+            input.attr('type', 'text');
+            icon.removeClass('bi-eye').addClass('bi-eye-slash');
+        } else {
+            input.attr('type', 'password');
+            icon.removeClass('bi-eye-slash').addClass('bi-eye');
+        }
+    });
+});
+</script>
 {% endblock %}

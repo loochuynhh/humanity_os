@@ -1,42 +1,29 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="vi">
 <head>
-  {% include "includes/head.html" %}
-  {% block extrastyle %}{% endblock extrastyle %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/images/favicon.ico' %}">
+    <title>{% block title %}Humanity OS - Admin Login{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{% static 'assets/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/bootstrap-icons/bootstrap-icons.css' %}">
+
+    <!-- Custom CSS -->
+    {% block extra_css %}
+    {% endblock %}
 </head>
+<body>
+    {% block content %}{% endblock %}
 
-<body class="">
-  {% block content %}{% endblock content %}
+    <!-- Scripts -->
+    <script src="{% static 'assets/js/core/jquery-3.7.1.min.js' %}"></script>
+    <script src="{% static 'assets/js/core/bootstrap.min.js' %}"></script>
+    <script src="{% static 'assets/js/plugin/sweetalert/sweetalert2.all.min.js' %}"></script>
 
-  <footer class="footer py-5">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-8 mx-auto text-center mb-4 mt-10">
-          <a href="javascript:;" target="_blank" class="text-secondary me-xl-4 me-4">
-            <span class="text-lg fab fa-dribbble"></span>
-          </a>
-          <a href="javascript:;" target="_blank" class="text-secondary me-xl-4 me-4">
-            <span class="text-lg fab fa-twitter"></span>
-          </a>
-          <a href="javascript:;" target="_blank" class="text-secondary me-xl-4 me-4">
-            <span class="text-lg fab fa-instagram"></span>
-          </a>
-          <a href="javascript:;" target="_blank" class="text-secondary me-xl-4 me-4">
-            <span class="text-lg fab fa-pinterest"></span>
-          </a>
-          <a href="javascript:;" target="_blank" class="text-secondary me-xl-4 me-4">
-            <span class="text-lg fab fa-github"></span>
-          </a>
-        </div>
-      </div>
-    </div>
-  </footer>
-
-  {% include "includes/scripts.html" %}
-  {% block extra_js %}{% endblock extra_js %}
-
+    {% block extra_js %}
+    {% endblock %}
 </body>
-
 </html>

@@ -1,5 +1,18 @@
 (function ($) {
   $(document).ready(function () {
+    $('.toggle-password').click(function() {
+        const targetId = $(this).data('target');
+        const input = $('#' + targetId);
+        const icon = $(this).find('i');
+
+        if (input.attr('type') === 'password') {
+            input.attr('type', 'text');
+            icon.removeClass('bi-eye').addClass('bi-eye-slash');
+        } else {
+            input.attr('type', 'password');
+            icon.removeClass('bi-eye-slash').addClass('bi-eye');
+        }
+    });
       // Xử lý preview ảnh đại diện
       $('#avatarInput').change(function (e) {
           if (this.files && this.files[0]) {
