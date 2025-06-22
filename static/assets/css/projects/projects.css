@@ -14,7 +14,6 @@
 }
 
 .project-card:hover {
-  transform: translateY(-5px);
   box-shadow: var(--shadow-md);
 }
 
@@ -166,7 +165,6 @@
 }
 
 .avatar:hover {
-  transform: scale(1.15);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 

@@ -39,7 +39,6 @@ body {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .hover-card:hover {
-    transform: translateY(-10px);
     box-shadow: 0 15px 25px var(--hover-shadow) !important;
 }
 .btn-outline-primary {
@@ -51,8 +50,6 @@ body {
     border-color: #66b0ff;
 }
 .btn-outline-primary:hover {
-    transform: scale(1.05);
-    transition: transform 0.3s ease;
     color: #fff;
     background-color: #0d6efd;
 }

@@ -11,9 +11,6 @@ class FormResponsesAdmin(admin.ModelAdmin):
     list_display = ('form', 'question', 'user', 'target_user', 'answer_type', 'created_at')
     list_filter = ('answer_type', 'created_at', 'form')
     search_fields = ('user__username', 'target_user__username', 'form__name', 'answer')
-        
-    def has_delete_permission(self, request, obj=None):
-        return False
     
     def has_change_permission(self, request, obj=None):
         return False

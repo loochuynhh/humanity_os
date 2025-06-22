@@ -299,11 +299,18 @@ def update_task_details(request):
             estimated_time = request.POST.get(f'estimated_time_{assignment.user.id}')
             if estimated_time:
                 assignment.estimated_time = float(estimated_time)
-                assignment.save()
+
+            status = request.POST.get(f'status_{assignment.user.id}')
+            if status in dict(Tasks.STATUS_CHOICES):  
+                assignment.status = status
+
+            assignment.save()
 
         task.save()
+        task.update_status_from_assignments()
+
         return JsonResponse({'success': True, 'message': 'Cập nhật task thành công!'})
-    except ObjectDoesNotExist:
+    except Tasks.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Task không tồn tại'}, status=404)
     except ValueError:
         return JsonResponse({'success': False, 'error': 'Dữ liệu không hợp lệ'}, status=400)
@@ -913,7 +920,7 @@ Tôi cần bạn đề xuất thời gian ước lượng cho một công việc
 - **Độ khó**: {task_info['difficulty']}
 - **Deadline**: {task_info['deadline']}
 - **Ghi chú**: {task_info['notes']}
-- **Ước lượng tổng của công việc**: {task_info['estimated_time']}
+- **Tổng thời gian ước lượng công việc cho tất cả mọi người**: {task_info['estimated_time']}
 - **Tổng thời gian đã sử dụng**: {task_info['total_time']}
 - **Ngày hôm nay theo giờ Việt Nam**: {today}
 
@@ -935,11 +942,11 @@ Tôi cần bạn đề xuất thời gian ước lượng cho một công việc
 
 ## Yêu cầu
 1. Đề xuất thời gian ước lượng hợp lý cho công việc này (tính bằng giờ).
-2. QUAN TRỌNG: Thời gian đề xuất PHẢI LỚN HƠN 0 và phù hợp với độ khó của công việc và không quá ít, có thể dài hơn để cho chắc chắn.
+2. QUAN TRỌNG: Thời gian đề xuất PHẢI LỚN HƠN 0 và phù hợp với độ khó của công việc và không quá ít, không quá dài, phù hợp với tổng thời gian ước lượng công việc cho tất cả mọi người và vai trò của người dùng hiện tại trong công việc đó.
 3. Hướng dẫn ước lượng theo độ khó:
    - Easy: thường từ 2-8 giờ
-   - Medium: thường từ 5-15 giờ
-   - Hard: thường từ 10-30 giờ
+   - Medium: thường từ 6-15 giờ
+   - Hard: thường từ 10-25 giờ
 
 4. Giữ phân tích NGẮN GỌN và SÚC TÍCH dưới 200 từ. Mỗi mục chỉ nên có 2-3 điểm quan trọng nhất.
 

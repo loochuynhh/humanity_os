@@ -145,24 +145,13 @@
                         <span class="badge bg-light text-dark">{{ entry.task_assignment.role }}</span>
                       </td>
                       <td>
-                        <select class="form-select form-select-sm status-select" 
-                                data-task-id="{{ entry.task_assignment.task.id }}"
-                                data-original-status="{{ entry.task_assignment.status }}">
-                          {% for status, status_label in status_choices %}
-                          <option value="{{ status }}"
-                                  {% if entry.task_assignment.status == status %}selected{% endif %}>
-                            {{ status_label }}
-                          </option>
-                          {% endfor %}
-                        </select>
+                        <span class="badge bg-light text-dark">{{ entry.task_assignment.status }}</span>
                       </td>
                       <td>
-                        <span class="text-xs editable" data-field="start_time">{{ entry.start_time|date:"d/m/Y H:i" }}</span>
-                        <input type="datetime-local" class="form-control form-control-sm d-none" name="start_time" value="{{ entry.start_time|date:'Y-m-d\TH:i' }}">
+                        <span class="text-xs">{{ entry.start_time|date:"d/m/Y H:i" }}</span>
                       </td>
                       <td>
-                        <span class="text-xs editable" data-field="end_time">{{ entry.end_time|date:"d/m/Y H:i"|default:"Đang theo dõi" }}</span>
-                        <input type="datetime-local" class="form-control form-control-sm d-none" name="end_time" value="{{ entry.end_time|date:'Y-m-d\TH:i'|default_if_none:'' }}">
+                        <span class="text-xs">{{ entry.end_time|date:"d/m/Y H:i"|default:"Đang theo dõi" }}</span>
                       </td>
                       <td>
                         <span class="text-xs font-weight-bold">{{ entry.duration|floatformat:2|default:"0.00" }}</span>

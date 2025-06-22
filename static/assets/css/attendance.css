@@ -136,7 +136,6 @@
 
 .attendance-form .btn-submit:hover {
   background: linear-gradient(135deg, #013785, #0262b3);
-  transform: translateY(-2px);
 }
 
 .attendance-form.checkout-form .btn-submit {

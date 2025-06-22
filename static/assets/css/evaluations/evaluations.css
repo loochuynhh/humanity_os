@@ -89,10 +89,6 @@
     transition: transform 0.3s ease;
   }
   
-  .rating-stars i:hover {
-    transform: scale(1.2);
-  }
-  
   .rating-stars i.inactive {
     color: #dee2e6;
   }

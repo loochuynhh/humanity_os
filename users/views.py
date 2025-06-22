@@ -194,11 +194,6 @@ def check_out(request):
 
         success, message = handle_check_out(request.user, location, image_data)
 
-        if success:
-            messages.success(request, message)
-        else:
-            messages.error(request, message)
-
         return JsonResponse({
             "success": success,
             "message": message

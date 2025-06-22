@@ -239,7 +239,6 @@ body[data-background-color="dark"] .demo-icon .icon-class {
   overflow: hidden;
   transition: all .3s ease; }
   #modalShowcase .preview-showcase:hover {
-    transform: translateY(-2.5%);
     background: #e9f6f9; }
 #modalShowcase .preview-title {
   color: #071437;
@@ -276,8 +275,7 @@ body[data-background-color="dark"] .demo-icon .icon-class {
   #checkOutMoreDemos:hover {
     background: #1e2129;
     color: #fff;
-    opacity: 1;
-    transition: color .2s ease; }
+    opacity: 1; }
 
 @media screen and (max-width: 1200px) {
   #modalShowcase .modal-dialog {

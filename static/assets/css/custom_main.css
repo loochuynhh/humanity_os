@@ -350,12 +350,10 @@ body {
    -------------------------------------- */
 .hover-card:hover,
 .card:hover {
-    transform: translateY(-5px);
   box-shadow: var(--shadow-md);
 }
 
 .feature-card:hover {
-    transform: translateY(-10px);
   box-shadow: var(--shadow-lg);
 }
 

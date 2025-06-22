@@ -28,7 +28,6 @@
 }
 
 .dashboard-card:hover {
-  transform: translateY(-5px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
 
@@ -201,10 +200,6 @@
   transition: all 0.3s ease;
 }
 
-.btn-icon:hover {
-  transform: translateY(-2px);
-}
-
 .btn-action {
   border-radius: 0.5rem;
   font-size: 0.875rem;
@@ -214,7 +209,6 @@
 }
 
 .btn-action:hover {
-  transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
@@ -352,8 +346,4 @@
 .stat-info p {
   color: var(--secondary-color);
   margin-bottom: 0;
-}
-
-.project-stat:hover .stat-icon {
-  transform: scale(1.1);
 }

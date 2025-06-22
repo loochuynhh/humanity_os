@@ -202,7 +202,6 @@
   }
   
   .task-detail .avatar-group .avatar:hover {
-    transform: scale(1.1);
     z-index: 1;
   }
   
