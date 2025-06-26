@@ -1,0 +1,3 @@
+Model,Accuracy,Mean_Time,Num_Users
+face_recognition,0.81,0.05790151868547712,10
+DeepFace,0.96,3.6363279495920455,10

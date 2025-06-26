@@ -1,0 +1,141 @@
+True_User,Target_Folder,Predicted_User_FR,Status_FR,Time_FR,Predicted_User_DF,Status_DF,Time_DF,Test_Image_Path
+Andy Samberg,Andy Samberg,Andy Samberg,Correct Match,0.05571746826171875,Andy Samberg,Correct Match,0.3538522720336914,../dataset/Andy Samberg/Andy Samberg_49.jpg
+Andy Samberg,Anushka Sharma,,No Face Detected in Test,0.03581428527832031,,No Match,3.6738688945770264,../dataset/Anushka Sharma/Anushka Sharma_20.jpg
+Andy Samberg,Anushka Sharma,Anushka Sharma,Incorrect Match,0.05133557319641113,Billie Eilish,Incorrect Match,1.1376855373382568,../dataset/Anushka Sharma/Anushka Sharma_58.jpg
+Andy Samberg,Billie Eilish,,No Face Detected in Test,0.0340120792388916,Billie Eilish,Incorrect Match,1.5177688598632812,../dataset/Billie Eilish/Billie Eilish_66.jpg
+Andy Samberg,Camila Cabello,,No Face Detected in Test,0.0511012077331543,,No Match,4.605034589767456,../dataset/Camila Cabello/Camila Cabello_3.jpg
+Andy Samberg,Camila Cabello,Camila Cabello,Incorrect Match,0.06351065635681152,,No Match,4.442178249359131,../dataset/Camila Cabello/Camila Cabello_19.jpg
+Andy Samberg,Courtney Cox,Courtney Cox,Incorrect Match,0.05465364456176758,,No Match,4.951465129852295,../dataset/Courtney Cox/Courtney Cox_52.jpg
+Andy Samberg,Dwayne Johnson,Dwayne Johnson,Incorrect Match,0.07843136787414551,Dwayne Johnson,Incorrect Match,2.7361602783203125,../dataset/Dwayne Johnson/Dwayne Johnson_13.jpg
+Andy Samberg,Ellen Degeneres,Ellen Degeneres,Incorrect Match,0.08460497856140137,Ellen Degeneres,Incorrect Match,3.5434765815734863,../dataset/Ellen Degeneres/Ellen Degeneres_47.jpg
+Andy Samberg,Hrithik Roshan,,No Match,0.07657170295715332,Hrithik Roshan,Incorrect Match,3.320803165435791,../dataset/Hrithik Roshan/Hrithik Roshan_10.jpg
+Andy Samberg,Roger Federer,Roger Federer,Incorrect Match,0.08292055130004883,,No Match,4.648597955703735,../dataset/Roger Federer/Roger Federer_46.jpg
+Andy Samberg,Tom Cruise,Tom Cruise,Incorrect Match,0.06403255462646484,,No Match,4.486033201217651,../dataset/Tom Cruise/Tom Cruise_47.jpg
+Anushka Sharma,Andy Samberg,,No Face Detected in Test,0.03973054885864258,,No Match,5.0087103843688965,../dataset/Andy Samberg/Andy Samberg_3.jpg
+Anushka Sharma,Andy Samberg,Andy Samberg,Incorrect Match,0.06398701667785645,Andy Samberg,Incorrect Match,0.38330769538879395,../dataset/Andy Samberg/Andy Samberg_32.jpg
+Anushka Sharma,Anushka Sharma,,No Face Detected in Test,0.04228711128234863,Billie Eilish,Incorrect Match,1.3318829536437988,../dataset/Anushka Sharma/Anushka Sharma_22.jpg
+Anushka Sharma,Billie Eilish,Billie Eilish,Incorrect Match,0.06007957458496094,,No Match,5.1439149379730225,../dataset/Billie Eilish/Billie Eilish_69.jpg
+Anushka Sharma,Camila Cabello,,No Face Detected in Test,0.05197405815124512,,No Match,4.740334749221802,../dataset/Camila Cabello/Camila Cabello_57.jpg
+Anushka Sharma,Camila Cabello,Camila Cabello,Incorrect Match,0.05693864822387695,,No Match,4.483891010284424,../dataset/Camila Cabello/Camila Cabello_71.jpg
+Anushka Sharma,Courtney Cox,,No Face Detected in Test,0.03423571586608887,,No Match,4.213559865951538,../dataset/Courtney Cox/Courtney Cox_20.jpg
+Anushka Sharma,Courtney Cox,,No Face Detected in Test,0.03690147399902344,,No Match,4.193984031677246,../dataset/Courtney Cox/Courtney Cox_79.jpg
+Anushka Sharma,Courtney Cox,Courtney Cox,Incorrect Match,0.05729222297668457,Courtney Cox,Incorrect Match,1.9394464492797852,../dataset/Courtney Cox/Courtney Cox_75.jpg
+Anushka Sharma,Dwayne Johnson,Dwayne Johnson,Incorrect Match,0.06799149513244629,,No Match,4.592705011367798,../dataset/Dwayne Johnson/Dwayne Johnson_40.jpg
+Anushka Sharma,Ellen Degeneres,Ellen Degeneres,Incorrect Match,0.0552525520324707,Ellen Degeneres,Incorrect Match,2.892700433731079,../dataset/Ellen Degeneres/Ellen Degeneres_63.jpg
+Anushka Sharma,Hrithik Roshan,,No Match,0.06176352500915527,,No Match,4.868556261062622,../dataset/Hrithik Roshan/Hrithik Roshan_49.jpg
+Anushka Sharma,Hrithik Roshan,Hrithik Roshan,Incorrect Match,0.07173705101013184,,No Match,4.65931248664856,../dataset/Hrithik Roshan/Hrithik Roshan_52.jpg
+Anushka Sharma,Roger Federer,Roger Federer,Incorrect Match,0.05455660820007324,Billie Eilish,Incorrect Match,1.4709289073944092,../dataset/Roger Federer/Roger Federer_13.jpg
+Anushka Sharma,Tom Cruise,Tom Cruise,Incorrect Match,0.06878113746643066,Tom Cruise,Incorrect Match,4.318387985229492,../dataset/Tom Cruise/Tom Cruise_12.jpg
+Billie Eilish,Andy Samberg,,No Face Detected in Test,0.03524279594421387,Billie Eilish,Incorrect Match,1.2780640125274658,../dataset/Andy Samberg/Andy Samberg_43.jpg
+Billie Eilish,Anushka Sharma,Anushka Sharma,Incorrect Match,0.08336400985717773,,No Match,4.258959531784058,../dataset/Anushka Sharma/Anushka Sharma_19.jpg
+Billie Eilish,Billie Eilish,Billie Eilish,Correct Match,0.053275346755981445,,No Match,4.466907262802124,../dataset/Billie Eilish/Billie Eilish_35.jpg
+Billie Eilish,Camila Cabello,,No Face Detected in Test,0.033812761306762695,,No Match,4.46927285194397,../dataset/Camila Cabello/Camila Cabello_10.jpg
+Billie Eilish,Camila Cabello,Camila Cabello,Incorrect Match,0.058837175369262695,,No Match,4.907140731811523,../dataset/Camila Cabello/Camila Cabello_63.jpg
+Billie Eilish,Courtney Cox,,No Face Detected in Test,0.044768333435058594,,No Match,4.643496036529541,../dataset/Courtney Cox/Courtney Cox_43.jpg
+Billie Eilish,Courtney Cox,Courtney Cox,Incorrect Match,0.05300021171569824,,No Match,4.3741455078125,../dataset/Courtney Cox/Courtney Cox_78.jpg
+Billie Eilish,Dwayne Johnson,Dwayne Johnson,Incorrect Match,0.05487251281738281,Dwayne Johnson,Incorrect Match,2.2619216442108154,../dataset/Dwayne Johnson/Dwayne Johnson_54.jpg
+Billie Eilish,Ellen Degeneres,Ellen Degeneres,Incorrect Match,0.08198809623718262,Ellen Degeneres,Incorrect Match,2.766062021255493,../dataset/Ellen Degeneres/Ellen Degeneres_65.jpg
+Billie Eilish,Hrithik Roshan,Hrithik Roshan,Incorrect Match,0.06091594696044922,Hrithik Roshan,Incorrect Match,3.216801643371582,../dataset/Hrithik Roshan/Hrithik Roshan_83.jpg
+Billie Eilish,Roger Federer,,No Face Detected in Test,0.04066777229309082,,No Match,4.19215989112854,../dataset/Roger Federer/Roger Federer_56.jpg
+Billie Eilish,Roger Federer,Roger Federer,Incorrect Match,0.061939239501953125,,No Match,4.254349708557129,../dataset/Roger Federer/Roger Federer_38.jpg
+Billie Eilish,Tom Cruise,,No Face Detected in Test,0.034631967544555664,,No Match,4.261447191238403,../dataset/Tom Cruise/Tom Cruise_51.jpg
+Billie Eilish,Tom Cruise,Tom Cruise,Incorrect Match,0.05812549591064453,Tom Cruise,Incorrect Match,4.294483423233032,../dataset/Tom Cruise/Tom Cruise_17.jpg
+Camila Cabello,Andy Samberg,,No Face Detected in Test,0.03457951545715332,,No Match,4.728243589401245,../dataset/Andy Samberg/Andy Samberg_3.jpg
+Camila Cabello,Andy Samberg,,No Face Detected in Test,0.0516207218170166,Andy Samberg,Incorrect Match,0.37844085693359375,../dataset/Andy Samberg/Andy Samberg_74.jpg
+Camila Cabello,Anushka Sharma,Anushka Sharma,Incorrect Match,0.10641312599182129,,No Match,4.652859210968018,../dataset/Anushka Sharma/Anushka Sharma_19.jpg
+Camila Cabello,Billie Eilish,Billie Eilish,Incorrect Match,0.05338311195373535,,No Match,4.43310022354126,../dataset/Billie Eilish/Billie Eilish_51.jpg
+Camila Cabello,Camila Cabello,,No Face Detected in Test,0.03499436378479004,,No Match,4.848212003707886,../dataset/Camila Cabello/Camila Cabello_24.jpg
+Camila Cabello,Camila Cabello,Camila Cabello,Correct Match,0.059613704681396484,Camila Cabello,Correct Match,2.1639175415039062,../dataset/Camila Cabello/Camila Cabello_41.jpg
+Camila Cabello,Courtney Cox,,No Face Detected in Test,0.041226863861083984,,No Match,4.221410274505615,../dataset/Courtney Cox/Courtney Cox_2.jpg
+Camila Cabello,Courtney Cox,Courtney Cox,Incorrect Match,0.058406829833984375,,No Match,4.431103229522705,../dataset/Courtney Cox/Courtney Cox_49.jpg
+Camila Cabello,Dwayne Johnson,Dwayne Johnson,Incorrect Match,0.05528664588928223,Dwayne Johnson,Incorrect Match,2.317599296569824,../dataset/Dwayne Johnson/Dwayne Johnson_13.jpg
+Camila Cabello,Ellen Degeneres,,No Face Detected in Test,0.042386531829833984,Billie Eilish,Incorrect Match,1.3973162174224854,../dataset/Ellen Degeneres/Ellen Degeneres_52.jpg
+Camila Cabello,Hrithik Roshan,Hrithik Roshan,Incorrect Match,0.06497979164123535,Hrithik Roshan,Incorrect Match,2.9737260341644287,../dataset/Hrithik Roshan/Hrithik Roshan_66.jpg
+Camila Cabello,Roger Federer,Roger Federer,Incorrect Match,0.06573939323425293,Roger Federer,Incorrect Match,3.3141095638275146,../dataset/Roger Federer/Roger Federer_22.jpg
+Camila Cabello,Tom Cruise,,No Face Detected in Test,0.04361987113952637,Billie Eilish,Incorrect Match,1.3632874488830566,../dataset/Tom Cruise/Tom Cruise_23.jpg
+Courtney Cox,Andy Samberg,Andy Samberg,Incorrect Match,0.06641459465026855,,No Match,4.641777515411377,../dataset/Andy Samberg/Andy Samberg_24.jpg
+Courtney Cox,Anushka Sharma,,No Face Detected in Test,0.03477644920349121,Billie Eilish,Incorrect Match,1.385155439376831,../dataset/Anushka Sharma/Anushka Sharma_1.jpg
+Courtney Cox,Billie Eilish,,No Face Detected in Test,0.044470787048339844,Billie Eilish,Incorrect Match,1.4862737655639648,../dataset/Billie Eilish/Billie Eilish_66.jpg
+Courtney Cox,Camila Cabello,Camila Cabello,Incorrect Match,0.06095433235168457,Camila Cabello,Incorrect Match,1.9285204410552979,../dataset/Camila Cabello/Camila Cabello_32.jpg
+Courtney Cox,Courtney Cox,Courtney Cox,Correct Match,0.08017325401306152,,No Match,4.5226686000823975,../dataset/Courtney Cox/Courtney Cox_1.jpg
+Courtney Cox,Dwayne Johnson,Dwayne Johnson,Incorrect Match,0.05700802803039551,Dwayne Johnson,Incorrect Match,2.4098904132843018,../dataset/Dwayne Johnson/Dwayne Johnson_60.jpg
+Courtney Cox,Ellen Degeneres,Ellen Degeneres,Incorrect Match,0.054772138595581055,,No Match,4.147314548492432,../dataset/Ellen Degeneres/Ellen Degeneres_70.jpg
+Courtney Cox,Hrithik Roshan,,No Match,0.054219722747802734,Hrithik Roshan,Incorrect Match,3.3286635875701904,../dataset/Hrithik Roshan/Hrithik Roshan_10.jpg
+Courtney Cox,Roger Federer,Roger Federer,Incorrect Match,0.06636691093444824,Roger Federer,Incorrect Match,3.3484303951263428,../dataset/Roger Federer/Roger Federer_22.jpg
+Courtney Cox,Tom Cruise,,No Face Detected in Test,0.03913688659667969,Billie Eilish,Incorrect Match,1.2258617877960205,../dataset/Tom Cruise/Tom Cruise_1.jpg
+Dwayne Johnson,Andy Samberg,Andy Samberg,Incorrect Match,0.060059309005737305,Andy Samberg,Incorrect Match,0.32842159271240234,../dataset/Andy Samberg/Andy Samberg_83.jpg
+Dwayne Johnson,Anushka Sharma,Anushka Sharma,Incorrect Match,0.07006311416625977,Anushka Sharma,Incorrect Match,0.7580771446228027,../dataset/Anushka Sharma/Anushka Sharma_2.jpg
+Dwayne Johnson,Billie Eilish,,No Face Detected in Test,0.03663778305053711,,No Match,3.8678314685821533,../dataset/Billie Eilish/Billie Eilish_6.jpg
+Dwayne Johnson,Billie Eilish,Camila Cabello,Incorrect Match,0.05717349052429199,,No Match,4.117200613021851,../dataset/Billie Eilish/Billie Eilish_13.jpg
+Dwayne Johnson,Camila Cabello,,No Face Detected in Test,0.031729698181152344,,No Match,4.064740896224976,../dataset/Camila Cabello/Camila Cabello_6.jpg
+Dwayne Johnson,Camila Cabello,,No Face Detected in Test,0.033713579177856445,,No Match,4.047476768493652,../dataset/Camila Cabello/Camila Cabello_5.jpg
+Dwayne Johnson,Camila Cabello,,No Face Detected in Test,0.03562021255493164,,No Match,3.798795461654663,../dataset/Camila Cabello/Camila Cabello_20.jpg
+Dwayne Johnson,Camila Cabello,Camila Cabello,Incorrect Match,0.051841020584106445,Camila Cabello,Incorrect Match,1.680420160293579,../dataset/Camila Cabello/Camila Cabello_56.jpg
+Dwayne Johnson,Courtney Cox,Courtney Cox,Incorrect Match,0.05623364448547363,Courtney Cox,Incorrect Match,2.3222527503967285,../dataset/Courtney Cox/Courtney Cox_38.jpg
+Dwayne Johnson,Dwayne Johnson,Dwayne Johnson,Correct Match,0.22239923477172852,Dwayne Johnson,Correct Match,2.9905896186828613,../dataset/Dwayne Johnson/Dwayne Johnson_51.jpg
+Dwayne Johnson,Ellen Degeneres,,No Face Detected in Test,0.05424928665161133,Billie Eilish,Incorrect Match,1.4532897472381592,../dataset/Ellen Degeneres/Ellen Degeneres_57.jpg
+Dwayne Johnson,Hrithik Roshan,Hrithik Roshan,Incorrect Match,0.0677037239074707,,No Match,3.9862735271453857,../dataset/Hrithik Roshan/Hrithik Roshan_24.jpg
+Dwayne Johnson,Roger Federer,,No Face Detected in Test,0.0321505069732666,,No Match,3.890813112258911,../dataset/Roger Federer/Roger Federer_62.jpg
+Dwayne Johnson,Roger Federer,Roger Federer,Incorrect Match,0.05180478096008301,Billie Eilish,Incorrect Match,1.2571132183074951,../dataset/Roger Federer/Roger Federer_9.jpg
+Dwayne Johnson,Tom Cruise,,No Face Detected in Test,0.03842329978942871,,No Match,4.232423305511475,../dataset/Tom Cruise/Tom Cruise_13.jpg
+Dwayne Johnson,Tom Cruise,Tom Cruise,Incorrect Match,0.05938386917114258,Tom Cruise,Incorrect Match,4.115677833557129,../dataset/Tom Cruise/Tom Cruise_48.jpg
+Ellen Degeneres,Andy Samberg,Andy Samberg,Incorrect Match,0.05424928665161133,Andy Samberg,Incorrect Match,0.3499267101287842,../dataset/Andy Samberg/Andy Samberg_62.jpg
+Ellen Degeneres,Anushka Sharma,,No Face Detected in Test,0.0453183650970459,Billie Eilish,Incorrect Match,1.4745233058929443,../dataset/Anushka Sharma/Anushka Sharma_23.jpg
+Ellen Degeneres,Billie Eilish,,No Face Detected in Test,0.05372786521911621,,No Match,4.739640712738037,../dataset/Billie Eilish/Billie Eilish_24.jpg
+Ellen Degeneres,Billie Eilish,Billie Eilish,Incorrect Match,0.05959439277648926,Billie Eilish,Incorrect Match,1.5981929302215576,../dataset/Billie Eilish/Billie Eilish_12.jpg
+Ellen Degeneres,Camila Cabello,,No Face Detected in Test,0.07154631614685059,,No Match,5.065185785293579,../dataset/Camila Cabello/Camila Cabello_36.jpg
+Ellen Degeneres,Camila Cabello,,No Face Detected in Test,0.03701281547546387,,No Match,4.1768341064453125,../dataset/Camila Cabello/Camila Cabello_25.jpg
+Ellen Degeneres,Camila Cabello,,No Match,0.059798240661621094,,No Match,4.385876655578613,../dataset/Camila Cabello/Camila Cabello_44.jpg
+Ellen Degeneres,Camila Cabello,,No Face Detected in Test,0.03667902946472168,,No Match,4.172720432281494,../dataset/Camila Cabello/Camila Cabello_72.jpg
+Ellen Degeneres,Camila Cabello,Anushka Sharma,Incorrect Match,0.05903291702270508,Billie Eilish,Incorrect Match,1.3585989475250244,../dataset/Camila Cabello/Camila Cabello_42.jpg
+Ellen Degeneres,Courtney Cox,,No Face Detected in Test,0.05249285697937012,,No Match,4.362305164337158,../dataset/Courtney Cox/Courtney Cox_76.jpg
+Ellen Degeneres,Courtney Cox,Courtney Cox,Incorrect Match,0.06000709533691406,,No Match,4.67704963684082,../dataset/Courtney Cox/Courtney Cox_4.jpg
+Ellen Degeneres,Dwayne Johnson,,No Face Detected in Test,0.033782958984375,Billie Eilish,Incorrect Match,1.33192777633667,../dataset/Dwayne Johnson/Dwayne Johnson_8.jpg
+Ellen Degeneres,Ellen Degeneres,Ellen Degeneres,Correct Match,0.06638550758361816,Ellen Degeneres,Correct Match,3.5716850757598877,../dataset/Ellen Degeneres/Ellen Degeneres_5.jpg
+Ellen Degeneres,Hrithik Roshan,Hrithik Roshan,Incorrect Match,0.05952858924865723,,No Match,4.587958574295044,../dataset/Hrithik Roshan/Hrithik Roshan_61.jpg
+Ellen Degeneres,Roger Federer,Roger Federer,Incorrect Match,0.05350899696350098,Roger Federer,Incorrect Match,3.257488250732422,../dataset/Roger Federer/Roger Federer_35.jpg
+Ellen Degeneres,Tom Cruise,Tom Cruise,Incorrect Match,0.06538844108581543,,No Match,4.439502954483032,../dataset/Tom Cruise/Tom Cruise_40.jpg
+Hrithik Roshan,Andy Samberg,Andy Samberg,Incorrect Match,0.0571749210357666,,No Match,4.421748399734497,../dataset/Andy Samberg/Andy Samberg_37.jpg
+Hrithik Roshan,Anushka Sharma,Anushka Sharma,Incorrect Match,0.05921673774719238,Anushka Sharma,Incorrect Match,0.9941177368164062,../dataset/Anushka Sharma/Anushka Sharma_12.jpg
+Hrithik Roshan,Billie Eilish,,No Face Detected in Test,0.05583453178405762,Billie Eilish,Incorrect Match,1.615177869796753,../dataset/Billie Eilish/Billie Eilish_26.jpg
+Hrithik Roshan,Camila Cabello,Camila Cabello,Incorrect Match,0.08003902435302734,,No Match,4.752629280090332,../dataset/Camila Cabello/Camila Cabello_63.jpg
+Hrithik Roshan,Courtney Cox,Courtney Cox,Incorrect Match,0.061675310134887695,,No Match,4.5091164112091064,../dataset/Courtney Cox/Courtney Cox_48.jpg
+Hrithik Roshan,Dwayne Johnson,,No Face Detected in Test,0.03478050231933594,,No Match,4.130629777908325,../dataset/Dwayne Johnson/Dwayne Johnson_16.jpg
+Hrithik Roshan,Dwayne Johnson,,No Face Detected in Test,0.03686857223510742,Billie Eilish,Incorrect Match,1.294337511062622,../dataset/Dwayne Johnson/Dwayne Johnson_8.jpg
+Hrithik Roshan,Ellen Degeneres,,No Face Detected in Test,0.04383087158203125,Billie Eilish,Incorrect Match,1.3302180767059326,../dataset/Ellen Degeneres/Ellen Degeneres_8.jpg
+Hrithik Roshan,Hrithik Roshan,Hrithik Roshan,Correct Match,0.06579279899597168,,No Match,4.8570592403411865,../dataset/Hrithik Roshan/Hrithik Roshan_28.jpg
+Hrithik Roshan,Roger Federer,Roger Federer,Incorrect Match,0.07244038581848145,,No Match,5.268752336502075,../dataset/Roger Federer/Roger Federer_42.jpg
+Hrithik Roshan,Tom Cruise,Tom Cruise,Incorrect Match,0.08028268814086914,,No Match,4.587285757064819,../dataset/Tom Cruise/Tom Cruise_50.jpg
+Roger Federer,Andy Samberg,Andy Samberg,Incorrect Match,0.05388998985290527,,No Match,4.490784645080566,../dataset/Andy Samberg/Andy Samberg_42.jpg
+Roger Federer,Anushka Sharma,,No Face Detected in Test,0.03507733345031738,,No Match,4.186527252197266,../dataset/Anushka Sharma/Anushka Sharma_63.jpg
+Roger Federer,Anushka Sharma,Anushka Sharma,Incorrect Match,0.055108070373535156,Camila Cabello,Incorrect Match,1.6093111038208008,../dataset/Anushka Sharma/Anushka Sharma_50.jpg
+Roger Federer,Billie Eilish,Billie Eilish,Incorrect Match,0.05642437934875488,,No Match,4.206052303314209,../dataset/Billie Eilish/Billie Eilish_75.jpg
+Roger Federer,Camila Cabello,Camila Cabello,Incorrect Match,0.04992032051086426,Camila Cabello,Incorrect Match,1.8288342952728271,../dataset/Camila Cabello/Camila Cabello_41.jpg
+Roger Federer,Courtney Cox,,No Face Detected in Test,0.03675675392150879,,No Match,4.067218065261841,../dataset/Courtney Cox/Courtney Cox_61.jpg
+Roger Federer,Courtney Cox,,No Face Detected in Test,0.036368608474731445,,No Match,4.004973649978638,../dataset/Courtney Cox/Courtney Cox_23.jpg
+Roger Federer,Courtney Cox,,No Face Detected in Test,0.034499168395996094,,No Match,3.9731810092926025,../dataset/Courtney Cox/Courtney Cox_12.jpg
+Roger Federer,Courtney Cox,,No Face Detected in Test,0.03478050231933594,,No Match,3.9449448585510254,../dataset/Courtney Cox/Courtney Cox_59.jpg
+Roger Federer,Courtney Cox,,No Face Detected in Test,0.037450313568115234,,No Match,5.022480010986328,../dataset/Courtney Cox/Courtney Cox_56.jpg
+Roger Federer,Courtney Cox,,No Face Detected in Test,0.045006752014160156,,No Match,4.341735363006592,../dataset/Courtney Cox/Courtney Cox_2.jpg
+Roger Federer,Courtney Cox,,No Face Detected in Test,0.04220890998840332,,No Match,4.495051622390747,../dataset/Courtney Cox/Courtney Cox_26.jpg
+Roger Federer,Courtney Cox,,No Match,0.05792236328125,,No Match,4.327422618865967,../dataset/Courtney Cox/Courtney Cox_47.jpg
+Roger Federer,Courtney Cox,,No Face Detected in Test,0.037917137145996094,,No Match,4.193725824356079,../dataset/Courtney Cox/Courtney Cox_68.jpg
+Roger Federer,Courtney Cox,,No Face Detected in Test,0.037467241287231445,,No Match,4.183511018753052,../dataset/Courtney Cox/Courtney Cox_41.jpg
+Roger Federer,Courtney Cox,,No Match,0.4003777503967285,,No Match,42.55424404144287,
+Roger Federer,Dwayne Johnson,Dwayne Johnson,Incorrect Match,0.05826210975646973,Dwayne Johnson,Incorrect Match,2.250012159347534,../dataset/Dwayne Johnson/Dwayne Johnson_13.jpg
+Roger Federer,Ellen Degeneres,Ellen Degeneres,Incorrect Match,0.06322288513183594,Ellen Degeneres,Incorrect Match,2.9600577354431152,../dataset/Ellen Degeneres/Ellen Degeneres_35.jpg
+Roger Federer,Hrithik Roshan,,No Face Detected in Test,0.03927326202392578,Billie Eilish,Incorrect Match,1.4115946292877197,../dataset/Hrithik Roshan/Hrithik Roshan_27.jpg
+Roger Federer,Roger Federer,Roger Federer,Correct Match,0.08121371269226074,Roger Federer,Correct Match,3.889958620071411,../dataset/Roger Federer/Roger Federer_65.jpg
+Roger Federer,Tom Cruise,Tom Cruise,Incorrect Match,0.06650066375732422,Tom Cruise,Incorrect Match,4.657778978347778,../dataset/Tom Cruise/Tom Cruise_7.jpg
+Tom Cruise,Andy Samberg,Andy Samberg,Incorrect Match,0.054309844970703125,Andy Samberg,Incorrect Match,0.3298006057739258,../dataset/Andy Samberg/Andy Samberg_50.jpg
+Tom Cruise,Anushka Sharma,,No Face Detected in Test,0.04077935218811035,Billie Eilish,Incorrect Match,1.3449022769927979,../dataset/Anushka Sharma/Anushka Sharma_36.jpg
+Tom Cruise,Billie Eilish,Billie Eilish,Incorrect Match,0.07479023933410645,,No Match,4.537203311920166,../dataset/Billie Eilish/Billie Eilish_75.jpg
+Tom Cruise,Camila Cabello,,No Face Detected in Test,0.03482842445373535,,No Match,4.282819032669067,../dataset/Camila Cabello/Camila Cabello_6.jpg
+Tom Cruise,Camila Cabello,Camila Cabello,Incorrect Match,0.06085371971130371,,No Match,4.896875619888306,../dataset/Camila Cabello/Camila Cabello_63.jpg
+Tom Cruise,Courtney Cox,Courtney Cox,Incorrect Match,0.05994057655334473,,No Match,4.616572856903076,../dataset/Courtney Cox/Courtney Cox_53.jpg
+Tom Cruise,Dwayne Johnson,,No Face Detected in Test,0.035398244857788086,Billie Eilish,Incorrect Match,1.3224279880523682,../dataset/Dwayne Johnson/Dwayne Johnson_8.jpg
+Tom Cruise,Ellen Degeneres,,No Face Detected in Test,0.04715585708618164,Billie Eilish,Incorrect Match,1.347402811050415,../dataset/Ellen Degeneres/Ellen Degeneres_52.jpg
+Tom Cruise,Hrithik Roshan,,No Match,0.09598207473754883,,No Match,4.542742490768433,../dataset/Hrithik Roshan/Hrithik Roshan_14.jpg
+Tom Cruise,Hrithik Roshan,Hrithik Roshan,Incorrect Match,0.0643606185913086,,No Match,4.2506701946258545,../dataset/Hrithik Roshan/Hrithik Roshan_29.jpg
+Tom Cruise,Roger Federer,Roger Federer,Incorrect Match,0.05629682540893555,Billie Eilish,Incorrect Match,1.3464381694793701,../dataset/Roger Federer/Roger Federer_41.jpg
+Tom Cruise,Tom Cruise,Tom Cruise,Correct Match,0.06449198722839355,Tom Cruise,Correct Match,4.495129823684692,../dataset/Tom Cruise/Tom Cruise_35.jpg
